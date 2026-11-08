@@ -325,14 +325,7 @@ impl CertificationData {
     /// Returns [`Error::CertificationData`] when the document does not follow the DTD of §7.4: an unknown `tipo`,
     /// a missing element, no `destinatari`, or a date, time or zone outside the format of §7.2.
     pub fn from_xml(xml: &str) -> Result<Self, Error> {
-        let data: Self = quick_xml::de::from_str(xml)
-            .map_err(|error| Error::CertificationData(error.to_string()))?;
-        if data.header.recipients.is_empty() {
-            return Err(Error::CertificationData(
-                "intestazione has no destinatari".to_owned(),
-            ));
-        }
-        Ok(data)
+        quick_xml::de::from_str(xml).map_err(|error| Error::CertificationData(error.to_string()))
     }
 
     /// Writes the data as a `daticert.xml` in UTF-8, with its XML declaration.
