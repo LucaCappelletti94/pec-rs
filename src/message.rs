@@ -1,7 +1,5 @@
 //! Reading a message a PEC provider generated: its kind, its certification data and the message it carries.
 
-use std::borrow::Cow;
-
 use mail_parser::{Headers, MessageParser, PartId};
 
 use crate::{CertificationData, Error, Kind, MessageKind};
@@ -40,7 +38,7 @@ impl<'a> Message<'a> {
         let headers = root.headers();
         let kind = kind_of(&headers)?;
         let security_error =
-            header_value(&headers, "X-VerificaSicurezza").is_some_and(|value| value == "errore");
+            header_bytes(&headers, "X-VerificaSicurezza").is_some_and(|value| value == b"errore");
         if security_error
             && !matches!(
                 kind,
@@ -140,7 +138,11 @@ impl<'a> Message<'a> {
     /// `X-Riferimento-Message-ID`, without angle brackets (§6.3).
     #[must_use]
     pub fn reference_message_id(&self) -> Option<&str> {
-        let value = header_value(&self.parsed.root().headers(), "X-Riferimento-Message-ID")?;
+        let value = std::str::from_utf8(header_bytes(
+            &self.parsed.root().headers(),
+            "X-Riferimento-Message-ID",
+        )?)
+        .ok()?;
         Some(
             value
                 .strip_prefix('<')
@@ -166,28 +168,25 @@ impl<'a> Message<'a> {
 
 /// The kind named by `X-Ricevuta` or `X-Trasporto`.
 fn kind_of(headers: &Headers<'_>) -> Result<MessageKind, Error> {
+    let unknown = |value: &[u8]| Error::UnknownKind(String::from_utf8_lossy(value).into_owned());
     match (
-        header_value(headers, "X-Ricevuta"),
-        header_value(headers, "X-Trasporto"),
+        header_bytes(headers, "X-Ricevuta"),
+        header_bytes(headers, "X-Trasporto"),
     ) {
         (None, None) => Err(Error::NotPec),
         (Some(_), Some(_)) => Err(Error::ConflictingKind),
         (Some(value), None) => Kind::from_receipt_header(value)
             .map(MessageKind::Certified)
-            .ok_or_else(|| Error::UnknownKind(value.to_owned())),
-        (None, Some("posta-certificata")) => Ok(MessageKind::Certified(Kind::Transport)),
-        (None, Some("errore")) => Ok(MessageKind::Anomaly),
-        (None, Some(value)) => Err(Error::UnknownKind(value.to_owned())),
+            .ok_or_else(|| unknown(value)),
+        (None, Some(b"posta-certificata")) => Ok(MessageKind::Certified(Kind::Transport)),
+        (None, Some(b"errore")) => Ok(MessageKind::Anomaly),
+        (None, Some(value)) => Err(unknown(value)),
     }
 }
 
-/// The trimmed value of the first `name` header, `None` when absent or not UTF-8.
-fn header_value<'m>(headers: &Headers<'m>, name: &str) -> Option<&'m str> {
-    let raw = headers.get(name)?.raw_value();
-    match String::from_utf8_lossy(raw) {
-        Cow::Borrowed(value) => Some(value.trim()),
-        Cow::Owned(_) => None,
-    }
+/// The value of the first `name` header without surrounding whitespace, `None` when absent.
+fn header_bytes<'m>(headers: &Headers<'m>, name: &str) -> Option<&'m [u8]> {
+    Some(headers.get(name)?.raw_value().trim_ascii())
 }
 
 /// The subject prefix the rules give each kind, `[prefix][subject originale]`.

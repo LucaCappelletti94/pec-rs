@@ -209,6 +209,8 @@ fn malformed_dates_are_rejected() {
 fn certified_at_is_an_instant() {
     let data = CertificationData::from_xml(&fixture("acceptance.xml")).expect("valid");
     assert_eq!(data.data.at.timestamp().to_string(), "2026-11-08T09:15:00Z");
+    assert_eq!(data.data.at.date(), Date::new(2026, 11, 8).expect("date"));
+    assert_eq!(data.data.at.time(), Time::new(10, 15, 0, 0).expect("time"));
     let west = edited(|xml| xml.replace("zona=\"+0100\"", "zona=\"-0430\"")).expect("valid");
     assert_eq!(
         west.data.at.offset(),
@@ -219,4 +221,15 @@ fn certified_at_is_an_instant() {
         CertificationData::from_xml(&west.to_xml().expect("writes")).expect("reads"),
         west
     );
+}
+
+/// §7.2 carries whole seconds, so a sub-second time has no `ora` to write.
+#[test]
+fn sub_second_time_is_rejected() {
+    let result = CertifiedAt::new(
+        Date::new(2026, 11, 8).expect("date"),
+        Time::new(10, 15, 0, 500).expect("time"),
+        Offset::UTC,
+    );
+    assert!(result.is_err(), "{result:?}");
 }

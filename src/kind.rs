@@ -36,31 +36,16 @@ pub enum Kind {
 }
 
 impl Kind {
-    /// The value of `X-Ricevuta`, or of `X-Trasporto` for [`Kind::Transport`], and of the `tipo` attribute.
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Acceptance => "accettazione",
-            Self::NonAcceptance => "non-accettazione",
-            Self::TakenInCharge => "presa-in-carico",
-            Self::Delivery => "avvenuta-consegna",
-            Self::Transport => "posta-certificata",
-            Self::DeliveryError => "errore-consegna",
-            Self::DeliveryTimeoutWarning => "preavviso-errore-consegna",
-            Self::VirusDetected => "rilevazione-virus",
-        }
-    }
-
     /// The receipt kind an `X-Ricevuta` value names. `posta-certificata` is not one, it travels in `X-Trasporto`.
-    pub(crate) fn from_receipt_header(value: &str) -> Option<Self> {
+    pub(crate) const fn from_receipt_header(value: &[u8]) -> Option<Self> {
         Some(match value {
-            "accettazione" => Self::Acceptance,
-            "non-accettazione" => Self::NonAcceptance,
-            "presa-in-carico" => Self::TakenInCharge,
-            "avvenuta-consegna" => Self::Delivery,
-            "errore-consegna" => Self::DeliveryError,
-            "preavviso-errore-consegna" => Self::DeliveryTimeoutWarning,
-            "rilevazione-virus" => Self::VirusDetected,
+            b"accettazione" => Self::Acceptance,
+            b"non-accettazione" => Self::NonAcceptance,
+            b"presa-in-carico" => Self::TakenInCharge,
+            b"avvenuta-consegna" => Self::Delivery,
+            b"errore-consegna" => Self::DeliveryError,
+            b"preavviso-errore-consegna" => Self::DeliveryTimeoutWarning,
+            b"rilevazione-virus" => Self::VirusDetected,
             _ => return None,
         })
     }

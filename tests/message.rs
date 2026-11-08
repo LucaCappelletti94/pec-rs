@@ -269,3 +269,64 @@ fn non_pec_messages_are_rejected() {
     assert!(matches!(Message::parse(&raw), Err(Error::UnknownKind(_))));
     assert!(matches!(Message::parse(b""), Err(Error::NotMime)));
 }
+
+/// §7.3.3 fixes the certification data as UTF-8.
+#[test]
+fn certification_data_must_be_utf8() {
+    let raw = message("acceptance.eml");
+    let text = std::str::from_utf8(&raw).expect("ascii fixture");
+    let marker = "filename=\"daticert.xml\"\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+    let start = text.find(marker).expect("the daticert part") + marker.len();
+    let end = start
+        + text[start..]
+            .find("\r\n--pec-inner")
+            .expect("the part ends");
+    // `//4=` is the base64 of the bytes 0xFF 0xFE, which no UTF-8 text starts with.
+    let raw = format!("{}//4={}", &text[..start], &text[end..]).into_bytes();
+    assert!(matches!(
+        Message::parse(&raw),
+        Err(Error::CertificationData(_))
+    ));
+}
+
+/// A kind header that is not even UTF-8 names no kind the rules define.
+#[test]
+fn garbled_kind_header_is_unknown() {
+    let raw = message("acceptance.eml");
+    let from: &[u8] = b"X-Ricevuta: accettazione";
+    let at = raw
+        .windows(from.len())
+        .position(|window| window == from)
+        .expect("the header");
+    let mut garbled = raw[..at].to_vec();
+    garbled.extend_from_slice(b"X-Ricevuta: accettazion\xff");
+    garbled.extend_from_slice(&raw[at + from.len()..]);
+    assert!(
+        matches!(Message::parse(&garbled), Err(Error::UnknownKind(kind)) if kind == "accettazion\u{fffd}")
+    );
+}
+
+/// The anomaly envelope carries no `X-Riferimento-Message-ID`, and one that is not UTF-8 names no identifier.
+#[test]
+fn reference_message_id_needs_a_readable_header() {
+    let raw = message("anomaly.eml");
+    assert_eq!(
+        Message::parse(&raw).expect("valid").reference_message_id(),
+        None
+    );
+    let raw = message("acceptance.eml");
+    let from: &[u8] = b"X-Riferimento-Message-ID: <";
+    let at = raw
+        .windows(from.len())
+        .position(|window| window == from)
+        .expect("the header");
+    let mut garbled = raw[..at + from.len()].to_vec();
+    garbled.push(0xff);
+    garbled.extend_from_slice(&raw[at + from.len()..]);
+    assert_eq!(
+        Message::parse(&garbled)
+            .expect("valid")
+            .reference_message_id(),
+        None
+    );
+}
