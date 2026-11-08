@@ -1,0 +1,88 @@
+Return-Path: <paolo.bianchi@example.com>
+Date: Sun, 8 Nov 2026 09:30:05 +0100
+From: "Per conto di: paolo.bianchi@example.com" <posta-certificata@pec.example.it>
+Reply-To: paolo.bianchi@example.com
+To: ufficio.fatture@pec.example.it
+Message-ID: <20261108093000.4242@mail.example.com>
+X-Trasporto: errore
+Subject: ANOMALIA MESSAGGIO: Richiesta informazioni
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----963FCE9AD7D8D7E88705CD13870546DD"
+
+This is an S/MIME signed message
+
+------963FCE9AD7D8D7E88705CD13870546DD
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Anomalia nel messaggio
+Il giorno 08/11/2026 alle ore 09:30:05 (+0100) =E8 stato ricevuto
+il messaggio "Richiesta informazioni" proveniente da "paolo.bianchi@example.com"
+ed indirizzato a:
+ufficio.fatture@pec.example.it
+Tali dati non sono stati certificati per il seguente errore:
+firma assente
+Il messaggio originale =E8 incluso in allegato.
+--pec-inner
+Content-Type: message/rfc822
+Content-Disposition: inline
+
+Return-Path: <paolo.bianchi@example.com>
+Message-ID: <20261108093000.4242@mail.example.com>
+Date: Sun, 8 Nov 2026 09:30:00 +0100
+From: "Paolo Bianchi" <paolo.bianchi@example.com>
+To: ufficio.fatture@pec.example.it
+Subject: Richiesta informazioni
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Buongiorno, vorrei sapere quando arriva la fattura.
+
+--pec-inner--
+
+------963FCE9AD7D8D7E88705CD13870546DD
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+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
+0w6CtvuPFww=
+
+------963FCE9AD7D8D7E88705CD13870546DD--
+

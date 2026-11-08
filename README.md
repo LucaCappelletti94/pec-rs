@@ -8,21 +8,25 @@
 
 Reading PEC messages, Italian certified email, in Rust.
 
-- the certification data of `daticert.xml`, read and written, with the instant each receipt certifies
+- every receipt, notice and envelope a PEC provider generates, told apart by kind and checked against its subject
+- the certification data of `daticert.xml`, read and written
+- the original message out of a transport envelope or a delivery receipt, and the arrived message out of an anomaly envelope
 
-It follows the AgID technical rules annexed to DM 2 November 2005.
+The crate works on bytes already fetched, so any SMTP or IMAP client can feed it. It follows the AgID technical rules annexed to DM 2 November 2005.
 
 ```rust
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
-use pec::{CertificationData, Kind, ReceiptKind};
+use pec::{Kind, Message, MessageKind};
 
-let xml = std::fs::read_to_string("tests/fixtures/daticert/delivery-full.xml")?;
-let data = CertificationData::from_xml(&xml)?;
-assert_eq!(data.kind, Kind::Delivery);
-assert_eq!(data.data.receipt, Some(ReceiptKind::Full));
+let raw = std::fs::read("tests/fixtures/messages/delivery-full.eml")?;
+let receipt = Message::parse(&raw)?;
+assert_eq!(receipt.kind(), MessageKind::Certified(Kind::Delivery));
+assert_eq!(receipt.subject(), "Invio fattura 00012");
+
+let data = receipt.certification_data().expect("every receipt has one");
 assert_eq!(data.data.delivered_to.as_deref(), Some("ufficio.fatture@pec.example.it"));
 assert_eq!(data.data.at.timestamp().to_string(), "2026-11-08T09:15:00Z");
-assert_eq!(CertificationData::from_xml(&data.to_xml()?)?, data);
+assert!(receipt.original_message().is_some());
 # Ok(())
 # }
 ```

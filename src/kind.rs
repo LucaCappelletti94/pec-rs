@@ -50,4 +50,28 @@ impl Kind {
             Self::VirusDetected => "rilevazione-virus",
         }
     }
+
+    /// The receipt kind an `X-Ricevuta` value names. `posta-certificata` is not one, it travels in `X-Trasporto`.
+    pub(crate) fn from_receipt_header(value: &str) -> Option<Self> {
+        Some(match value {
+            "accettazione" => Self::Acceptance,
+            "non-accettazione" => Self::NonAcceptance,
+            "presa-in-carico" => Self::TakenInCharge,
+            "avvenuta-consegna" => Self::Delivery,
+            "errore-consegna" => Self::DeliveryError,
+            "preavviso-errore-consegna" => Self::DeliveryTimeoutWarning,
+            "rilevazione-virus" => Self::VirusDetected,
+            _ => return None,
+        })
+    }
+}
+
+/// What a message is, read from `X-Ricevuta` or `X-Trasporto`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum MessageKind {
+    /// A receipt, a notice or a transport envelope, each carrying certification data.
+    Certified(Kind),
+    /// `X-Trasporto: errore`: a message that arrived without being valid PEC, wrapped by the recipient's provider
+    /// with no certification data (§6.4.2).
+    Anomaly,
 }

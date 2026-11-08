@@ -14,6 +14,7 @@ categories = ["email", "parser-implementations"]
 
 [dependencies]
 jiff = { version = "0.2.39", default-features = false, features = ["alloc"] }
+mail-parser = "1.0.1"
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 serde = { version = "1.0.229", features = ["derive"] }
 thiserror = "2.0.21"
