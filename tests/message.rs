@@ -267,6 +267,14 @@ fn non_pec_messages_are_rejected() {
         "X-Trasporto: busta",
     );
     assert!(matches!(Message::parse(&raw), Err(Error::UnknownKind(_))));
+    let raw = replaced(
+        &message("transport.eml"),
+        "X-Trasporto: posta-certificata",
+        "X-Trasporto: accettazione",
+    );
+    assert!(
+        matches!(Message::parse(&raw), Err(Error::UnknownKind(kind)) if kind == "accettazione")
+    );
     assert!(matches!(Message::parse(b""), Err(Error::NotMime)));
 }
 
@@ -328,5 +336,27 @@ fn reference_message_id_needs_a_readable_header() {
             .expect("valid")
             .reference_message_id(),
         None
+    );
+}
+
+/// Every `tipo` of §7.4 reads into its kind, and nothing else does.
+#[test]
+fn every_tipo_parses() {
+    let cases = [
+        ("accettazione", Kind::Acceptance),
+        ("non-accettazione", Kind::NonAcceptance),
+        ("presa-in-carico", Kind::TakenInCharge),
+        ("avvenuta-consegna", Kind::Delivery),
+        ("posta-certificata", Kind::Transport),
+        ("errore-consegna", Kind::DeliveryError),
+        ("preavviso-errore-consegna", Kind::DeliveryTimeoutWarning),
+        ("rilevazione-virus", Kind::VirusDetected),
+    ];
+    for (text, kind) in cases {
+        assert_eq!(text.parse::<Kind>(), Ok(kind), "{text}");
+    }
+    assert_eq!(
+        "Accettazione".parse::<Kind>(),
+        Err(Error::UnknownKind("Accettazione".to_owned()))
     );
 }

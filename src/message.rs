@@ -166,21 +166,22 @@ impl<'a> Message<'a> {
     }
 }
 
-/// The kind named by `X-Ricevuta` or `X-Trasporto`.
+/// The kind named by `X-Ricevuta` or `X-Trasporto`. `posta-certificata` names the transport envelope and travels only
+/// in `X-Trasporto`, which otherwise carries `errore` for the anomaly envelope.
 fn kind_of(headers: &Headers<'_>) -> Result<MessageKind, Error> {
-    let unknown = |value: &[u8]| Error::UnknownKind(String::from_utf8_lossy(value).into_owned());
-    match (
-        header_bytes(headers, "X-Ricevuta"),
-        header_bytes(headers, "X-Trasporto"),
-    ) {
+    let text = |name: &str| header_bytes(headers, name).map(String::from_utf8_lossy);
+    match (text("X-Ricevuta"), text("X-Trasporto")) {
         (None, None) => Err(Error::NotPec),
         (Some(_), Some(_)) => Err(Error::ConflictingKind),
-        (Some(value), None) => Kind::from_receipt_header(value)
-            .map(MessageKind::Certified)
-            .ok_or_else(|| unknown(value)),
-        (None, Some(b"posta-certificata")) => Ok(MessageKind::Certified(Kind::Transport)),
-        (None, Some(b"errore")) => Ok(MessageKind::Anomaly),
-        (None, Some(value)) => Err(unknown(value)),
+        (Some(value), None) => match value.parse()? {
+            Kind::Transport => Err(Error::UnknownKind(value.into_owned())),
+            kind => Ok(MessageKind::Certified(kind)),
+        },
+        (None, Some(value)) if value == "errore" => Ok(MessageKind::Anomaly),
+        (None, Some(value)) => match value.parse()? {
+            Kind::Transport => Ok(MessageKind::Certified(Kind::Transport)),
+            _ => Err(Error::UnknownKind(value.into_owned())),
+        },
     }
 }
 

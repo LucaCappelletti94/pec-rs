@@ -1,6 +1,10 @@
 //! The kinds of message a PEC provider generates.
 
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
+
+use crate::Error;
 
 /// The kind of a certified message, the `tipo` of `daticert.xml` (§7.4).
 ///
@@ -35,18 +39,25 @@ pub enum Kind {
     VirusDetected,
 }
 
-impl Kind {
-    /// The receipt kind an `X-Ricevuta` value names. `posta-certificata` is not one, it travels in `X-Trasporto`.
-    pub(crate) const fn from_receipt_header(value: &[u8]) -> Option<Self> {
-        Some(match value {
-            b"accettazione" => Self::Acceptance,
-            b"non-accettazione" => Self::NonAcceptance,
-            b"presa-in-carico" => Self::TakenInCharge,
-            b"avvenuta-consegna" => Self::Delivery,
-            b"errore-consegna" => Self::DeliveryError,
-            b"preavviso-errore-consegna" => Self::DeliveryTimeoutWarning,
-            b"rilevazione-virus" => Self::VirusDetected,
-            _ => return None,
+impl FromStr for Kind {
+    type Err = Error;
+
+    /// Reads a `tipo` value of §7.4, the same names `X-Ricevuta` and `X-Trasporto` carry.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::UnknownKind`] with the value when the rules define no such kind.
+    fn from_str(value: &str) -> Result<Self, Error> {
+        Ok(match value {
+            "accettazione" => Self::Acceptance,
+            "non-accettazione" => Self::NonAcceptance,
+            "presa-in-carico" => Self::TakenInCharge,
+            "avvenuta-consegna" => Self::Delivery,
+            "posta-certificata" => Self::Transport,
+            "errore-consegna" => Self::DeliveryError,
+            "preavviso-errore-consegna" => Self::DeliveryTimeoutWarning,
+            "rilevazione-virus" => Self::VirusDetected,
+            _ => return Err(Error::UnknownKind(value.to_owned())),
         })
     }
 }
