@@ -1,0 +1,88 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.8@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: preavviso-errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA PER SUP. TEMPO MASSIMO: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----CEFD0FD536EA285B362B99BC0AC371BA"
+
+This is an S/MIME signed message
+
+------CEFD0FD536EA285B362B99BC0AC371BA
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Avviso di mancata consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+e destinato all=27utente "ufficio.fatture@pec.example.it"
+non e stato consegnato nelle prime dodici ore dal suo invio.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+cmVhdnZpc28tZXJyb3JlLWNvbnNlZ25hIj4KICA8aW50ZXN0YXppb25lPgogICAgPG1pdHRlbnRl
+Pm1hcmlvLnJvc3NpQHBlYy5leGFtcGxlLml0PC9taXR0ZW50ZT4KICAgIDxkZXN0aW5hdGFyaSB0
+aXBvPSJjZXJ0aWZpY2F0byI+dWZmaWNpby5mYXR0dXJlQHBlYy5leGFtcGxlLml0PC9kZXN0aW5h
+dGFyaT4KICAgIDxyaXNwb3N0ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwvcmlzcG9zdGU+
+CiAgICA8b2dnZXR0bz5JbnZpbyBmYXR0dXJhIDAwMDEyPC9vZ2dldHRvPgogIDwvaW50ZXN0YXpp
+b25lPgogIDxkYXRpPgogICAgPGdlc3RvcmUtZW1pdHRlbnRlPkdlc3RvcmUgUEVDIGRpIEVzZW1w
+aW8gUy5wLkEuPC9nZXN0b3JlLWVtaXR0ZW50ZT4KICAgIDxkYXRhIHpvbmE9IiswMTAwIj4KICAg
+ICAgPGdpb3Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6MDA8L29yYT4K
+ICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4MTAxNTAwLjAw
+MDAxLjAxLjEuMUBwZWMuZXhhbXBsZS5pdDwvaWRlbnRpZmljYXRpdm8+CiAgICA8bXNnaWQ+Jmx0
+OzIwMjYxMTA4MTAxNDU4LjAwMDFAY2xpZW50LmV4YW1wbGUuaXQmZ3Q7PC9tc2dpZD4KICAgIDxj
+b25zZWduYT51ZmZpY2lvLmZhdHR1cmVAcGVjLmV4YW1wbGUuaXQ8L2NvbnNlZ25hPgogIDwvZGF0
+aT4KPC9wb3N0YWNlcnQ+Cg==
+--pec-inner--
+
+------CEFD0FD536EA285B362B99BC0AC371BA
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+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
+ZEegGmqVgJWZjg==
+
+------CEFD0FD536EA285B362B99BC0AC371BA--
+
