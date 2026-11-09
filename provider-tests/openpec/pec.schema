@@ -1,0 +1,52 @@
+# The PEC provider directory schema, RFC 6109 §4.5.
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.1 NAME 'providerCertificateHash'
+    DESC 'Hash SHA1 of X.509 certificate in hexadecimal format'
+    EQUALITY caseIgnoreIA5Match
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.2 NAME 'providerCertificate'
+    DESC 'X.509 certificate in ASN.1 DER binary format'
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.8 )
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.3 NAME 'providerName'
+    DESC 'PEC provider name'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.4 NAME 'mailReceipt'
+    DESC 'E-mail address of the service mailbox'
+    EQUALITY caseIgnoreIA5Match
+    SUBSTR caseIgnoreIA5SubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+    SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.5 NAME 'managedDomains'
+    DESC 'Domains handled by the PEC provider'
+    EQUALITY caseIgnoreIA5Match
+    SUBSTR caseIgnoreIA5SubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.6 NAME 'LDIFLocationURL'
+    DESC 'URL of the LDIF file that defines the entry'
+    EQUALITY caseExactMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.16572.2.2.7 NAME 'providerUnit'
+    DESC 'Name of the secondary operative environment'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    SINGLE-VALUE )
+
+objectclass ( 1.3.6.1.4.1.16572.2.1.1 NAME 'LDIFLocationURLObject'
+    SUP top AUXILIARY
+    MAY ( LDIFLocationURL ) )
+
+objectclass ( 1.3.6.1.4.1.16572.2.1.2 NAME 'provider'
+    SUP top STRUCTURAL
+    MUST ( providerCertificateHash $ providerCertificate $ providerName $ mailReceipt $ managedDomains )
+    MAY ( description $ LDIFLocationURL $ providerUnit ) )
