@@ -11,6 +11,7 @@ Reading PEC messages, Italian certified email, in Rust.
 - every receipt, notice and envelope a PEC provider generates, told apart by kind and checked against its subject
 - the certification data of `daticert.xml`, read and written
 - the original message out of a transport envelope or a delivery receipt, and the arrived message out of an anomaly envelope
+- the attachment hashes of a short delivery receipt, checked against the message the sender sent
 
 The crate works on bytes already fetched, so any SMTP or IMAP client can feed it. It follows the AgID technical rules annexed to DM 2 November 2005.
 

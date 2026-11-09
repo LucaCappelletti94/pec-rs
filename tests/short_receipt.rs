@@ -5,7 +5,7 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use pec::{Error, Message};
+use pec::{AttachmentCheck, Error, Message};
 
 /// Reads a signed message fixture.
 fn message(name: &str) -> Vec<u8> {
@@ -14,6 +14,31 @@ fn message(name: &str) -> Vec<u8> {
         env!("CARGO_MANIFEST_DIR")
     ))
     .expect("the fixture exists")
+}
+
+/// Reads a message the sender sent, as kept on the sender's side.
+fn sent(name: &str) -> Vec<u8> {
+    std::fs::read(format!(
+        "{}/tests/fixtures/original/{name}",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .expect("the fixture exists")
+}
+
+/// The checks of a short receipt fixture against a sent message.
+fn checks(receipt: &str, sent: &[u8]) -> Result<Vec<AttachmentCheck>, Error> {
+    Message::parse(&message(receipt))
+        .expect("a valid receipt")
+        .check_attachments(sent)
+}
+
+/// Every attachment of `attachments.eml` matching its hash.
+fn all_match() -> Vec<AttachmentCheck> {
+    vec![
+        AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
+        AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+        AttachmentCheck::Matches(None),
+    ]
 }
 
 /// `bytes` with every occurrence of `from` replaced by `to`.
@@ -127,4 +152,81 @@ fn unreplaced_attachment_is_no_hash() {
     let mut expected = expected();
     expected.remove(1);
     assert_eq!(hashes(&raw), expected);
+}
+
+/// The hash of each sent attachment is the SHA-1 of its decoded content, or of an attached message as sent. The
+/// attached message has no file name, so it is found by its digest.
+#[test]
+fn sent_attachments_match_their_hashes() {
+    assert_eq!(
+        checks("delivery-short.eml", &sent("attachments.eml")),
+        Ok(all_match())
+    );
+}
+
+/// A signed message carries its attachments inside the signed part.
+#[test]
+fn signed_attachments_match_their_hashes() {
+    assert_eq!(
+        checks("delivery-short-signed.eml", &sent("attachments-signed.eml")),
+        Ok(all_match())
+    );
+}
+
+/// An encrypted message has no attachment a provider could replace, so there is nothing to check.
+#[test]
+fn encrypted_message_has_nothing_to_check() {
+    assert_eq!(
+        checks("delivery-short-encrypted.eml", &sent("encrypted.eml")),
+        Ok(Vec::new())
+    );
+}
+
+/// An attachment that changed after the receipt differs from the hash under its name.
+#[test]
+fn changed_attachment_differs() {
+    let changed = replaced(&sent("attachments.eml"), "Nota con", "Nota sul");
+    assert_eq!(
+        checks("delivery-short.eml", &changed),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
+            AttachmentCheck::Differs("nota.txt".to_owned()),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+}
+
+/// A sent attachment without a hash in the receipt is missing from it, and a hash that no sent attachment has is
+/// reported as not sent. A renamed attachment is still found by its digest.
+#[test]
+fn unmatched_attachments_and_hashes_are_reported() {
+    let renamed = replaced(&sent("attachments.eml"), "fattura.xml", "fattura-bis.xml");
+    let changed = replaced(&renamed, "Ordine numero 42", "Ordine numero 43");
+    assert_eq!(
+        checks("delivery-short.eml", &changed),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("fattura-bis.xml".to_owned())),
+            AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+            AttachmentCheck::Missing(None),
+            AttachmentCheck::NotSent("null".to_owned()),
+        ])
+    );
+}
+
+/// Only a short receipt that carries the original holds hashes to check.
+#[test]
+fn other_receipts_cannot_be_checked() {
+    for name in ["delivery-full.eml", "delivery-summary.eml", "transport.eml"] {
+        assert_eq!(
+            checks(name, &sent("attachments.eml")),
+            Err(Error::NotShortReceipt),
+            "{name}"
+        );
+    }
+}
+
+/// The sent message has to be MIME.
+#[test]
+fn sent_message_must_be_mime() {
+    assert_eq!(checks("delivery-short.eml", b""), Err(Error::NotMime));
 }
