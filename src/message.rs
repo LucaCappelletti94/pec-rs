@@ -74,7 +74,7 @@ impl<'a> Message<'a> {
             MessageKind::Certified(kind) => {
                 let part = certification_part.ok_or(Error::MissingCertificationData)?;
                 let bytes = part.decoded();
-                let xml = std::str::from_utf8(&bytes).map_err(|_| {
+                let xml = core::str::from_utf8(&bytes).map_err(|_| {
                     Error::CertificationData("daticert.xml is not UTF-8".to_owned())
                 })?;
                 let data = CertificationData::from_xml(xml)?;
@@ -138,7 +138,7 @@ impl<'a> Message<'a> {
     /// `X-Riferimento-Message-ID`, without angle brackets (§6.3).
     #[must_use]
     pub fn reference_message_id(&self) -> Option<&str> {
-        let value = std::str::from_utf8(header_bytes(
+        let value = core::str::from_utf8(header_bytes(
             &self.parsed.root().headers(),
             "X-Riferimento-Message-ID",
         )?)

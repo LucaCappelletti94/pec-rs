@@ -23,7 +23,7 @@ fn message(name: &str) -> Vec<u8> {
 
 /// `bytes` with every occurrence of `from` replaced by `to`.
 fn replaced(bytes: &[u8], from: &str, to: &str) -> Vec<u8> {
-    let text = std::str::from_utf8(bytes).expect("ascii fixture");
+    let text = core::str::from_utf8(bytes).expect("ascii fixture");
     assert!(text.contains(from), "{from:?} is in the fixture");
     text.replace(from, to).into_bytes()
 }
@@ -282,7 +282,7 @@ fn non_pec_messages_are_rejected() {
 #[test]
 fn certification_data_must_be_utf8() {
     let raw = message("acceptance.eml");
-    let text = std::str::from_utf8(&raw).expect("ascii fixture");
+    let text = core::str::from_utf8(&raw).expect("ascii fixture");
     let marker = "filename=\"daticert.xml\"\r\nContent-Transfer-Encoding: base64\r\n\r\n";
     let start = text.find(marker).expect("the daticert part") + marker.len();
     let end = start
