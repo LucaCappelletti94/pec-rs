@@ -403,3 +403,31 @@ fn message_ids_parse_in_either_form() {
         );
     }
 }
+
+/// A delivery error for a virus carries `X-VerificaSicurezza` and its own subject prefix (§6.4.3.3), and the plain
+/// delivery-error prefix does not stand in for it.
+#[test]
+fn virus_delivery_error_has_its_own_prefix() {
+    let raw = replaced(
+        &replaced(
+            &message("delivery-error.eml"),
+            "X-Ricevuta: errore-consegna",
+            "X-Ricevuta: errore-consegna\r\nX-VerificaSicurezza: errore",
+        ),
+        "Subject: AVVISO DI MANCATA CONSEGNA:",
+        "Subject: AVVISO DI MANCATA CONSEGNA PER VIRUS:",
+    );
+    let parsed = Message::parse(&raw).expect("a virus delivery error");
+    assert_eq!(parsed.kind(), MessageKind::Certified(Kind::DeliveryError));
+    assert!(parsed.security_error());
+    assert_eq!(parsed.subject(), SUBJECT);
+    let raw = replaced(
+        &message("delivery-error.eml"),
+        "X-Ricevuta: errore-consegna",
+        "X-Ricevuta: errore-consegna\r\nX-VerificaSicurezza: errore",
+    );
+    assert!(matches!(
+        Message::parse(&raw),
+        Err(Error::SubjectMismatch { .. })
+    ));
+}

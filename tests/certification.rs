@@ -273,3 +273,12 @@ fn sub_second_time_is_rejected() {
     );
     assert!(result.is_err(), "{result:?}");
 }
+
+/// UTC is written `+0000` (§7.2), so a reader that takes `-0000` as an unknown zone never sees one.
+#[test]
+fn utc_zone_is_written_positive() {
+    let data = edited(|xml| xml.replace("zona=\"+0100\"", "zona=\"+0000\"")).expect("valid");
+    assert_eq!(data.data.at.offset(), Offset::UTC);
+    let written = data.to_xml().expect("writes");
+    assert!(written.contains("zona=\"+0000\""), "{written}");
+}
