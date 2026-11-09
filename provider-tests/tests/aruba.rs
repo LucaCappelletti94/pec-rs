@@ -7,13 +7,16 @@
     reason = "test code: the expect message names the failing step"
 )]
 
-use std::thread::sleep;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+mod common;
 
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+
+use common::{RECEIPT_WAIT, Receipts, fetch, message, receipt_form, token};
 use lettre::address::Envelope;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{SmtpTransport, Transport};
-use pec::{AttachmentCheck, Error, Kind, Message, MessageKind, ReceiptKind, TextLineEnds};
+use pec::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
 use serde::Deserialize;
 
 /// The mailbox the messages leave from and arrive at.
@@ -23,52 +26,6 @@ struct Account {
     address: String,
     /// The password.
     password: String,
-}
-
-/// How long the provider gets to deliver every receipt.
-const RECEIPT_WAIT: Duration = Duration::from_secs(600);
-
-/// A message to `address` from itself asking for the `receipt` form, with a quoted-printable text attachment
-/// written with literal line breaks, a base64 binary one, and an attached message without a file name.
-fn message(address: &str, receipt: &str, subject: &str) -> Vec<u8> {
-    format!(
-        "From: {address}\r\n\
-         To: {address}\r\n\
-         Subject: {subject}\r\n\
-         X-TipoRicevuta: {receipt}\r\n\
-         MIME-Version: 1.0\r\n\
-         Content-Type: multipart/mixed; boundary=\"pec-test\"\r\n\
-         \r\n\
-         --pec-test\r\n\
-         Content-Type: text/plain; charset=\"utf-8\"\r\n\
-         \r\n\
-         Messaggio di prova delle ricevute di avvenuta consegna.\r\n\
-         --pec-test\r\n\
-         Content-Type: text/plain; charset=\"utf-8\"\r\n\
-         Content-Transfer-Encoding: quoted-printable\r\n\
-         Content-Disposition: attachment; filename=\"righe.txt\"\r\n\
-         \r\n\
-         Prima riga della nota.\r\n\
-         Seconda riga con =C3=A8.\r\n\
-         \r\n\
-         --pec-test\r\n\
-         Content-Type: application/octet-stream; name=\"dati.bin\"\r\n\
-         Content-Transfer-Encoding: base64\r\n\
-         \r\n\
-         AAECAwQFBgcICQoLDA0ODxAREhP/\r\n\
-         --pec-test\r\n\
-         Content-Type: message/rfc822\r\n\
-         Content-Disposition: attachment\r\n\
-         \r\n\
-         From: anna.verdi@example.com\r\n\
-         To: {address}\r\n\
-         Subject: Messaggio inoltrato\r\n\
-         \r\n\
-         Testo del messaggio inoltrato.\r\n\
-         \r\n\
-         --pec-test--\r\n"
-    )
-    .into_bytes()
 }
 
 /// Sends `raw` from the mailbox to itself over SMTPS.
@@ -87,8 +44,8 @@ fn send(account: &Account, raw: &[u8]) {
         .expect("the provider accepts the message");
 }
 
-/// Every message in the inbox whose subject holds `token`, read without marking it read.
-fn fetch(account: &Account, token: &str) -> Vec<Vec<u8>> {
+/// Every message in the inbox whose subject holds `token`, over IMAPS.
+fn fetch_tls(account: &Account, token: &str) -> Vec<Vec<u8>> {
     let tls = native_tls::TlsConnector::new().expect("a TLS connector");
     let client = imap::connect(("imaps.pec.aruba.it", 993), "imaps.pec.aruba.it", &tls)
         .expect("the IMAP server answers");
@@ -96,68 +53,9 @@ fn fetch(account: &Account, token: &str) -> Vec<Vec<u8>> {
         .login(&account.address, &account.password)
         .map_err(|(error, _)| error)
         .expect("the login succeeds");
-    session.examine("INBOX").expect("the inbox opens read-only");
-    let uids = session
-        .uid_search(format!("SUBJECT \"{token}\""))
-        .expect("the search succeeds");
-    let mut messages = Vec::new();
-    for uid in uids {
-        let fetched = session
-            .uid_fetch(uid.to_string(), "BODY.PEEK[]")
-            .expect("the fetch succeeds");
-        messages.extend(
-            fetched
-                .iter()
-                .filter_map(|fetch| fetch.body().map(<[u8]>::to_vec)),
-        );
-    }
+    let messages = fetch(&mut session, token);
     session.logout().expect("the logout succeeds");
     messages
-}
-
-/// The raw acceptance, transport envelope and delivery receipt for the message whose subject is `subject`.
-#[derive(Default)]
-struct Receipts {
-    /// The acceptance receipt.
-    acceptance: Option<Vec<u8>>,
-    /// The transport envelope, which reaches the inbox since the message is addressed to it.
-    transport: Option<Vec<u8>>,
-    /// The delivery receipt.
-    delivery: Option<Vec<u8>>,
-}
-
-impl Receipts {
-    /// Files each fetched message under its kind when its subject is `subject`.
-    fn file(&mut self, raw: Vec<u8>, subject: &str) {
-        let Ok(message) = Message::parse(&raw) else {
-            return;
-        };
-        if message.subject() != subject {
-            return;
-        }
-        let slot = match message.kind() {
-            MessageKind::Certified(Kind::Acceptance) => &mut self.acceptance,
-            MessageKind::Certified(Kind::Transport) => &mut self.transport,
-            MessageKind::Certified(Kind::Delivery) => &mut self.delivery,
-            _ => return,
-        };
-        *slot = Some(raw);
-    }
-
-    /// Whether all three arrived.
-    const fn complete(&self) -> bool {
-        self.acceptance.is_some() && self.transport.is_some() && self.delivery.is_some()
-    }
-}
-
-/// The receipt form `daticert.xml` names.
-fn receipt_form(raw: &[u8]) -> Option<ReceiptKind> {
-    Message::parse(raw)
-        .expect("a valid PEC message")
-        .certification_data()
-        .expect("certification data")
-        .data
-        .receipt
 }
 
 #[test]
@@ -168,15 +66,16 @@ fn aruba_receipts_verify() {
     let account: Account =
         toml::from_str(&std::fs::read_to_string(path).expect("the credential file is readable"))
             .expect("the credential file holds address and password");
-    let token = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("the clock is after 1970")
-        .as_secs()
-        .to_string();
+    let token = token();
     let short_subject = format!("pec-rs ricevuta breve {token}");
     let summary_subject = format!("pec-rs ricevuta sintetica {token}");
-    let short_sent = message(&account.address, "breve", &short_subject);
-    let summary_sent = message(&account.address, "sintetica", &summary_subject);
+    let short_sent = message(&account.address, &account.address, "breve", &short_subject);
+    let summary_sent = message(
+        &account.address,
+        &account.address,
+        "sintetica",
+        &summary_subject,
+    );
     send(&account, &short_sent);
     send(&account, &summary_sent);
 
@@ -189,7 +88,7 @@ fn aruba_receipts_verify() {
             "the receipts arrive within {RECEIPT_WAIT:?}"
         );
         sleep(Duration::from_secs(20));
-        for raw in fetch(&account, &token) {
+        for raw in fetch_tls(&account, &token) {
             let breve =
                 Message::parse(&raw).is_ok_and(|message| message.subject() == short_subject);
             if breve {
@@ -204,7 +103,8 @@ fn aruba_receipts_verify() {
     let short_delivery = short.delivery.expect("complete");
     assert_eq!(receipt_form(&short_transport), Some(ReceiptKind::Short));
     assert_eq!(receipt_form(&short_delivery), Some(ReceiptKind::Short));
-    // Aruba replaces the parts with a Content-Disposition and leaves in place one named only by its Content-Type.
+    // Aruba hashes the canonical form, replaces the parts with a Content-Disposition and leaves in place one named
+    // only by its Content-Type.
     assert_eq!(
         Message::parse(&short_delivery)
             .expect("a valid receipt")
