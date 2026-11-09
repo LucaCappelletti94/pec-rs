@@ -17,6 +17,7 @@ jiff = { version = "0.2.39", default-features = false, features = ["alloc"] }
 mail-parser = "1.0.1"
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 serde = { version = "1.0.229", features = ["derive"] }
+sha1 = { version = "0.11.0", default-features = false }
 thiserror = "2.0.21"
 
 [lints.rust]

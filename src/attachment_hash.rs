@@ -1,6 +1,8 @@
-//! The SHA-1 a short delivery receipt carries in place of each attachment of the original message, §6.5.2.2.
+//! The SHA-1 a short delivery receipt carries in place of each attachment of the original message, and checking it
+//! against the message the sender sent, §6.5.2.2.
 
-use mail_parser::{MessagePart, MessageRef};
+use mail_parser::{MessageParser, MessagePart, MessageRef};
+use sha1::{Digest, Sha1};
 
 use crate::Error;
 
@@ -29,23 +31,37 @@ impl AttachmentHash {
     }
 }
 
+/// How one attachment of the sent message, or one thing the receipt carries in its place, compares (§6.5.2.2).
+///
+/// An attachment is paired with what the receipt carries under its file name, and failing that with what holds its
+/// SHA-1, since a provider names an attachment without a file name as it sees fit. What the receipt carries is a
+/// hash, or the attachment itself when the provider left it in place, as Aruba does for a part named only by its
+/// `Content-Type`.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum AttachmentCheck {
+    /// The receipt carries the SHA-1 of this sent attachment, named by its file name when it has one.
+    Matches(Option<String>),
+    /// The receipt carries this sent attachment itself, unchanged, named by its file name when it has one.
+    Carried(Option<String>),
+    /// The receipt carries a hash or an attachment under this sent attachment's name, and it is not the same.
+    Differs(String),
+    /// The receipt carries nothing for this sent attachment, named by its file name when it has one.
+    Missing(Option<String>),
+    /// The receipt carries this hash or attachment, named as the receipt names it, and no sent attachment is it.
+    NotSent(Option<String>),
+}
+
 /// Reads the `.hash` parts of the original message a short delivery receipt carries, in order.
 ///
 /// They replace the top-level parts of the original, or those of the signed part of a `multipart/signed`
 /// original. An `application/pkcs7-mime` original is a single part and carries none.
 pub(crate) fn read(original: MessageRef<'_>) -> Result<Vec<AttachmentHash>, Error> {
-    let root = original.root_part();
-    let content = if is_signed(&root) {
-        root.children().next()
-    } else {
-        Some(root)
-    };
     let mut hashes = Vec::new();
-    for part in content.iter().flat_map(MessagePart::children) {
+    for part in replaceable(original) {
         let Some(file) = part.attachment_name() else {
             continue;
         };
-        let Some(name) = file.strip_suffix(".hash") else {
+        let Some(name) = replaced_name(file) else {
             continue;
         };
         let sha1 = digest(part.decoded().trim_ascii())
@@ -58,14 +74,130 @@ pub(crate) fn read(original: MessageRef<'_>) -> Result<Vec<AttachmentHash>, Erro
     Ok(hashes)
 }
 
-/// Whether the part is `multipart/signed`.
-fn is_signed(part: &MessagePart<'_>) -> bool {
-    part.content_type().is_some_and(|content_type| {
-        content_type.ctype().eq_ignore_ascii_case("multipart")
-            && content_type
-                .subtype()
-                .is_some_and(|subtype| subtype.eq_ignore_ascii_case("signed"))
-    })
+/// The file name a `.hash` part stands for, `None` when `file` names no hash.
+fn replaced_name(file: &str) -> Option<&str> {
+    file.strip_suffix(".hash")
+}
+
+/// Checks a short delivery receipt against the attachments of the message the sender sent: the parts with a file
+/// name and the attached messages, hashed as the provider hashes them.
+///
+/// Each is paired with a hash of the receipt or with an attachment its `original` still carries. The checks follow
+/// the order of the sent attachments, then list what the receipt carries for no sent attachment.
+pub(crate) fn check(
+    hashes: &[AttachmentHash],
+    original: MessageRef<'_>,
+    sent: &[u8],
+) -> Result<Vec<AttachmentCheck>, Error> {
+    let parsed = MessageParser::default().parse(sent).ok_or(Error::NotMime)?;
+    let outgoing = attachments(parsed.root());
+    let candidates: Vec<Candidate<'_>> = hashes
+        .iter()
+        .map(|hash| Candidate {
+            name: Some(&hash.name),
+            sha1: hash.sha1,
+            carried: false,
+        })
+        .chain(
+            attachments(original)
+                .into_iter()
+                .filter(|(name, _)| name.and_then(replaced_name).is_none())
+                .map(|(name, sha1)| Candidate {
+                    name,
+                    sha1,
+                    carried: true,
+                }),
+        )
+        .collect();
+    let mut paired = vec![false; candidates.len()];
+    let mut take = |found: &dyn Fn(&Candidate<'_>) -> bool| {
+        let index =
+            (0..candidates.len()).find(|&index| !paired[index] && found(&candidates[index]))?;
+        paired[index] = true;
+        Some(&candidates[index])
+    };
+    let by_name: Vec<Option<AttachmentCheck>> = outgoing
+        .iter()
+        .map(|&(name, sha1)| {
+            let name = name?;
+            let candidate = take(&|candidate| candidate.name == Some(name))?;
+            Some(if candidate.sha1 == sha1 {
+                candidate.found(Some(name.to_owned()))
+            } else {
+                AttachmentCheck::Differs(name.to_owned())
+            })
+        })
+        .collect();
+    let mut checks: Vec<AttachmentCheck> = outgoing
+        .iter()
+        .zip(by_name)
+        .map(|(&(name, sha1), check)| {
+            check.unwrap_or_else(|| {
+                let name = name.map(str::to_owned);
+                match take(&|candidate| candidate.sha1 == sha1) {
+                    Some(candidate) => candidate.found(name),
+                    None => AttachmentCheck::Missing(name),
+                }
+            })
+        })
+        .collect();
+    checks.extend(
+        candidates
+            .iter()
+            .zip(paired)
+            .filter(|&(_, paired)| !paired)
+            .map(|(candidate, _)| AttachmentCheck::NotSent(candidate.name.map(str::to_owned))),
+    );
+    Ok(checks)
+}
+
+/// Something a short receipt's original carries for an attachment: its hash, or the attachment itself.
+struct Candidate<'a> {
+    /// The file name, without `.hash` for a hash.
+    name: Option<&'a str>,
+    /// The SHA-1 the hash holds, or that of the carried attachment.
+    sha1: [u8; 20],
+    /// Whether this is the attachment itself.
+    carried: bool,
+}
+
+impl Candidate<'_> {
+    /// The check of a sent attachment, named `name`, that this candidate stands for.
+    const fn found(&self, name: Option<String>) -> AttachmentCheck {
+        if self.carried {
+            AttachmentCheck::Carried(name)
+        } else {
+            AttachmentCheck::Matches(name)
+        }
+    }
+}
+
+/// The attachments of a message as a provider finds them, each with its file name and the SHA-1 a provider gives
+/// it: that of the transfer-decoded content, or of the bytes as sent for an attached message.
+fn attachments(message: MessageRef<'_>) -> Vec<(Option<&str>, [u8; 20])> {
+    replaceable(message)
+        .filter(|part| part.attachment_name().is_some() || part.is_message())
+        .map(|part| {
+            let sha1 = if part.is_message() {
+                Sha1::digest(part.raw_body())
+            } else {
+                Sha1::digest(part.decoded())
+            };
+            (part.attachment_name(), sha1.into())
+        })
+        .collect()
+}
+
+/// The parts a provider may replace with their hash: the top-level parts, or those of the signed part of a
+/// `multipart/signed` message. An `application/pkcs7-mime` message is a single part and has none.
+fn replaceable(message: MessageRef<'_>) -> impl Iterator<Item = MessagePart<'_>> {
+    let root = message.root_part();
+    let content = if root.is_content_type("multipart", "signed") {
+        root.children().next()
+    } else {
+        Some(root)
+    };
+    content.into_iter().flat_map(|part| part.children())
 }
 
 /// The 20 bytes written as exactly 40 hexadecimal digits of either case.

@@ -48,6 +48,9 @@ pub enum Error {
     /// A `.hash` part of a short delivery receipt, named here, does not hold 40 hexadecimal digits (§6.5.2.2).
     #[error("the part {0:?} does not hold 40 hexadecimal digits")]
     InvalidAttachmentHash(String),
+    /// The message is not a short delivery receipt carrying the original, so it holds no hashes to check (§6.5.2.2).
+    #[error("the message is not a short delivery receipt carrying the original")]
+    NotShortReceipt,
     /// The `daticert.xml` does not follow the DTD of §7.4.
     #[error("invalid daticert.xml: {0}")]
     CertificationData(String),

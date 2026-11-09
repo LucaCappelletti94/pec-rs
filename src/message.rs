@@ -3,8 +3,8 @@
 use mail_parser::{Headers, MessageParser, PartId};
 
 use crate::{
-    AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind, ReceiptKind,
-    attachment_hash,
+    AttachmentCheck, AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind,
+    ReceiptKind, attachment_hash,
 };
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
@@ -24,8 +24,9 @@ pub struct Message<'a> {
     certification: Option<CertificationData>,
     /// The `message/rfc822` part holding the original or arrived message.
     original: Option<PartId>,
-    /// The `.hash` parts of the original of a short delivery receipt, empty for every other message.
-    hashes: Vec<AttachmentHash>,
+    /// The `.hash` parts of the original of a short delivery receipt, `None` for every other message and for a
+    /// short receipt without the original.
+    hashes: Option<Vec<AttachmentHash>>,
     /// This message's `Message-ID`.
     id: Option<MessageId>,
     /// The `X-Riferimento-Message-ID`.
@@ -121,8 +122,8 @@ impl<'a> Message<'a> {
             .and_then(|id| parsed.part(id))
             .and_then(|part| part.nested())
         {
-            Some(original) if short_receipt => attachment_hash::read(original)?,
-            _ => Vec::new(),
+            Some(original) if short_receipt => Some(attachment_hash::read(original)?),
+            _ => None,
         };
         let id = headers.message_id().and_then(|id| id.parse().ok());
         let reference_id = header_bytes(&headers, "X-Riferimento-Message-ID")
@@ -196,7 +197,29 @@ impl<'a> Message<'a> {
     /// encrypted or had no attachment.
     #[must_use]
     pub fn attachment_hashes(&self) -> &[AttachmentHash] {
-        &self.hashes
+        self.hashes.as_deref().unwrap_or_default()
+    }
+
+    /// Checks a short delivery receipt against the message the sender sent, given as its raw bytes (§6.5.2.2). Each
+    /// attachment of the sent message, hashed as the provider hashes it, is paired with what the receipt carries
+    /// under its file name, and failing that with what holds its SHA-1: a hash, or the attachment itself when the
+    /// provider left it in place. The checks follow the order of the sent attachments, then list what the receipt
+    /// carries for no sent attachment.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotShortReceipt`] when this message is not a short delivery receipt carrying the original,
+    /// and [`Error::NotMime`] when `sent` is not MIME.
+    pub fn check_attachments(&self, sent: &[u8]) -> Result<Vec<AttachmentCheck>, Error> {
+        let (Some(hashes), Some(original)) = (
+            self.hashes.as_deref(),
+            self.original
+                .and_then(|id| self.parsed.part(id))
+                .and_then(|part| part.nested()),
+        ) else {
+            return Err(Error::NotShortReceipt);
+        };
+        attachment_hash::check(hashes, original, sent)
     }
 }
 
