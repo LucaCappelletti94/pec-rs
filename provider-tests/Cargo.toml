@@ -1,0 +1,19 @@
+[package]
+name = "pec-provider-tests"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dev-dependencies]
+imap = "2.4.1"
+lettre = { version = "0.11.23", default-features = false, features = ["ring", "rustls", "smtp-transport", "webpki-roots"] }
+native-tls = "0.2.14"
+pec = { path = ".." }
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.2.1"
+
+[[test]]
+name = "aruba"
+path = "tests/aruba.rs"
+
+[workspace]
