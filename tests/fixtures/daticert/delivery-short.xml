@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<postacert tipo="avvenuta-consegna" errore="nessuno">
+  <intestazione>
+    <mittente>mario.rossi@pec.example.it</mittente>
+    <destinatari tipo="certificato">ufficio.fatture@pec.example.it</destinatari>
+    <risposte>mario.rossi@pec.example.it</risposte>
+    <oggetto>Invio fattura 00012</oggetto>
+  </intestazione>
+  <dati>
+    <gestore-emittente>Gestore PEC di Esempio S.p.A.</gestore-emittente>
+    <data zona="+0100">
+      <giorno>08/11/2026</giorno>
+      <ora>10:15:00</ora>
+    </data>
+    <identificativo>opec001.20261108101500.00001.01.1.1@pec.example.it</identificativo>
+    <msgid>&lt;20261108101458.0001@client.example.it&gt;</msgid>
+    <ricevuta tipo="breve"/>
+    <consegna>ufficio.fatture@pec.example.it</consegna>
+  </dati>
+</postacert>

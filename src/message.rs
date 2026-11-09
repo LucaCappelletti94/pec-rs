@@ -2,7 +2,10 @@
 
 use mail_parser::{Headers, MessageParser, PartId};
 
-use crate::{CertificationData, Error, Kind, MessageId, MessageKind, ReceiptKind};
+use crate::{
+    AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind, ReceiptKind,
+    attachment_hash,
+};
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
 ///
@@ -21,6 +24,8 @@ pub struct Message<'a> {
     certification: Option<CertificationData>,
     /// The `message/rfc822` part holding the original or arrived message.
     original: Option<PartId>,
+    /// The `.hash` parts of the original of a short delivery receipt, empty for every other message.
+    hashes: Vec<AttachmentHash>,
     /// This message's `Message-ID`.
     id: Option<MessageId>,
     /// The `X-Riferimento-Message-ID`.
@@ -35,8 +40,8 @@ impl<'a> Message<'a> {
     /// Fails when the bytes are not MIME, when no PEC header names a kind or the header names one the rules do
     /// not define, when the subject lacks the prefix of its kind (§6.3 to §6.5), when `X-VerificaSicurezza`
     /// appears outside the virus notices (§6.4.3), when a certified kind lacks its `daticert.xml` or that file is
-    /// invalid or names another kind, when an envelope lacks the message it wraps, and when a summary delivery
-    /// receipt carries one (§6.5.2.3).
+    /// invalid or names another kind, when an envelope lacks the message it wraps, when a summary delivery receipt
+    /// carries one (§6.5.2.3), and when a `.hash` part of a short delivery receipt is not a SHA-1 (§6.5.2.2).
     pub fn parse(raw: &'a [u8]) -> Result<Self, Error> {
         let parsed = MessageParser::default().parse(raw).ok_or(Error::NotMime)?;
         let root = parsed.root();
@@ -108,6 +113,17 @@ impl<'a> Message<'a> {
         {
             return Err(Error::OriginalInSummaryReceipt);
         }
+        let short_receipt = kind == MessageKind::Certified(Kind::Delivery)
+            && certification
+                .as_ref()
+                .is_some_and(|data| data.data.receipt == Some(ReceiptKind::Short));
+        let hashes = match original
+            .and_then(|id| parsed.part(id))
+            .and_then(|part| part.nested())
+        {
+            Some(original) if short_receipt => attachment_hash::read(original)?,
+            _ => Vec::new(),
+        };
         let id = headers.message_id().and_then(|id| id.parse().ok());
         let reference_id = header_bytes(&headers, "X-Riferimento-Message-ID")
             .and_then(|value| core::str::from_utf8(value).ok())
@@ -119,6 +135,7 @@ impl<'a> Message<'a> {
             prefix_len: prefix.len(),
             certification,
             original,
+            hashes,
             id,
             reference_id,
         })
@@ -172,6 +189,14 @@ impl<'a> Message<'a> {
     pub fn original_message(&self) -> Option<&[u8]> {
         let part = self.parsed.part(self.original?)?;
         Some(part.nested()?.raw())
+    }
+
+    /// The SHA-1 of each attachment a short delivery receipt replaced in the original message (§6.5.2.2), in the
+    /// order the receipt carries them. Empty for every other message, and for a short receipt whose original was
+    /// encrypted or had no attachment.
+    #[must_use]
+    pub fn attachment_hashes(&self) -> &[AttachmentHash] {
+        &self.hashes
     }
 }
 

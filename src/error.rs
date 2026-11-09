@@ -45,6 +45,9 @@ pub enum Error {
     /// A summary delivery receipt carries an original message, though it carries only `daticert.xml` (§6.5.2.3).
     #[error("the summary delivery receipt carries an original message")]
     OriginalInSummaryReceipt,
+    /// A `.hash` part of a short delivery receipt, named here, does not hold 40 hexadecimal digits (§6.5.2.2).
+    #[error("the part {0:?} does not hold 40 hexadecimal digits")]
+    InvalidAttachmentHash(String),
     /// The `daticert.xml` does not follow the DTD of §7.4.
     #[error("invalid daticert.xml: {0}")]
     CertificationData(String),

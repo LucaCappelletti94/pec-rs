@@ -105,6 +105,24 @@ ed indirizzato a "ufficio.fatture@pec.example.it"
 =E8 stato consegnato nella casella di destinazione.
 Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' delivery-summary.xml '' ''
 
+# Short receipts for a plain, a signed and an encrypted original (§6.5.2.2). The originals already carry the
+# .hash parts a provider writes, so original/attachments.eml is the message the sender kept.
+SHORT_BODY='Ricevuta breve di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "ufficio.fatture@pec.example.it"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it'
+build delivery-short.eml "$(receipt 10 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  "$SHORT_BODY" delivery-short.xml short.eml postacert.eml
+build delivery-short-signed.eml "$(receipt 11 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  "$SHORT_BODY" delivery-short.xml short-signed.eml postacert.eml
+build delivery-short-encrypted.eml "$(receipt 12 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  "$SHORT_BODY" delivery-short.xml encrypted.eml postacert.eml
+# A full receipt whose original carries the sender's own attachment named .hash, which is no SHA-1.
+build delivery-full-user-hash.eml "$(receipt 13 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  "${SHORT_BODY/Ricevuta breve di/Ricevuta di}" delivery-full.xml user-hash.eml postacert.eml
+
 build delivery-error.eml "$(receipt 7 'X-Ricevuta: errore-consegna')" 'AVVISO DI MANCATA CONSEGNA: Invio fattura 00012' \
   'Avviso di mancata consegna
 Il giorno 08/11/2026 alle ore 10:15:00 (+0100) nel messaggio
