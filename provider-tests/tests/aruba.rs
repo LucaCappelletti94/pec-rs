@@ -13,7 +13,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use lettre::address::Envelope;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{SmtpTransport, Transport};
-use pec::{AttachmentCheck, Error, Kind, Message, MessageKind, ReceiptKind};
+use pec::{AttachmentCheck, Error, Kind, Message, MessageKind, ReceiptKind, TextLineEnds};
 use serde::Deserialize;
 
 /// The mailbox the messages leave from and arrive at.
@@ -208,7 +208,7 @@ fn aruba_receipts_verify() {
     assert_eq!(
         Message::parse(&short_delivery)
             .expect("a valid receipt")
-            .check_attachments(&short_sent),
+            .check_attachments(&short_sent, TextLineEnds::Canonical),
         Ok(vec![
             AttachmentCheck::Matches(Some("righe.txt".to_owned())),
             AttachmentCheck::Carried(Some("dati.bin".to_owned())),
@@ -221,7 +221,7 @@ fn aruba_receipts_verify() {
     let summary_receipt = Message::parse(&summary_delivery).expect("a valid receipt");
     assert_eq!(summary_receipt.original_message(), None);
     assert_eq!(
-        summary_receipt.check_attachments(&summary_sent),
+        summary_receipt.check_attachments(&summary_sent, TextLineEnds::Canonical),
         Err(Error::NotShortReceipt)
     );
 }

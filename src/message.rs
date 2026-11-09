@@ -4,7 +4,7 @@ use mail_parser::{Headers, MessageParser, PartId};
 
 use crate::{
     AttachmentCheck, AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind,
-    ReceiptKind, attachment_hash,
+    ReceiptKind, TextLineEnds, attachment_hash,
 };
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
@@ -203,14 +203,19 @@ impl<'a> Message<'a> {
     /// Checks a short delivery receipt against the message the sender sent, given as its raw bytes (§6.5.2.2). Each
     /// attachment of the sent message, hashed as the provider hashes it, is paired with what the receipt carries
     /// under its file name, and failing that with what holds its SHA-1: a hash, or the attachment itself when the
-    /// provider left it in place. The checks follow the order of the sent attachments, then list what the receipt
-    /// carries for no sent attachment.
+    /// provider left it in place. A text attachment's hash may be over its canonical CRLF form only, or over that
+    /// or its LF form, as `line_ends` says. The checks follow the order of the sent attachments, then list what
+    /// the receipt carries for no sent attachment.
     ///
     /// # Errors
     ///
     /// Returns [`Error::NotShortReceipt`] when this message is not a short delivery receipt carrying the original,
     /// and [`Error::NotMime`] when `sent` is not MIME.
-    pub fn check_attachments(&self, sent: &[u8]) -> Result<Vec<AttachmentCheck>, Error> {
+    pub fn check_attachments(
+        &self,
+        sent: &[u8],
+        line_ends: TextLineEnds,
+    ) -> Result<Vec<AttachmentCheck>, Error> {
         let (Some(hashes), Some(original)) = (
             self.hashes.as_deref(),
             self.original
@@ -219,7 +224,7 @@ impl<'a> Message<'a> {
         ) else {
             return Err(Error::NotShortReceipt);
         };
-        attachment_hash::check(hashes, original, sent)
+        attachment_hash::check(hashes, original, sent, line_ends)
     }
 }
 
