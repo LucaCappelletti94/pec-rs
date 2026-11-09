@@ -1,6 +1,6 @@
 //! The kinds of message a PEC provider generates.
 
-use std::str::FromStr;
+use core::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
