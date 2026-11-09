@@ -200,18 +200,26 @@ impl<'a> Message<'a> {
         self.hashes.as_deref().unwrap_or_default()
     }
 
-    /// Checks the hashes of a short delivery receipt against the message the sender sent, given as its raw bytes
-    /// (§6.5.2.2). Each attachment of the sent message, hashed as the provider hashes it, is paired with the hash
-    /// under its file name and failing that with one holding its SHA-1. The checks follow the order of the sent
-    /// attachments, then list the hashes no sent attachment has.
+    /// Checks a short delivery receipt against the message the sender sent, given as its raw bytes (§6.5.2.2). Each
+    /// attachment of the sent message, hashed as the provider hashes it, is paired with what the receipt carries
+    /// under its file name, and failing that with what holds its SHA-1: a hash, or the attachment itself when the
+    /// provider left it in place. The checks follow the order of the sent attachments, then list what the receipt
+    /// carries for no sent attachment.
     ///
     /// # Errors
     ///
     /// Returns [`Error::NotShortReceipt`] when this message is not a short delivery receipt carrying the original,
     /// and [`Error::NotMime`] when `sent` is not MIME.
     pub fn check_attachments(&self, sent: &[u8]) -> Result<Vec<AttachmentCheck>, Error> {
-        let hashes = self.hashes.as_deref().ok_or(Error::NotShortReceipt)?;
-        attachment_hash::check(hashes, sent)
+        let (Some(hashes), Some(original)) = (
+            self.hashes.as_deref(),
+            self.original
+                .and_then(|id| self.parsed.part(id))
+                .and_then(|part| part.nested()),
+        ) else {
+            return Err(Error::NotShortReceipt);
+        };
+        attachment_hash::check(hashes, original, sent)
     }
 }
 

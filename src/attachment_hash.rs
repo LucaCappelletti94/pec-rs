@@ -31,20 +31,24 @@ impl AttachmentHash {
     }
 }
 
-/// How one attachment of the sent message, or one hash of a short delivery receipt, compares (§6.5.2.2).
+/// How one attachment of the sent message, or one thing the receipt carries in its place, compares (§6.5.2.2).
 ///
-/// An attachment is paired with the hash under its file name, and failing that with a hash holding its SHA-1,
-/// since a provider names an attachment without a file name as it sees fit.
+/// An attachment is paired with what the receipt carries under its file name, and failing that with what holds its
+/// SHA-1, since a provider names an attachment without a file name as it sees fit. What the receipt carries is a
+/// hash, or the attachment itself when the provider left it in place, as Aruba does for a part named only by its
+/// `Content-Type`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AttachmentCheck {
     /// The receipt carries the SHA-1 of this sent attachment, named by its file name when it has one.
     Matches(Option<String>),
-    /// The receipt carries a hash under this sent attachment's name, and it is not the attachment's SHA-1.
+    /// The receipt carries this sent attachment itself, unchanged, named by its file name when it has one.
+    Carried(Option<String>),
+    /// The receipt carries a hash or an attachment under this sent attachment's name, and it is not the same.
     Differs(String),
-    /// The receipt carries no hash for this sent attachment, named by its file name when it has one.
+    /// The receipt carries nothing for this sent attachment, named by its file name when it has one.
     Missing(Option<String>),
-    /// The receipt carries this hash, named as the receipt names it, and no sent attachment has it.
-    NotSent(String),
+    /// The receipt carries this hash or attachment, named as the receipt names it, and no sent attachment is it.
+    NotSent(Option<String>),
 }
 
 /// Reads the `.hash` parts of the original message a short delivery receipt carries, in order.
@@ -57,7 +61,7 @@ pub(crate) fn read(original: MessageRef<'_>) -> Result<Vec<AttachmentHash>, Erro
         let Some(file) = part.attachment_name() else {
             continue;
         };
-        let Some(name) = file.strip_suffix(".hash") else {
+        let Some(name) = replaced_name(file) else {
             continue;
         };
         let sha1 = digest(part.decoded().trim_ascii())
@@ -70,13 +74,108 @@ pub(crate) fn read(original: MessageRef<'_>) -> Result<Vec<AttachmentHash>, Erro
     Ok(hashes)
 }
 
-/// Checks the hashes of a short delivery receipt against the attachments of the message the sender sent: the parts
-/// with a file name and the attached messages, hashed as the provider hashes them.
+/// The file name a `.hash` part stands for, `None` when `file` names no hash.
+fn replaced_name(file: &str) -> Option<&str> {
+    file.strip_suffix(".hash")
+}
+
+/// Checks a short delivery receipt against the attachments of the message the sender sent: the parts with a file
+/// name and the attached messages, hashed as the provider hashes them.
 ///
-/// The checks follow the order of the sent attachments, then the hashes no sent attachment has.
-pub(crate) fn check(hashes: &[AttachmentHash], sent: &[u8]) -> Result<Vec<AttachmentCheck>, Error> {
+/// Each is paired with a hash of the receipt or with an attachment its `original` still carries. The checks follow
+/// the order of the sent attachments, then list what the receipt carries for no sent attachment.
+pub(crate) fn check(
+    hashes: &[AttachmentHash],
+    original: MessageRef<'_>,
+    sent: &[u8],
+) -> Result<Vec<AttachmentCheck>, Error> {
     let parsed = MessageParser::default().parse(sent).ok_or(Error::NotMime)?;
-    let attachments: Vec<(Option<&str>, [u8; 20])> = replaceable(parsed.root())
+    let outgoing = attachments(parsed.root());
+    let candidates: Vec<Candidate<'_>> = hashes
+        .iter()
+        .map(|hash| Candidate {
+            name: Some(&hash.name),
+            sha1: hash.sha1,
+            carried: false,
+        })
+        .chain(
+            attachments(original)
+                .into_iter()
+                .filter(|(name, _)| name.and_then(replaced_name).is_none())
+                .map(|(name, sha1)| Candidate {
+                    name,
+                    sha1,
+                    carried: true,
+                }),
+        )
+        .collect();
+    let mut paired = vec![false; candidates.len()];
+    let mut take = |found: &dyn Fn(&Candidate<'_>) -> bool| {
+        let index =
+            (0..candidates.len()).find(|&index| !paired[index] && found(&candidates[index]))?;
+        paired[index] = true;
+        Some(&candidates[index])
+    };
+    let by_name: Vec<Option<AttachmentCheck>> = outgoing
+        .iter()
+        .map(|&(name, sha1)| {
+            let name = name?;
+            let candidate = take(&|candidate| candidate.name == Some(name))?;
+            Some(if candidate.sha1 == sha1 {
+                candidate.found(Some(name.to_owned()))
+            } else {
+                AttachmentCheck::Differs(name.to_owned())
+            })
+        })
+        .collect();
+    let mut checks: Vec<AttachmentCheck> = outgoing
+        .iter()
+        .zip(by_name)
+        .map(|(&(name, sha1), check)| {
+            check.unwrap_or_else(|| {
+                let name = name.map(str::to_owned);
+                match take(&|candidate| candidate.sha1 == sha1) {
+                    Some(candidate) => candidate.found(name),
+                    None => AttachmentCheck::Missing(name),
+                }
+            })
+        })
+        .collect();
+    checks.extend(
+        candidates
+            .iter()
+            .zip(paired)
+            .filter(|&(_, paired)| !paired)
+            .map(|(candidate, _)| AttachmentCheck::NotSent(candidate.name.map(str::to_owned))),
+    );
+    Ok(checks)
+}
+
+/// Something a short receipt's original carries for an attachment: its hash, or the attachment itself.
+struct Candidate<'a> {
+    /// The file name, without `.hash` for a hash.
+    name: Option<&'a str>,
+    /// The SHA-1 the hash holds, or that of the carried attachment.
+    sha1: [u8; 20],
+    /// Whether this is the attachment itself.
+    carried: bool,
+}
+
+impl Candidate<'_> {
+    /// The check of a sent attachment, named `name`, that this candidate stands for.
+    const fn found(&self, name: Option<String>) -> AttachmentCheck {
+        if self.carried {
+            AttachmentCheck::Carried(name)
+        } else {
+            AttachmentCheck::Matches(name)
+        }
+    }
+}
+
+/// The attachments of a message as a provider finds them, each with its file name and the SHA-1 a provider gives
+/// it: that of the transfer-decoded content, or of the bytes as sent for an attached message.
+fn attachments(message: MessageRef<'_>) -> Vec<(Option<&str>, [u8; 20])> {
+    replaceable(message)
         .filter(|part| part.attachment_name().is_some() || part.is_message())
         .map(|part| {
             let sha1 = if part.is_message() {
@@ -86,47 +185,7 @@ pub(crate) fn check(hashes: &[AttachmentHash], sent: &[u8]) -> Result<Vec<Attach
             };
             (part.attachment_name(), sha1.into())
         })
-        .collect();
-    let mut paired = vec![false; hashes.len()];
-    let mut take = |found: &dyn Fn(&AttachmentHash) -> bool| {
-        let index = (0..hashes.len()).find(|&index| !paired[index] && found(&hashes[index]))?;
-        paired[index] = true;
-        Some(&hashes[index])
-    };
-    let by_name: Vec<Option<AttachmentCheck>> = attachments
-        .iter()
-        .map(|&(name, sha1)| {
-            let name = name?;
-            let hash = take(&|hash| hash.name == name)?;
-            Some(if hash.sha1 == sha1 {
-                AttachmentCheck::Matches(Some(name.to_owned()))
-            } else {
-                AttachmentCheck::Differs(name.to_owned())
-            })
-        })
-        .collect();
-    let mut checks: Vec<AttachmentCheck> = attachments
-        .iter()
-        .zip(by_name)
-        .map(|(&(name, sha1), check)| {
-            check.unwrap_or_else(|| {
-                let name = name.map(str::to_owned);
-                if take(&|hash| hash.sha1 == sha1).is_some() {
-                    AttachmentCheck::Matches(name)
-                } else {
-                    AttachmentCheck::Missing(name)
-                }
-            })
-        })
-        .collect();
-    checks.extend(
-        hashes
-            .iter()
-            .zip(paired)
-            .filter(|&(_, paired)| !paired)
-            .map(|(hash, _)| AttachmentCheck::NotSent(hash.name.clone())),
-    );
-    Ok(checks)
+        .collect()
 }
 
 /// The parts a provider may replace with their hash: the top-level parts, or those of the signed part of a

@@ -208,7 +208,50 @@ fn unmatched_attachments_and_hashes_are_reported() {
             AttachmentCheck::Matches(Some("fattura-bis.xml".to_owned())),
             AttachmentCheck::Matches(Some("nota.txt".to_owned())),
             AttachmentCheck::Missing(None),
-            AttachmentCheck::NotSent("null".to_owned()),
+            AttachmentCheck::NotSent(Some("null".to_owned())),
+        ])
+    );
+}
+
+/// A provider may leave an attachment in place instead of its hash, as Aruba does for a part named only by its
+/// `Content-Type`, and the receipt then carries the attachment itself.
+#[test]
+fn kept_attachment_is_carried() {
+    assert_eq!(
+        checks("delivery-short-kept.eml", &sent("attachments-kept.eml")),
+        Ok(vec![
+            AttachmentCheck::Carried(Some("fattura.xml".to_owned())),
+            AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+}
+
+/// A kept attachment that is not the sent one differs, and when the sent one is renamed as well the receipt's copy
+/// is reported as not sent.
+#[test]
+fn changed_kept_attachment_differs() {
+    let changed = replaced(
+        &sent("attachments-kept.eml"),
+        "PD94bWwgdmVyc2lvbj0iMS4w",
+        "PD94bWwgdmVyc2lvbj0iMS4x",
+    );
+    assert_eq!(
+        checks("delivery-short-kept.eml", &changed),
+        Ok(vec![
+            AttachmentCheck::Differs("fattura.xml".to_owned()),
+            AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+    let renamed = replaced(&changed, "fattura.xml", "fattura-bis.xml");
+    assert_eq!(
+        checks("delivery-short-kept.eml", &renamed),
+        Ok(vec![
+            AttachmentCheck::Missing(Some("fattura-bis.xml".to_owned())),
+            AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+            AttachmentCheck::NotSent(Some("fattura.xml".to_owned())),
         ])
     );
 }
