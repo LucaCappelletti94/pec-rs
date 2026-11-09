@@ -3,7 +3,21 @@ name: Audit
 on:
   push:
     branches: [main]
+    paths:
+      - Cargo.lock
+      - "**/Cargo.toml"
+      - deny.toml
+      - .cargo/audit.toml
+      - .github/workflows/audit.yml
   pull_request:
+    paths:
+      - Cargo.lock
+      - "**/Cargo.toml"
+      - deny.toml
+      - .cargo/audit.toml
+      - .github/workflows/audit.yml
+  schedule:
+    - cron: "0 4 * * 1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
