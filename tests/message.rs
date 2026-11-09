@@ -5,7 +5,7 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use pec::{Error, Kind, Message, MessageKind};
+use pec::{Error, Kind, Message, MessageId, MessageKind};
 
 /// Reads a fixture file under `tests/fixtures`.
 fn fixture(path: &str) -> Vec<u8> {
@@ -105,7 +105,7 @@ fn every_fixture_is_classified() {
                 let data = parsed.certification_data().expect(name);
                 assert_eq!(data.kind, kind, "{name}");
                 assert_eq!(
-                    parsed.reference_message_id(),
+                    parsed.reference_message_id().map(MessageId::as_str),
                     Some("20261108101458.0001@client.example.it"),
                     "{name}"
                 );
@@ -152,7 +152,7 @@ fn anomaly_carries_the_arrived_message() {
         Some(fixture("original/ordinary.eml").as_slice())
     );
     assert_eq!(
-        parsed.message_id(),
+        parsed.message_id().map(MessageId::as_str),
         Some("20261108093000.4242@mail.example.com")
     );
 }
@@ -359,4 +359,47 @@ fn every_tipo_parses() {
         "Accettazione".parse::<Kind>(),
         Err(Error::UnknownKind("Accettazione".to_owned()))
     );
+}
+
+/// The original `Message-ID` reads the same from the header and from `daticert.xml`, which is how a receipt is matched
+/// to the message it certifies.
+#[test]
+fn reference_message_id_matches_the_certification_data() {
+    for name in ["acceptance.eml", "delivery-full.eml", "transport.eml"] {
+        let raw = message(name);
+        let parsed = Message::parse(&raw).expect(name);
+        let data = parsed.certification_data().expect(name);
+        assert_eq!(
+            parsed.reference_message_id(),
+            data.data.message_id.as_ref(),
+            "{name}"
+        );
+    }
+}
+
+/// An identifier reads the same with or without its angle brackets, and anything that is not one is refused.
+#[test]
+fn message_ids_parse_in_either_form() {
+    let bare: MessageId = "a.1@example.it".parse().expect("bare");
+    let bracketed: MessageId = " <a.1@example.it> ".parse().expect("bracketed");
+    assert_eq!(bare, bracketed);
+    assert_eq!(bare.as_str(), "a.1@example.it");
+    assert_eq!(bare.to_string(), "<a.1@example.it>");
+    for invalid in [
+        "",
+        "<>",
+        "example.it",
+        "@example.it",
+        "a@",
+        "<a@example.it",
+        "a@example.it>",
+        "a b@example.it",
+        "<a<b@example.it>",
+    ] {
+        assert_eq!(
+            invalid.parse::<MessageId>(),
+            Err(Error::InvalidMessageId(invalid.to_owned())),
+            "{invalid:?}"
+        );
+    }
 }

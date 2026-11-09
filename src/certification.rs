@@ -5,7 +5,7 @@ use jiff::civil::{Date, Time};
 use jiff::tz::Offset;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{Error, Kind};
+use crate::{Error, Kind, MessageId};
 
 /// The content of a `daticert.xml` attachment, the root element `postacert`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -97,10 +97,15 @@ pub struct Data {
     pub at: CertifiedAt,
     /// The identifier the sender's provider gave the message, `identificativo`.
     #[serde(rename = "identificativo")]
-    pub identifier: String,
+    pub identifier: MessageId,
     /// The `Message-ID` the message carried before the provider replaced it, `msgid`.
-    #[serde(rename = "msgid", default, skip_serializing_if = "Option::is_none")]
-    pub message_id: Option<String>,
+    #[serde(
+        rename = "msgid",
+        default,
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "crate::message_id::serialize_bracketed"
+    )]
+    pub message_id: Option<MessageId>,
     /// The delivery receipt format the sender asked for, `ricevuta`, on transport envelopes and delivery receipts.
     #[serde(
         rename = "ricevuta",
