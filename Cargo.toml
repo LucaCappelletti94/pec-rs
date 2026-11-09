@@ -44,3 +44,7 @@ unwrap_used = "warn"
 
 [package.metadata.docs.rs]
 all-features = true
+
+[profile.mutants]
+inherits = "test"
+debug = "none"

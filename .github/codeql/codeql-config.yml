@@ -1,0 +1,5 @@
+---
+name: pec CodeQL configuration
+
+queries:
+  - uses: security-extended
