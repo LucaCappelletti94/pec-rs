@@ -2,7 +2,7 @@
 
 use mail_parser::{Headers, MessageParser, PartId};
 
-use crate::{CertificationData, Error, Kind, MessageId, MessageKind};
+use crate::{CertificationData, Error, Kind, MessageId, MessageKind, ReceiptKind};
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
 ///
@@ -35,7 +35,8 @@ impl<'a> Message<'a> {
     /// Fails when the bytes are not MIME, when no PEC header names a kind or the header names one the rules do
     /// not define, when the subject lacks the prefix of its kind (§6.3 to §6.5), when `X-VerificaSicurezza`
     /// appears outside the virus notices (§6.4.3), when a certified kind lacks its `daticert.xml` or that file is
-    /// invalid or names another kind, and when an envelope lacks the message it wraps.
+    /// invalid or names another kind, when an envelope lacks the message it wraps, and when a summary delivery
+    /// receipt carries one (§6.5.2.3).
     pub fn parse(raw: &'a [u8]) -> Result<Self, Error> {
         let parsed = MessageParser::default().parse(raw).ok_or(Error::NotMime)?;
         let root = parsed.root();
@@ -98,6 +99,14 @@ impl<'a> Message<'a> {
             )
         {
             return Err(Error::MissingOriginal);
+        }
+        if original.is_some()
+            && kind == MessageKind::Certified(Kind::Delivery)
+            && certification
+                .as_ref()
+                .is_some_and(|data| data.data.receipt == Some(ReceiptKind::Summary))
+        {
+            return Err(Error::OriginalInSummaryReceipt);
         }
         let id = headers.message_id().and_then(|id| id.parse().ok());
         let reference_id = header_bytes(&headers, "X-Riferimento-Message-ID")

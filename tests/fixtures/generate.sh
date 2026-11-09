@@ -149,6 +149,25 @@ info@example.com
 Il messaggio originale =E8 incluso in allegato.
 Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' transport.xml certified.eml postacert.eml
 
+build transport-summary.eml 'Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: sintetica
+X-Trasporto: posta-certificata' 'POSTA CERTIFICATA: Invio fattura 00012' \
+  'Messaggio di posta certificata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E8 stato inviato da "mario.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.example.it
+info@example.com
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' transport-summary.xml certified.eml postacert.eml
+
 build anomaly.eml 'Return-Path: <paolo.bianchi@example.com>
 Date: Sun, 8 Nov 2026 09:30:05 +0100
 From: "Per conto di: paolo.bianchi@example.com" <posta-certificata@pec.example.it>
