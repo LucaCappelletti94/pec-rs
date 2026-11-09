@@ -1,0 +1,65 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-Tn: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/tlain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Messaggio di posta certificata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E8 stato inviato da "mario.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.example.it
+info@example.com
+Il messaggio oÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿriginale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-plication/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Ko4GjMIGgMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgbAMBMGA1UdJQQM
+MAoGCCsGAQUFBwMEMCsGA1UdEQQkMCKBIHBvc3RhLWNlcnRpZmljYXRhQHBlYy5l
+eGFtcGxlLml0MB0GA1UdDgQWBBREBK6zEUYrllgsCesuup20Y72IojAfBgNVHSME
+GDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAKBggqhkjOPQQDAgNJADBGAiEA9jBa
+/A7FvZpOwv4EpNetWuK9s3Cby48NWW8SluVzAtgCIQDO3rCQzsW6rp6UQ5gqF0Hd
+yjdjBdReVB0mIajgHCEDisposition: attachment; filename="smime.p7s"
+
+MIIGNQYJKoZIhvcNAQcCoIIGJjCCBiICAQExDzANBglghkgBZQMEAgEFADALBgkq
+hkiG9w0BBwGgggRUMIIB2DCCAX+gAwIBAgIUZkQi5sAzl5Mu3lC5iXgeDujg5Pgw
+CgYIKoZIzj0EAwIwOTELMAkGA1UEBhMCSVQxFDASBwNVBAoMC1BFQyBCCAX+gAwIBAgIUZkQi5sAzl5Mu3lC5iXgeDujg5Pgw
+CgYIKoZIzj0EAwIwOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN0IENB
+MRQwEgYDVQQDDAtQRUMgVGVzdCBDQTAgFw0yNjExMDgyMDAxMjRaGA8yMTI2MTAx
+NTIwMDEyNFowOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN0IENBMRQw
+EgYDVQQDDAtQRUMgVGVzdCBDQTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABAZC
+QmxU7uXfypNg9630xdW5qIhesFoApx8gproxbptIg4gQeookaFqaTqavEXlBDYOI
+x3hACaq78QYiQqUv6LajYzBhMB0GA1UdDgQWBBToxm9jWcPJZwNngriq6q1Y2SFe
+ZjAfBgNVHSMEGDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAPBgNVHRMBAf8EBTAD
+AQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNHADBEAiAMxhuDYQpsOhZp
+T1n0Tib+8Dom5zPGJEaM1vu/mXafNAIgOzeVsCTK8zR8N5w95pPYma4Ed5+dxjo8
+ZI/Ig+Fww1wwggJ0MIICGaADAgECAhQURJ3dSzFCJZhuVEh3sS1Mli1f6TAKBggq
+hkjOPQQDAjA5MQswCQYDVQQGEwJJVDEUMBIGA1UECgwLUEVDIFRlc3QgQ0ExFDAS
+BgNVBAMMC1BFQyBUZXN0IENBMCAXDTI2MTEwODIwMDEyNFoYDzIxMjYxMDE1MjAw
+MTI0WjCBkTELMAkGA1UEBhMCSVQxJjAkBgNVGA2UdJQQM
+MAoGCCsGAQUFBwMEMCsvcNAwICAUAwBwYF
+Kw4DAgcwDQYIKoZIhvcNAwICASgwCgYIKoZIzj0EAwIERzBFAiBSaoRLxhiEAK/g
+zQCdu5ZY78/Xciuxar+J0n8afi1coQIhAMfmn4YGGcK+ylzOP6WoY8g2fKrAWwQI
+DU7lgx1E8bxh
+
+------37C282A49E76019750C36DC3C2A37F03--
+

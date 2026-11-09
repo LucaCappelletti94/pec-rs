@@ -1,0 +1,38 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Contenple.com
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGluYXRhcmkgdGlwbz0iY2Vy
+dGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvZGVzdGluYXRhcmk+CiAg
+ICA8cmlzcG9zdGU+bWFyaW8ucm9zc2lAcGVjLmV4YW1wbGUuaXQ8L3Jpc3Bvc3RlPgogICAgPG9n
+Z2V0dG8+SW52aW8gZmF0dHVyYSAwMDAxMjwvb2dnZXR0bz4KICA8L2ludGVzdGF6aW9uZT4KICA8
+ZGF0aT4KICAgIDxnZXN0b3JlLWVtaXR0ZW50ZT5HZXN0b3JlIFBFQyBkaSBFc2VtcGlvIFMucC5B
+LjwvZ2VzdG9yZS1lbWl0dGVudGU+CiAgICA8ZGF0YSB6b25hPSIrMDEwMCI+CiAgICAgIDxnaW9y
+bm8+MDgvMTEv«•¾†NjwvZ2lvcm5vPgogICAgICA8b3JhPjEwOjE1OjAwPC9vcmE+CiAgICA8L2Rh
+dGE+CiAgICA8aWRlbnRpZmljYXRpdm8+b3BlYzAwMS4yMDI2MTEwODEwMTUwMC4wMDAwMS4wMS4x
+LjFAcGVjLmV4YW1w37F03--
+

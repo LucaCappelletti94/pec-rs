@@ -1,0 +1,22 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 202example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.eÿÿÿÿÿÿÿ!xam----6F2D0520EBE2698A82962C14911CDAE1-Trasporto: posta-certificata
+Subject: POSTA CERTIF³CATA: Invio¤fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signaReturn-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.exampleture"; micalg="sha-256"; boundary="--7-37Return-Pav 2026 10:15:00 +0exam'le.it>
+Date: Sun, 4 Nov 2026C282A49E76019750C3 .it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subjogo8L3Bvc3RhY2VydD4K
+10:15:00 +0100--pec-inner
+Content-Type:
+ 

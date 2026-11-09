@@ -1,0 +1,106 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.5@pec.example.it>
+X-Riferimento-mica      : <20261108101457.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: 26 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.5@pec.example.it>
+X-Riferimento-mica      : <20261108101457.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signatu/re"; micalg="sha-256"; boundary="----D59AF32E760ED9149A5188BEEC50EE99"
+
+This is an S/MIME signed message
+
+------D59AF32E760ED9149A5188BEEC50EE99
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type:t/plain; text/plain; ch2E760ED9149MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjEuMUBwZWMuZXh4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJjb21wbGV0YSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgËC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Contr
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Dispÿsition: inline; filename="poname="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0E+CiAgPC9kYXRpPgiMS4wSJjb21wbGV0YSIvPgogICAgPGNvbnNlZ2;5hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb4Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+ContR0ZW50ZT4KIC.gIDxkYXRhIHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb3Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjEuMUBwZWMuZXhhbXBsZS5pdDwvaWRlb#nRpZmljYXRpdm8+CiAgICA8FrXNnaEE99"n/x-pkcs7-signatu/re"; micalg="sha-256"; boundary="----D59AF32E760ED9149A5188BEEC50EE99"
+
+This is an S/MIME signed message
+
+------D59AF32E760ED9149A5188BEEC50EE99
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type:t/plain; text/plain; ch2E760ED9149MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjEuMUBwZWMuZXh4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJjb21wbGV0YSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgËC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Contr
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Dispÿsition: inline; filename="poname="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0E+CiAgPC9kYXRpPgiMS4wSJjb21wbGV0YSIvPgogICAgPGNvbnNlZ2;5hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb4Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+ContR0ZW50ZT4KIC.gIDxkYXRhIHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb3Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTCAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjm8+CiAgICA8
+bXNnaWS+Jmx0OzIwMjYxMTA4MTAxNDU4LjAwMDFAY2xpZW50LmV4YW1wbGUuaXQmZ3Q7PC9n: inline; filename="poname="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wSJjb21wbGV0YSIvPgogICAgPGtc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJjb21wbGV0YSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Contr
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Dispÿsition: inline; filename="poname="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wSJjb21wbGV0YSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWIuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY4KVy2dD
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Disposition: inline; filenam6q1Y2SFeZjAPBgNVHRMBAf8EBTAD
+AQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNHADBEAiADxhuDYQpsOhZp
+T1n0TiB+8Dom5zPGJEaM1vu/mXafNAIgOzeVsCTK8zR8N5w95pPYma4Ed5+dxjo8
+ZI/Ig+Fx0OzIwMjYxMTA4MTA:NDU4LjAwMDFAY2xpZW50LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJjb21wbGVYI0SvPgogICAgPGNvbnNlZ25hPnVmZmljaW8u
+ZmF0dHVyZUBwZWMuZXhhb
+
+------D60AF32E760ED9149A5188BEEC50EE99--
+

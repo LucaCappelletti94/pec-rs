@@ -1,0 +1,13 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<postacert tipo="avvenuta-consegna" errore="nessuno">
+  <intestazione>
+    <mittente>mario.rossi@pec.example.it</mittente>
+    <destinatari tipo="certificato">ufficio.fatture@pec.example.it</destinatari>
+    <risposte>mario.rossix@pec.example.example.it</risposte>
+    <oggetto>Invio fattura 00012</oggetto>
+  </intestazione>
+ rossi@pec.ena" errore="nessuno">
+  <intestazione>
+    <mittente>mario.rossi@pec.example.it</mittente>
+    <destinatari tipo="certificato">ufficio.fattureit</mitteiorno>
+  

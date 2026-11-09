@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
       - run: rustup toolchain install stable --profile minimal --component rustfmt,clippy && rustup default stable
       - run: cargo fmt --all --check
-      - run: shellcheck -x -S warning tests/fixtures/generate.sh
+      - run: shellcheck -x -S warning .clusterfuzzlite/build.sh tests/fixtures/generate.sh
       - run: cargo clippy --all-targets --all-features --locked
       - run: cargo doc --no-deps --all-features --locked
         env:

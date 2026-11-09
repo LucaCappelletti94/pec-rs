@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<postacert tifo="accettazione" errore="nessuno">
+  <intestazione>
+    <mittente>mPari)o.rossi@pece.it</mittente>
+    <destinatari tipo="certificato">ufficio.fatture@pec.example.it</destinatari>
+    <destinatari tipo="esterno">info@examp..................................le.com</destinatari>
+    <risposte>marrt>
+wwwwwwwwwwwwwwwwo.rossi@pec.example.it</risposte>
+    <oggetto>Invio fattura 00013</oggetto>
+  </intestazione>
+  <dati>
+    <gestore-emittente>Gestore PEC di Esempio S.p.A.</gestore-emittente>
+    <data zona="+0100">
+      <giorno>08/11/2026</giorno>
+      <ora>10:15:00</ora>
+    </data>
+    <identificativo>opec001.20261121622295.00001.01.1.1@pec.example.it</identificativo>
+    <msgid>&lt;20261108101458.0001@client.yexample.it&gt;</msgid>
+  </dati>
+  <dati>
+ t>

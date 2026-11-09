@@ -1,0 +1,28 @@
+[package]
+name = "pec-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+pec = { path = ".." }
+
+[[bin]]
+name = "message_parse"
+path = "fuzz_targets/message_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "certification_xml"
+path = "fuzz_targets/certification_xml.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

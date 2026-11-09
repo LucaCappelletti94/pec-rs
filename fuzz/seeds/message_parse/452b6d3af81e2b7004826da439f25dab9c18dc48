@@ -1,0 +1,17 @@
+ÌDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.7@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="--2"--5F5BB6341D2873AABAA4B874BF221876"
+
+This is an S/MIME signed message
+
+------2F5BB6341D2873AABAA4B874BF221876
+Content-Type: multipart/mixed; boundary=L3eate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it signed message
+
+-8ip0261="--5F5B

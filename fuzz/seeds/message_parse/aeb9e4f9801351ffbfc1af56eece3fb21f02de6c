@@ -1,0 +1,84 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.9@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: rilevazione-virus
+X-Mittente: mario.rossi@pec.example.it
+Subject: PROBLEMA DI SICUREZZA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----772189A2C4B2C22195101CC67DAFB5C8"
+
+This is an S/MIME signed message
+
+------772189A2C4B2C22195101CC67DAFB5C8
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Avviso di rilevazione virus informatico
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) nel messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+e destinato all=27utente "ufficio.fatture@pec.example.it"
+=E8 stato rilevato un problema di sicurezza Eicar-Test-Signature.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; f2VydCB0aXBvPSJy
+aWxldmF6aW9uZS12aXJ1cyIgZXJyb3JlPSJ2aXJ1cyI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxt
+aXR0ZW50ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00ename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGluYXRhcmkgdGlwbz0iY2Vy
+dGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvZGVzdGluYXRhcmk+CiAg
+ICA8cmlzcG9zdGU+bWFyaW8ucm9zc2lAcGVjLmV4YW1wbGUuaXQ8L3Jpc3Bvc3RlPgogICAgPG9n
+Z2V0dG8+SW52aW8gZmF0dHVyYSAwMDAxMjwvb2dnZXR0bz4KICA8L2ludGVzdGF6aW9uZT4KICA8
+ZGF0aT4KICAgIDxnZXN0b3JlLWVtaXR0ZW50ZT5HZXN0b3JlIFBFQyBkaSBFc2VtcGlvIFMucC5B
+LjwvZ2VzdG9yZS1lbWl0dGVudGU+CiAgICA8ZGF0YSB6b25hPSIrMDEwMCI+CiAgICAgIDxnaW9y
+bm8+MDgvMTEvMjAyNjwvZ2lvcm5vPgogICAgICA8b3JhPjEwOjE1OjAwPC9vcmE+CiAgICA8L2Rh
+dGE+CiAgICA8aWRlbnRpZmljYXRpdm8+b3BlYzAwMS4yMDI2MTEwODEwMTUwMC4wMDAwMS4wMS4x
+LjFAcGVjLmV4YW1wbGUuaXQ8L2lkZW50aWZpY2F0aXZvPgogICAgPG1zZ2lkPiZsdDsyM2IMDTEw
+ODEwMTQ1OC4wMDAxQGNsaWVudC5leGFtcGxlLml0Jmd0OzwvbXNnaWQ+CiAgICA8cmljZXZ1dGEg
+dGlwbz0iY29tcExldGEiLz4KICA8L2RhdGk+CjwvcG9zdGFjZXJ5Pgo=
+--pec-inner
+Content-Type: message/rfc822; namIGRpIEVz
+ZW1waW8gUy5wLkEuMSkwJwYDVQQDDCBwb3N0YS1jZXËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËJ0aWZpY2F0YUBwZWMuZXhh
+bXBsZS5pdDEvMC0GCSqGSIb3DQEJARYgcG9zdGEtY2VydGlmaWNhdGFAcGVjLmV4
+YW1wbGUuaXQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASNoHjQiqnidTwJs2N+
+zj6zKek9bHyfHCArnrQqmzve5Xfw6Zew1gbL8SlFzR0URn6OhmfoOpnL7P6z2LZL
+EQ8Ko4GjMIGgMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgbAMBMGA1UdJQQM
+MAoGCCsGAQUFBwMEMCsGA1UdEQQkMCKBIHBvc3RhLWNlcnRpZmljYXRhQHBlYy5l
+eGFtcGxlLml0MB0GA1UdDgQWBBREBK6zEUYrllgsCesuup20Y72IojAfBgNVHSME
+GDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAKBggqhkjOPQQDAgNJADBGAiEA9jBa
+/A7FvZpOwv4EpNetWuK9s3Cby48NWW8SluVzAtgCIQDO3rCQzsW6rp6UQ5gqF0Hd
+yjdjBdReVB0mIajgHCEZKjGCAaUwggGhAgEBMFEwOTELMAkGA1UEBhMCSVQxFDAS
+BgNVBAoMC1BFQyBUZXN0IENBMRQwEgYDVQQDDAtQRUMgVGVzdCBDQQIUFESd3Usx
+QiWYblRId7EtTJYtX+kwDQYJYIZIAWUDBAIBBQCggeQwGAYJKoZIhvcNAQkDMQsG
+CSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMTA4MjAwNzI0WjAvBgkqhkiG
+9w0BCQQxIgQgB9A/SOmrKtiEynJb7KbkgPDa5OE9r8LNF8vuoiwCUFAweQYJKoZI
+hvcNAQkPMWwwajALBglgbkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQB
+AjAKBggqhkiG9r-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIIGNgYJKoZIhvcNAQcCoIIGJzCCBiMCAQExDzANBglghkgBZQMEAgEFADALBgkq
+hkiG9w0BBwGgggRUMIIB2DCCAX+gAwIBAgIUZkQi5sAzl5Mu3lC5iXgeDujg5Pgw
+CgYIKoZIzjBBBBBBBBBBBBBBBB0EAwIwOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN0IENB
+MRQwEgYDVQQDDAtQRUMgVGVzdCBDQTAgFw0yNjExMDgyDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossMDAxMjRaGA8yMTI2MTAx
+NTIwMDEyNFowOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN0IENBMRQw
+EgYDVQQDDAtQRUMgVGVzdCBDQTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABAZC
+QmxU7uXfypNg9630xdW5qIhesFoApx8gproxbptIg4gQeookaFqaTqavEXlBDYOI
+x3hACaq78QYiQqUv6LajYzBhMB0GA1UdDgQWBBToxm9jWcPJZwNngriq6q1Y2SFe
+ZjAfBgNVHSMi@pec.example.it
+Message-ID: <opec001.20261108101500.È0001.01.1.7@pec.example.it>
+X-REGDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAPBgNVHRMBAf8EBTAD
+AQH/MA4GA1UdD.wEB/wQEAwIBBjAKBggqhkjOPQQDAgNHADBEAiAMxhuDYQpsOhZp
+T1n0TiB+8Dom5zPGJEaM1vu/mXafNAIgOzeVsCTK8ziferimentR8N5o-Mew95ssp

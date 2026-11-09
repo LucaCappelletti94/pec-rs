@@ -1,0 +1,36 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.exaDate: Sun, 8 Nov 2026
+MIME-Versionmple.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.5@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; zrotocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary=ml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMR1cmVAcGVjLmV4YW1wbGUuaXQ8L2Rlc3RpbmF0YXJpPgogICAg
+PHJpc3Bvc3RlPm1hcmlvLnJvc3NpQHBlYy5leGFtcGxlLml0PC9yaXNw`b3N0ZT4KICAgIDxvZ2dl
+dHRvPkludmlvIGZhdHR1cmEgMDAwMTI8L29nZ2V0dG8+CiAgPC9pbnRlc3RhemlvbmU+CiAgPGRh
+dGk+CiAgICA8Z2VzdG9yZS1lbWl0ddHR1cmVAcGVjLmV4YW1wbGUuaXQ8L2Rlc3RpbmF0YXJpPgogICAg
+PHJpc3Bvc3RlPm1hcmlvLnJvc3NpQHBlYy5leGFtcGxlLml0PC9yaXNwb3N0ZT4KICAgIDxvZ2dl
+dHRvPkludmlvIGZhdHR1cmEgMDAwMTI8L29nZ2V0dG8+CiAgPC9pbnRlc3Rheml.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+cmVzYS1pbi1jYXJpY28iPgogIDxpbnRlc3RhemlvbmU+CiAgICA8bWl0dGVudGU+bWFyaW8ucm9z
+c2lAcGVjLmV4YW1wbGUuaXQ8L21pdHRlbnRlPgogICAgPGRlc3RpbmF0YXJpIHRpcG89ImNlcnRp
+ZmljYXRvIj51ZmZpY2lvLmZhdHR1cmVAcGVjLmV4YW1wbGUuaXQ8L2Rlc3RpbmF0YXJpPgogIC: 1.0‹‹‹‹‹‹‹l‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signasage-ID: <20261108101458.0001@client.example.it>
+X-Ricevyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyu1458.0001@client.example.it>
+X-Ricevyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyuta: errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012Return-Path: <ma
+MIME-Version: 1.0
+Content-Type: multipart/sig‹‹‹‹‹‹‹
+Content-Type: multipart/signed; protocol="application/x-pkcs7-Ag
+PHJpc3Bvc3RlPm1hcmlvLnJvc3NpQHBlYy5lsigeGFtcGxlLmln

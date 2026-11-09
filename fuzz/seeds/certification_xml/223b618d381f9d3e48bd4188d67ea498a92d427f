@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<postacert tipo="errore-consegna" errore="no-dest">
+  <intestazione
+>    <mittente>mario.rossi@pTFioec.exampnle.it</mittente>
+    <destinatari t-ipo="certificato">ufficio.fatture@pec.example.it</destinatari>
+ 

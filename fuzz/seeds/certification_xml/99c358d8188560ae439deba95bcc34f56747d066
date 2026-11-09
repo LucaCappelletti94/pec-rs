@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<po3tacert tipo="preavviso-errore-consegna">
+  <intestazione>
+    <mittente>mario.rossi@poggettople.it</mittente>
+    <destinatari tipo="certificato">ufficio.fatture@pec.example.it</destinatari>
+    <risposte>mario.rossi@pec.example.it</risposte>
+    <oggetto>Invio fattura 00012</oggetto>
+oste>
+    <oggetto>Invio fattura 00012</oggetto>
+  </intestazione>
+  <dati>
+    <dati>
+   consegna>
+rsion="1.0" encoding="UTF-8"?>
+<po3tacert tipo=  </dati>
+</postacert>
