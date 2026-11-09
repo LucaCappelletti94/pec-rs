@@ -122,6 +122,9 @@ build delivery-short-encrypted.eml "$(receipt 12 'X-Ricevuta: avvenuta-consegna'
 # A short receipt that keeps in place an attachment named only by its Content-Type, as Aruba does.
 build delivery-short-kept.eml "$(receipt 14 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
   "$SHORT_BODY" delivery-short.xml short-kept.eml postacert.eml
+# A short receipt hashing a text attachment with LF line ends, as OpenPEC does, where the canonical form is CRLF.
+build delivery-short-lf.eml "$(receipt 15 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  "$SHORT_BODY" delivery-short.xml short-lf.eml postacert.eml
 # A full receipt whose original carries the sender's own attachment named .hash, which is no SHA-1.
 build delivery-full-user-hash.eml "$(receipt 13 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
   "${SHORT_BODY/Ricevuta breve di/Ricevuta di}" delivery-full.xml user-hash.eml postacert.eml

@@ -1,0 +1,22 @@
+From: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Subject: Invio fattura 00012
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+
+Buongiorno,
+in allegato la fattura 00012 con la nota e l'ordine.
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+Content-Disposition: attachment; filename="righe.txt"
+
+Prima riga.
+Seconda riga.
+
+--pec-sent--

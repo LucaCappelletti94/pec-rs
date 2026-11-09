@@ -7,7 +7,7 @@ mod kind;
 pub mod message;
 mod message_id;
 
-pub use attachment_hash::{AttachmentCheck, AttachmentHash};
+pub use attachment_hash::{AttachmentCheck, AttachmentHash, TextLineEnds};
 pub use certification::{
     CertificationData, CertifiedAt, Data, ErrorCode, Header, ReceiptKind, Recipient, RecipientKind,
 };

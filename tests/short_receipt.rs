@@ -5,7 +5,7 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use pec::{AttachmentCheck, Error, Message};
+use pec::{AttachmentCheck, Error, Message, TextLineEnds};
 
 /// Reads a signed message fixture.
 fn message(name: &str) -> Vec<u8> {
@@ -25,11 +25,20 @@ fn sent(name: &str) -> Vec<u8> {
     .expect("the fixture exists")
 }
 
-/// The checks of a short receipt fixture against a sent message.
+/// The checks of a short receipt fixture against a sent message, accepting text hashed in canonical form only.
 fn checks(receipt: &str, sent: &[u8]) -> Result<Vec<AttachmentCheck>, Error> {
+    checks_with(receipt, sent, TextLineEnds::Canonical)
+}
+
+/// The checks of a short receipt fixture against a sent message, accepting the given text line ends.
+fn checks_with(
+    receipt: &str,
+    sent: &[u8],
+    line_ends: TextLineEnds,
+) -> Result<Vec<AttachmentCheck>, Error> {
     Message::parse(&message(receipt))
         .expect("a valid receipt")
-        .check_attachments(sent)
+        .check_attachments(sent, line_ends)
 }
 
 /// Every attachment of `attachments.eml` matching its hash.
@@ -272,4 +281,47 @@ fn other_receipts_cannot_be_checked() {
 #[test]
 fn sent_message_must_be_mime() {
     assert_eq!(checks("delivery-short.eml", b""), Err(Error::NotMime));
+}
+
+/// A provider that hashes a text attachment with LF line ends, as OpenPEC does, differs from the canonical CRLF
+/// form unless the caller accepts LF as well.
+#[test]
+fn text_hashed_with_lf_matches_only_when_accepted() {
+    let sent = sent("attachments-lines.eml");
+    assert_eq!(
+        checks("delivery-short-lf.eml", &sent),
+        Ok(vec![AttachmentCheck::Differs("righe.txt".to_owned())])
+    );
+    assert_eq!(
+        checks_with("delivery-short-lf.eml", &sent, TextLineEnds::CanonicalOrLf),
+        Ok(vec![AttachmentCheck::Matches(Some("righe.txt".to_owned()))])
+    );
+}
+
+/// Accepting LF as well still accepts the canonical form, and leaves binary attachments alone.
+#[test]
+fn canonical_hashes_match_when_lf_is_accepted() {
+    assert_eq!(
+        checks_with(
+            "delivery-short.eml",
+            &sent("attachments.eml"),
+            TextLineEnds::CanonicalOrLf
+        ),
+        Ok(all_match())
+    );
+}
+
+/// The LF form pairs by digest too, for a provider that renames the hash, as OpenPEC does.
+#[test]
+fn renamed_text_hashed_with_lf_pairs_by_digest() {
+    let raw = replaced(
+        &message("delivery-short-lf.eml"),
+        "righe.txt.hash",
+        "righe-1.txt.hash",
+    );
+    let receipt = Message::parse(&raw).expect("a valid receipt");
+    assert_eq!(
+        receipt.check_attachments(&sent("attachments-lines.eml"), TextLineEnds::CanonicalOrLf),
+        Ok(vec![AttachmentCheck::Matches(Some("righe.txt".to_owned()))])
+    );
 }
