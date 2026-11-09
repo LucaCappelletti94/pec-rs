@@ -42,6 +42,9 @@ pub enum Error {
     /// A transport or anomaly envelope has no attached message.
     #[error("the envelope has no attached message")]
     MissingOriginal,
+    /// A summary delivery receipt carries an original message, though it carries only `daticert.xml` (§6.5.2.3).
+    #[error("the summary delivery receipt carries an original message")]
+    OriginalInSummaryReceipt,
     /// The `daticert.xml` does not follow the DTD of §7.4.
     #[error("invalid daticert.xml: {0}")]
     CertificationData(String),

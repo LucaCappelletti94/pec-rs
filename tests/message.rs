@@ -116,10 +116,15 @@ fn every_fixture_is_classified() {
 }
 
 /// The transport envelope and the full delivery receipt carry the original message unmodified, §6.3.4 and §6.5.2.1.
+/// An envelope asking for summary receipts still carries it, because only the receipt drops it (§6.5.2.3).
 #[test]
 fn original_message_is_extracted() {
     let original = fixture("original/certified.eml");
-    for name in ["transport.eml", "delivery-full.eml"] {
+    for name in [
+        "transport.eml",
+        "transport-summary.eml",
+        "delivery-full.eml",
+    ] {
         let raw = message(name);
         let parsed = Message::parse(&raw).expect(name);
         assert_eq!(
@@ -241,6 +246,36 @@ fn envelopes_need_their_message() {
         "Content-Type: application/octet-stream",
     );
     assert!(matches!(Message::parse(&raw), Err(Error::MissingOriginal)));
+}
+
+/// A summary receipt carries only `daticert.xml` (§6.5.2.3), so an attached original contradicts its form.
+#[test]
+fn summary_receipt_carries_no_original() {
+    let original = String::from_utf8(fixture("original/certified.eml")).expect("ascii fixture");
+    let raw = replaced(
+        &message("delivery-summary.eml"),
+        "--pec-inner--",
+        &format!(
+            "--pec-inner\r\nContent-Type: message/rfc822; name=\"postacert.eml\"\r\nContent-Disposition: inline; filename=\"postacert.eml\"\r\n\r\n{original}\r\n--pec-inner--"
+        ),
+    );
+    assert!(matches!(
+        Message::parse(&raw),
+        Err(Error::OriginalInSummaryReceipt)
+    ));
+}
+
+/// A recipient in `Cc` gets a full receipt without the original (§6.5.2.1).
+#[test]
+fn full_receipt_may_lack_the_original() {
+    let raw = replaced(
+        &message("delivery-full.eml"),
+        "Content-Type: message/rfc822",
+        "Content-Type: application/octet-stream",
+    );
+    let parsed = Message::parse(&raw).expect("a full receipt for a recipient in Cc");
+    assert_eq!(parsed.kind(), MessageKind::Certified(Kind::Delivery));
+    assert!(parsed.original_message().is_none());
 }
 
 #[test]
