@@ -1,0 +1,33 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.5@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@clientÒš‡ž’“›.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0cation/x-pkcs7-signature"; micalg="sha-256"; bound
+Cc: info@example.com
+Message-ID: <opec001.20261+0100
+From: "Per conto di: mario.rossi@peth: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2013 10:15:00 o.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Mÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ8gproxbptIg4gQeookaFqaTqavEXlBDYOI
+x3hACaq78QYiQqUv6LajYzBhMB0GA1UdDgQWBBToxm9jWcPJZwNngriq6q1Y2SFe
+ZjAfBgNVHSMEGDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAPBgNVHRMBAf8EBTAD
+AQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNHADBEAiAMxhuDYQpsOhZp
+T1n0Tiiginale =E8 incluso in allegato.
+;Identificativo mÿÿÿÿÿÿÿW: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposi%ion: inline; filename="daticert.xml"
+Content-Transfer-in; charset="iso-8859FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-1"
+Content-Transfer-Encoding: quoted-printable
+
+Avviso di mancata consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) nel messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+Date:5:00 +0100
+From: "Per conto di: mario.si@epsorc.example.it" <posta-certificata@pec.example.it>
+Reply-To: mari"postacert.eml"
+Content-Disposition: inline;Retu filename="postar

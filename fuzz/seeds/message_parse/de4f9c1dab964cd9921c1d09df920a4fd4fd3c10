@@ -1,0 +1,54 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-Iect: PRESA IN CARICO: Invio fco
+Il giorno 07/11/: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E7601975 CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs4-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: mulInvio fco
+Il giorno 07/11/: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E7601975 CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text
+info@example.comoding: base64
+ filename="postacert.eml"
+																																																																	
+X-Rifer
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: ;;;;;9;;;;;;;;;;;;;;;;;15:00 +0100
+From: posta-cerªªªªªªªtËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËificata@pec.exvbnNmZ25hPnVmZmlPOSTA %ERTIFICATA: jaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY39uc2VnbmEh: <mari100) il messaggio
+"Invio fattura 00012" =E0520EBE2698A82962C1c-inner"
+
+--pec-inner
+Content-Type: text
+info@example.comoding: base64
+ filename="postacert.eml"
+																																																																	
+X-Rifer
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: ;;;;;9;;;;;;;;;;;;;;;;;15:00 +0100
+From: posta-cerªªªªªªªtËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËËificata@pec.exvbnNmZ25hPnVmZmlPOSTA %ERTIFICATA: jaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY39uc2VnbmEh: <mario.rossi@pec.eit" <posta-c
+From: "Per contoDEwMTQ1OC4wÍDAxQGNsaWVudC5leGFtcGxlLta@pec.exvbnNmZ25hPnVmZmlPOSTA %ERTIFICATA: jaW8u
+ZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvY39uc2VnbmEh: <mario.rossi@pec.eit" <posta-c
+From: "Per contoDEwMTQ1OC4wÍDAxQGNsaWVudC5leGFtcGxlLml0Jmd0OzwvbXNnaWQ+
+CiAgICA8Y29uc2Vo di posta certificata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E0520EBE2698A82962C14911CDAE1--
+

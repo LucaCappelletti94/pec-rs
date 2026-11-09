@@ -1,0 +1,96 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.202611081015@00.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-sagnature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Messaggio di posta certificata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E8 stato inviato da "mario.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.example.it
+info@example.com
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.eficata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E8 stato inviato da "mario.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.example.it
+info@example.com
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGluYXRhcmkgdGlwbz0iY2Vy
+dGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvZGVzdGluYXRhcmk+CiAg
+ICA8cmlzcG9zdGU+bWFyaW8ucm9zc2lAcGVjLmV4YW1wbGUuaXQ8L3Jpc3Bvc3RlPgogICAgPG9n
+Z2V0dG8+SW52aW8gZmF0dHVyYSAwMDAxMjwvb2dnZXR0bz4KKCA8L2ludGVzdGF6aW9uZT4KICA8
+ZGF0aT4KICAgIDxnZXN0b3JlLWVtaXR0ZW50ZT5HZXN0b3JlIFBFQyBkaSBFc2VtcGlvIFMucC5B
+LjwvZ2VzdG9yZS1lbWl0dGVudGU+CiAgICA6ZGF0YSB6b25hPSIrMDEwMCI+CiAgICAgIDxnaW9y
+bm8+MDgvMTEvMjAYNjwvZ2lvcm5vPgogICAgICA8bEPJj3hwOjE1OjAwPC9vcmE+CiAgICA8L2Rh
+dGE+CiAgICA8aWRlbnRpZmljYXRpdm8+b3BlYzAwMS4yMDI2MTEwODEwMTUwMC4wMDAwMS4wMS4x
+LjFAcGVjLmV4YW1wbGUuaXQ8L2lkZW50aWZpY2Fxample.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGluYXRhcmkgdGlwbz0iY2Vy
+dGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvZGVzdGluYXRhcmk+CiAg
+ICA8cmlzcG9zdGU+bWFyaW8ucm9zc2lAcGVjLmV4YW1wbGUuaXQ8L3Jpc3Bvc3RlPgogICAgPG9n
+Z2V0dG8+SW52aW8gZmF0dHVyYSAwMDAxMjwvb2dnZXR0bz4KKCA8L2ludGVzdGF6aW9uZT4KICA8
+ZGF0aT4KICAgIDxnZXN0b3JlLWVtaXR0ZW50ZT5HZXN0b3JlIFBFQyBkaSBFc2VtcGlvIFMucC5B
+LjwvZ2VzdG9yZS1lbWl0dGVudGU+CiAgICA6ZGF0YSB6b25hPSIrMDEwMCI+CiAgICAgIDxnaW9y
+bm8+MDgvMTEvMjAYNjwvZ2lvcm5vPgogICAgICA8b3JhPjEwOjE1OjAwPC9vcmE+CiAgICA8L2Rh
+dGE+CiAgICA8aWRlbnRpZmljYXRpdm8+b3BlYzAwMS4yMDI2MTEwODEwMTUwMC4wMDAwMS4wMS4x
+LjFAcGVjLmV4YW1wbGUuaXQ8L2lkZW50aWZpY2F0aXZvPgogICAgPG1zZ2lkPiZsdDsyMDI2MTEw
+ODEwMTQ1OC4wMDAxQGNsaWVudC5leGFtcGxlLml0Jmd0OzwvbXNnaWQ+CiAgICA8cmljZXZ1dGEg
+dGlwbz0iY29tcGxldGEiLz4KICA8L2RhdGk+CjwvcG9zdGFjZXJ0Pgo=
+--pec-inner
+Content-Type: message/rfc822; níme="postacert.eml"
+Content-Disposition: inline; filename="postacert.eml"
+
+Return-Path: <mario.rossi@pec.example.it>
+Message-ID: <opec001.20261108101500.00001.01.1.tcGxlLml0Jmd0OzwvbXNnaWQ+CiAgICA8cmljZXZ1dGEg
+dGlwbz0iiqnidTwJs2N+
+zj6zKek9bHyfHCArnrQqmzve5Xfw6Zew1gbLÿÿÿ8SlFzR0URn6OhmfoOpnL7P6z2LZL
+EQ8Ko4GjMIGgMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgbAMBMGA1UdJQQM
+MAoGCCsGAQUFBwMEMCsGA1UdEQQkMCKBIHBvc3RhLWNlcnRpZmljYXRhQHBlYy5l
+eGFtcGxlLml0MB0GA1UdDgQWBBREBK6zEUYrllgsCesuup20Y72IojAfBgNVHSME
+GDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAKBggqhkjOPQQDAgNJADBGAiEA9jBa
+/A7FvZpOwv4EpNetWuK9s3Cby48NWW8SluVzAtgCIQDO3rCQzsW6rp6UQ5gqF0Hd
+yjdjBdReVB0mIajgHCEZKjGCAaUwggGhAgEBMFEwOTELMAkGA0UEBhMCSVQxFDAS
+BgNVBAoMC1BFQyBUZXN0IENBMRQwEgYDVQQDDAtQRUMgVGVzdCBDQQIUFESd3Usx
+QiWYblRId7EtTJYtX+kwDQYJYIZIAWUDBAIBBQCggeQwGAYJKoZIhvcNAQkDMQsG
+CSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMTA4MjAwNzI0WjAvBgkqhkiG
+9w0BCQQxIgQgB9A/SOmrKtiEynJb7KbkgPDa5OE9r8LNF8vuoiwCUFAweQYJKoZI
+hvcNAQkPMWwwajALBglghkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQB
+AjAKBggqhkiG9w0DBzAOBggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYF
+Kw4DAgcwDQYIKoZIhvcNAwICASgwCgYIKoZIzj0ESun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.r3C2A37F03--
+

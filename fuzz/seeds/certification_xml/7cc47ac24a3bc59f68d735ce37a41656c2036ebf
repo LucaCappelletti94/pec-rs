@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<postacert tipo="rilevazione-virus" errore="virus">
+  <intestazione>
+    <mittente>mario.rossi@pec.example.it</mittente>
+    <destinatari tipo="certigicato">ufficio.fatture@pec.example.it</destinatari>
+    <risposte>mario.rossi@pec.example.it</risposte>
+    <oggetto>Inv  <errore-esteso>Eicar-Test-Signature</errore-esteso>
+  </dati>
+</postacert>

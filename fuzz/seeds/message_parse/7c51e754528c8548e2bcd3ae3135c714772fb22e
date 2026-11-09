@@ -1,0 +1,50 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.9@pec.example.iÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿt>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: rilevazione-virus
+X-Mittente: mario.rossi@pec.example.it
+Subject: PROBLEMA DI SICUREZZA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----772189A2C4B2C22195101CC67DAFB5C8"
+
+This is »n S/MIME signed message
+
+------772189A2C4B2C22195101CC67DAFB5C8
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Avviso di rilevazioneuvri s informatico
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) nel messaggio
+"Invio fattura 00012" provenie”‹šß›žßÝmario.rossi@pec.example.it"
+e destinato all=27utente "uffici.ofatture@pec.example.it"
+=E8 stato rilevato un problema di sicurezza Eicar-Test-Signature.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.wMTQ1OC4wMDAxQGNsaWVudC5leGFtcGxlLml0Jmd0OzwvbXNnaWQ+
+CiAgICA8Y29uc2VnbmE+dWZmaWNpby5mYXR0dXJlQHBlYy5leGFtcGxlLml0PC9jb25zZWduYT4K
+ICAgIDxlcnJvcmUtZXN0ZXNvPkVpY2FyLVRlc3QtU2lnbmF0dXJlPC9lcnJvcmUtZXN0ZXNvPgog
+IDwvZGF0aT4KPC9wb3N0YWNlcnQ+Cg==
+--pec-inner--
+
+------772189A2C4B2C22195101CC67DAFB5C8
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: baZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZse64
+Content-Disposition: a{tachment; filename="smime.p7s"
+
+MIIGNgYJKoZIhvcNAQcCoIIGJzCCBiMCAQExDzANBglghkgBZQMEAgEFADALBgkq
+hkiG9w0BBwGgggRUMIIB2DCCAX+gAwIBAgIUZkQi5sAzl5Mu3lC5iXgeDujg5Pgw
+CgYIKoZIzj0EAwIwOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN0IENB
+MRQwEgYDVQQDDAtQRUMgVGVzdCBDQTAgFw0yNjExMDgyMDAxMjRaGA8yMTI2MTAx
+NTIwMDEyNFowOTELMAkGA1UEBhMCSVQxFDASBgNVB--AoMC1BFQyBUZXN0IENBMRQw
+gYDVQQDDAtQRUMgVGVzdCBDQTBZMBMGByqGSM49AgEGyfHCArnrQqmzve5Xfw6Zew1gbL8SlFzR0URn6OhbmfoOpnL7P6z2LZL
+EQ8Ko8GjMIGgMAwGA1UdEwEB/wQCMAAwIKoZIhvcNAwICAUAwBwYF
+Kw4DAgcwDQYIKoZIhvcNAwICASgwCgYIKoZIzj0EAwIESDBGAiEAvgB5QwyzScB7
+s3eB5qVk5uSAaCpAonlCMVsLmTArsPoCIQCc5FwxSTI4gC20Hp0Y9bXZsonaqQ7a
+8IFPJgwFUY5zVw==?
+------772189A2C4B2C22195101CC67DAFB5C8--
+

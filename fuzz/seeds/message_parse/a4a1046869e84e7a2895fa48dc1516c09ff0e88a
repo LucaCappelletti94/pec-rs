@@ -1,0 +1,47 @@
+Date96682074]7EEB69A4D990B38E--osta-certificata@pec.example.it
+To: mario.rossi@peÒexample.it
+M
+Frÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿom: posta-certifi <opec002.20261108mple.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml&
+Content-Transf-ID: <20261108101458.0001@client.example.it>	
+X-Ricevuta: erroEEB69A4D990B38E--osta-certificata@pec.example.it
+To: mario.rossi@peÒexample.it
+M
+Frÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿom: posta-certifi <opec002.20261108mple.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transf-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signasage-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/digestsre-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signasage-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/digestsigned; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="--
+--2F"iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Avviso di mancata conÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿgio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a:
+ufficio.fatture@pec.example.it
+=E8 TransfQUFBwMEMC0 +0100
+From: poC5leGFtcGxlL2
+MIME-Version: 1.0
+Content-Type: multipart/siICAUAwBtwYF
+Kw4DAgcwDQYIKoZIcNAwICMessage-ID: <opec000----6F2D0520EBE2698A82962C1ÒÆq1CDAE1.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Messaer-Encodin
+
+--pec-innÿÿÿÿÿÿÿÿÿÿÿÿÿÿer
+Cge-o

@@ -1,0 +1,44 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec000.20261108101500.00001.01.1.8@pec.Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.8@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: preavviso-errore-ÿÿÿÿegna
+Subject: AVVISO DI MANCATA CONSEGNA PER SUP. TEMPO MASSIMO: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----CEFD0FD536EA285B362B99BC0AC371BA"
+
+This is an S/example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ri–cevuta: preavviso-errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA PER SUP. TEMPO MASSIMO: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256";MIME signed message
+
+------CEFD0FD536EA285B362B99BC boundary="----CEFD0FD536EA285B362B99BC0AC371BA"
+
+This is an S/MIME signed message
+
+------CEFD0FD536EA285B362B99BC0AC371BA
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charse=="iso-885Date: Sun, 8 Nov 2029zato a:
+ufficio.fatture@pec.example.it
+=E8 stato rilevato un problema di sicurezza Eicar-Test-Signature.
+Il messaggio non =E8 stato accettato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+CongYDVQQDDAtQRUMgVGVzdCBDQQIUFESd3Usx
+QiWYblRId7EtTJYtX+kwDQYJYIZIAWUDBAIBBQCggeQwGAYJKoZIhvcNAQkDMQsG
+CSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMTA4MjAwNzI0WjAvBgkqhkiG
+9w0BCQQxIgQgxfkNLne15/ugg78Up4jKiGlMahXU2u/UOspecqKhbpcweQYJKoZI
+hvcNAQkPMWwwajALBglghkgBZQMEASowC-1"
+Cont0ACent-Transfer-Enco37TEMPO MASSIMO: Invio fattura 00ding: quo012
+MIME-Veted-printablrsieon: 1.0
+Content-Type: multipart/

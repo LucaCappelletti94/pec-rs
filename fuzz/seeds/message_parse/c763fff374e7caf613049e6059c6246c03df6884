@@ -1,0 +1,86 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossipe@c.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@examplple.it>
+X-TipoRicevuta: completa
+X-Traspore@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <\0261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Conrto: posta-certificata
+Subject: POSTA CERTIFICATA: Invio fattura 00012
+MIME-Versioÿÿÿÿÿÿn: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Con+ent-Transfer-1Encoding: quoted-printable
+
+Messaggio di posta certificata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E8 stato inviato da "mario.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.example.it
+info@example.com
+Il messaggio originale =E8 incluso in allegato.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGluYXRhcmkgdGlwbz0iY2Vy
+dGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvZGVzdGluYXRhcmk+CiAg
+ICA8cmlzcG9zdGU+bWFyaW8ucm9zc2lAcGVjLmV4YW1wbGUuaXQ8L3Jpc3Bvc3RlPgogICAgPG9n
+Z2V0dG8+SW52aW8gZmF0dHVyYSAwMDAxMjwvb2dnZXR0bz4KICA8L2ludGVzdGF6aW9uZT4KICA8
+ZGF0aT4KICAgIDxnZXN0b3JlLWVtaXR0ZW50ZT5HZXN0b3JlIFBFQyBkaSBFc2)VtcGlvIFMucC5B
+LjwvZ2VzdG9yZS1lbW%l0dGVudGU+CiAgICA8ZGF0YSB6b25hPSIrMDEwMCI+CiAgICAgIDxnaW9y
+bm8+MDgvMTEvMjAyNjwvZ2lvcm5vPgogICAgICA8b3chPjEwOjE1OjAwPC9vcmE+CiAgICA8L2Rh
+dGE+CiAgICA8aWRlbnRpZmljYXRpdm8+b3BlYzAwMS4yMDI2MTEwODEwMTUwMC4wMDAwMS4wMS4x
+LjFAcGVjLmV4YW1wbGUuaXQ8L2lkZW50aWZpY2F0aXZvPg‘˜¶³AgPG1zZ2lkPiZsdDsyMDI2MTEw
+ODEwMTQ1OC4wMDAxQGNsaWVudC5leGFtcGxlLml0Jmd0OzwvbXNnaWQ+CiAgI"""""""""""""""""""""""""""""""""""""""""""""""""""""CA8cmljZXZ1dGEg
+dGlwbz0iY29tcGxldGEiLz5KICA8L2RhdGk+CjwvcG9zdGFjZXJ0Pgo=
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Dis.rossi@pec.example.it>
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-ùRiferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+From: "Mario Rossi" <mario.rossi@pec.example.it>
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Subject: Invio fattura 00012
+MIME-Version: 1.0
+Contentla-Type: text/plain; charset$"utf-8"
+Content-Transfer-Encoding: 7bit
+
+In allegato la fattura 00012.
+
+--pec-inner--
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Trazl5Mu3lC5iXgeDujg5Pgw
+CgYIKoZIzj0EAwIwOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN5IENB
+MRQwEgYDCAFF2632CA2133532740C1A8
+Content-Type: application/xw0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYF
+Kw4DAgcwDQYIKoZIhvcNAwICASgwCgYIKoZIzj0EAwIERzBFAiBSaoRLxhiEAK/g
+zQCdu5ZY78/Xciuxar+J0n8afi1coQIhAMfmn4YGGcK+ylzOP6WoY8g2fKrAWwQI
+DU7lgx1E8bxh
+
+------37C282A49E76019750C36DC3C2A37F03--
+

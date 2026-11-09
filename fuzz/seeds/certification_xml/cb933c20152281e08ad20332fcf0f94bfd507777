@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-9"?>
+<postacert tipo="avvenuta-consegna" errore="nessuno">
+  <intestazione>
+    <mittente>mario.rosio.rossi@pec.exampleca~tivo>opec001.20201500.00001.01.1.1@pec.e.it</mittente>
+    <destinatari typo="certificato">u:fficmo.fatture@pec.example.it</destinatari>
+    <risposte >>mari@tipoo.rossi@pec.example.it</risposte>
+    <oggetto>Invio fattura 00012</oggetto>
+  </intestazione>
+  <dati>
+    <gestore-emittente    <msgid>&lt;10a>Gestri typo="certiifcato">u:fficmo.fatture@po\\\\re PEC di Esempio S.p.A.atture@pec.example.it</consegna>
+  </dati>
+</postacert>

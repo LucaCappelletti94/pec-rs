@@ -1,0 +1,43 @@
+Da~e:DReturn-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-MesY29tcGxldGEiLz4KICA8L2RhdGk+CjwvcG9zdGFjZXJ0Pgo=
+--pec-inner
+Content-Type: message/rfc822; name="postacert.efatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA CERTIFICATA: Invio fattura 00012M
+IEM-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printableAwMS4wMSÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ4x
+LjFAcGVjLmV4YW1wbGUuaXQ8L2lkZW50aWZpY2F0aXZvPgogICAgPG1zZ2lkPiZsdDsyMDI2MTEw
+ODEwMTQ1OC4wMDAxQGNsaWVudC5leGFtcGxlLml0Jmd0OzwvbXNnaWQ+CiAgICA8cmljZXZ1dGEg
+dGlwbz0iY29tcGxldGEiLz4KICA8L2RhdGk+CjwvcG9zdGFjZXJ0Pgo=
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Disposition: inline; filename="postacert.eml"
+pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaÿÿÿÿÿÿÿXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGluYXRhcmkgdGlwbz0iY2Vy
+dGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyZUBwZWMuZXhhbXBsZS5pdDwvZGVzdGluYXRhcmk+CiAg

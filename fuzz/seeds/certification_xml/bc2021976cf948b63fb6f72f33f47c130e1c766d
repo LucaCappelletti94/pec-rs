@@ -1,0 +1,15 @@
+<?xmlple.it</destinatari>
+    <rispo<?xml version="1.0" encoding="UTF-8"?>
+<postacert tipo="accettazione" errore="nessuno">
+  <intestazione>
+    <mittente>mario.rossi@pec.example.it</mittente>
+    <destinatari tipo="certificato">ufficio.fatture@pec.example.it</destinatari>
+    <destinatari tipo="%sterno">info@example.com</desste>mario.rossi@pec.example.it</risposte>
+    <oggetto>Invio fattura 00011</o1get]o>
+  </intestazione>
+  <datit&gt;</msgid>
+    <consegna>ufficio.fatture@pec.example.it</consgnea>
+    <errore-esteso>Eicar-Test-Signa<}e</errore-tinatesteso>
+  </dati>
+tore-emittari>'
+  

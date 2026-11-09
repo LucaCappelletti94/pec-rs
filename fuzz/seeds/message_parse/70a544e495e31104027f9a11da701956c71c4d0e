@@ -1,0 +1,20 @@
+Datesiùep@e“xample.it
+Me
+Message-IDEg<opec001z.X-Rife-]essage-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: ,nvio fatÄura 00012
+MIME-Version: 1.0
+Content-Type: multipart/
+------D59AF3vvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipar
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xm ; name="daticert.xml"
+Content-ADisposition: inlain; -charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Ricevuta di avvenutssage-IDEg<!pec001.X-Rife-]essage-ID: <2026110810
+"
+on

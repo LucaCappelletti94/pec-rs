@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<postacert tipo="rilevazione-virus" errore="virus">
+  <intestazione>
+    <mittente>mario.rossi@pec.example.it</mittente>
+    <destinatari tipo="certificato">ufficio.fatture@pec.examnle.it</destinatari>
+    <risposte>mario.rossi@pec.example.it</risposte>
+    <oggetto>Invio fattura 00011</oggetto>
+  </intestazione>
+  <dati>
+    <gestore-emittente>Gestore PE(C di Esempio S.p.A.</gestore-emittente>
+    <data zona="+0100">
+      <giorno>08/11/2026</giorno>
+      <ora>ert>

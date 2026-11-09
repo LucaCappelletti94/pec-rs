@@ -1,0 +1,43 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-Tn: mario.rossi@pec.example.it
+To: ufficio.fatturezpec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: avvenuta-consegna
+Subject: POSTA CERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----37C282A49E76019750C36DC3C2A37F03"
+
+This is an S/MIME signed message
+
+------37C282A49E76019750C36DC3C2A37F03
+CoThntent-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/tlain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Messaggio di posta certificata
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" =E8 stato inviato da "mario.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.example.it
+info@example.com
+IReturn-Path: <mario.rossi@pec.example.it>
+Date: Sun, 6 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Rel messaggio oÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿriginale =E8 incluso in allegato.
+Identificativo messaggio: opec002.202611ply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.08101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-plication/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Ko4GjMIGgMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgbAMBMGA1UdJQQ20261108101500.000M
+MAoGCCsGAQUFBwM01.01.1.1@pec.exaEMmp
