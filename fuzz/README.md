@@ -1,6 +1,6 @@
 # Fuzz targets
 
-ClusterFuzzLite runs these on every pull request, daily in batch, and on every push to `main`.
+ClusterFuzzLite fuzzes these for an hour every Sunday, after pruning the corpus it keeps on the `fuzz-corpus` branch.
 
 - `message_parse` reads arbitrary bytes as a PEC message and calls every accessor.
 - `certification_xml` reads arbitrary text as `daticert.xml`, writes what it read and reads it back unchanged.
