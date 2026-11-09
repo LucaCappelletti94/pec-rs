@@ -18,4 +18,10 @@ Content-Disposition: attachment; filename="righe.txt.hash"
 Content-Transfer-Encoding: 7bit
 
 e754c2993fbc51668ce333ce3dd178dc37f60d86
+--pec-short
+Content-Type: text/plain; name="null.hash"
+Content-Disposition: attachment; filename="null.hash"
+Content-Transfer-Encoding: 7bit
+
+09417e8ecdc385b5271f5da741488557ec056ef2
 --pec-short--

@@ -51,16 +51,16 @@ pub enum AttachmentCheck {
     NotSent(Option<String>),
 }
 
-/// The line ends a provider may have hashed a text attachment with (§6.5.2.2).
+/// The line ends a provider may have hashed a text attachment or an attached message with (§6.5.2.2).
 ///
 /// The rules hash "the whole content of the attachment" without naming a form. MIME's canonical form of text ends
-/// lines with CRLF (RFC 2049 §4), which Aruba hashes, while OpenPEC hashes the text with the LF line ends it writes
-/// to disk.
+/// lines with CRLF (RFC 2049 §4), which Aruba hashes, while OpenPEC hashes text and attached messages with the LF
+/// line ends it writes to disk.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum TextLineEnds {
     /// Only the canonical CRLF form.
     Canonical,
-    /// The canonical form, or the same text with LF line ends.
+    /// The canonical form, or the same text or message with LF line ends.
     CanonicalOrLf,
 }
 
@@ -192,7 +192,7 @@ struct Attachment<'a> {
     name: Option<&'a str>,
     /// The SHA-1 of the transfer-decoded content, or of the bytes as sent for an attached message.
     sha1: [u8; 20],
-    /// The SHA-1 of the same text with LF line ends, when the caller accepts that form and it differs.
+    /// The SHA-1 of the same text or message with LF line ends, when the caller accepts that form and it differs.
     lf_sha1: Option<[u8; 20]>,
 }
 
@@ -208,21 +208,21 @@ fn attachments(message: MessageRef<'_>, line_ends: TextLineEnds) -> Vec<Attachme
     replaceable(message)
         .filter(|part| part.attachment_name().is_some() || part.is_message())
         .map(|part| {
-            if part.is_message() {
-                return Attachment {
-                    name: part.attachment_name(),
-                    sha1: Sha1::digest(part.raw_body()).into(),
-                    lf_sha1: None,
-                };
-            }
-            let decoded = part.decoded();
-            let lf_sha1 = (line_ends == TextLineEnds::CanonicalOrLf && is_text(&part))
-                .then(|| lf_form(&decoded))
-                .flatten()
-                .map(|text| Sha1::digest(text).into());
+            let decoded;
+            let content: &[u8] = if part.is_message() {
+                part.raw_body()
+            } else {
+                decoded = part.decoded();
+                &decoded
+            };
+            let lf_sha1 = (line_ends == TextLineEnds::CanonicalOrLf
+                && (part.is_message() || is_text(&part)))
+            .then(|| lf_form(content))
+            .flatten()
+            .map(|lf| Sha1::digest(lf).into());
             Attachment {
                 name: part.attachment_name(),
-                sha1: Sha1::digest(&decoded).into(),
+                sha1: Sha1::digest(content).into(),
                 lf_sha1,
             }
         })

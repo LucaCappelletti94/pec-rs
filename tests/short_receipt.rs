@@ -283,18 +283,25 @@ fn sent_message_must_be_mime() {
     assert_eq!(checks("delivery-short.eml", b""), Err(Error::NotMime));
 }
 
-/// A provider that hashes a text attachment with LF line ends, as OpenPEC does, differs from the canonical CRLF
-/// form unless the caller accepts LF as well.
+/// A provider that hashes text and attached messages with LF line ends, as OpenPEC does, differs from the
+/// canonical CRLF form unless the caller accepts LF as well.
 #[test]
-fn text_hashed_with_lf_matches_only_when_accepted() {
+fn lf_hashes_match_only_when_accepted() {
     let sent = sent("attachments-lines.eml");
     assert_eq!(
         checks("delivery-short-lf.eml", &sent),
-        Ok(vec![AttachmentCheck::Differs("righe.txt".to_owned())])
+        Ok(vec![
+            AttachmentCheck::Differs("righe.txt".to_owned()),
+            AttachmentCheck::Missing(None),
+            AttachmentCheck::NotSent(Some("null".to_owned())),
+        ])
     );
     assert_eq!(
         checks_with("delivery-short-lf.eml", &sent, TextLineEnds::CanonicalOrLf),
-        Ok(vec![AttachmentCheck::Matches(Some("righe.txt".to_owned()))])
+        Ok(vec![
+            AttachmentCheck::Matches(Some("righe.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
     );
 }
 
@@ -322,6 +329,9 @@ fn renamed_text_hashed_with_lf_pairs_by_digest() {
     let receipt = Message::parse(&raw).expect("a valid receipt");
     assert_eq!(
         receipt.check_attachments(&sent("attachments-lines.eml"), TextLineEnds::CanonicalOrLf),
-        Ok(vec![AttachmentCheck::Matches(Some("righe.txt".to_owned()))])
+        Ok(vec![
+            AttachmentCheck::Matches(Some("righe.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
     );
 }

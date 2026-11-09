@@ -19,4 +19,17 @@ Content-Disposition: attachment; filename="righe.txt"
 Prima riga.
 Seconda riga.
 
+--pec-sent
+Content-Type: message/rfc822
+Content-Disposition: attachment
+
+From: anna.verdi@example.com
+To: mario.rossi@pec.example.it
+Subject: Ordine di acquisto
+Date: Sat, 7 Nov 2026 18:00:00 +0100
+Message-ID: <ordine-0042@example.com>
+Content-Type: text/plain; charset="utf-8"
+
+Ordine numero 42, in allegato alla fattura.
+
 --pec-sent--

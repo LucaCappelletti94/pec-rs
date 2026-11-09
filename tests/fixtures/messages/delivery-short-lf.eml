@@ -6,11 +6,11 @@ X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
 X-Ricevuta: avvenuta-consegna
 Subject: CONSEGNA: Invio fattura 00012
 MIME-Version: 1.0
-Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----AA31A21D30367E9E7BFA0D1EBFDF2D93"
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----79CFE0D12B0BCA8209AD29990A2F3E59"
 
 This is an S/MIME signed message
 
-------AA31A21D30367E9E7BFA0D1EBFDF2D93
+------79CFE0D12B0BCA8209AD29990A2F3E59
 Content-Type: multipart/mixed; boundary="pec-inner"
 
 --pec-inner
@@ -66,16 +66,22 @@ Content-Disposition: attachment; filename="righe.txt.hash"
 Content-Transfer-Encoding: 7bit
 
 e754c2993fbc51668ce333ce3dd178dc37f60d86
+--pec-short
+Content-Type: text/plain; name="null.hash"
+Content-Disposition: attachment; filename="null.hash"
+Content-Transfer-Encoding: 7bit
+
+09417e8ecdc385b5271f5da741488557ec056ef2
 --pec-short--
 
 --pec-inner--
 
-------AA31A21D30367E9E7BFA0D1EBFDF2D93
+------79CFE0D12B0BCA8209AD29990A2F3E59
 Content-Type: application/x-pkcs7-signature; name="smime.p7s"
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="smime.p7s"
 
-MIIGNQYJKoZIhvcNAQcCoIIGJjCCBiICAQExDzANBglghkgBZQMEAgEFADALBgkq
+MIIGNAYJKoZIhvcNAQcCoIIGJTCCBiECAQExDzANBglghkgBZQMEAgEFADALBgkq
 hkiG9w0BBwGgggRUMIIB2DCCAX+gAwIBAgIUZkQi5sAzl5Mu3lC5iXgeDujg5Pgw
 CgYIKoZIzj0EAwIwOTELMAkGA1UEBhMCSVQxFDASBgNVBAoMC1BFQyBUZXN0IENB
 MRQwEgYDVQQDDAtQRUMgVGVzdCBDQTAgFw0yNjExMDgyMDAxMjRaGA8yMTI2MTAx
@@ -99,16 +105,16 @@ MAoGCCsGAQUFBwMEMCsGA1UdEQQkMCKBIHBvc3RhLWNlcnRpZmljYXRhQHBlYy5l
 eGFtcGxlLml0MB0GA1UdDgQWBBREBK6zEUYrllgsCesuup20Y72IojAfBgNVHSME
 GDAWgBToxm9jWcPJZwNngriq6q1Y2SFeZjAKBggqhkjOPQQDAgNJADBGAiEA9jBa
 /A7FvZpOwv4EpNetWuK9s3Cby48NWW8SluVzAtgCIQDO3rCQzsW6rp6UQ5gqF0Hd
-yjdjBdReVB0mIajgHCEZKjGCAaUwggGhAgEBMFEwOTELMAkGA1UEBhMCSVQxFDAS
+yjdjBdReVB0mIajgHCEZKjGCAaQwggGgAgEBMFEwOTELMAkGA1UEBhMCSVQxFDAS
 BgNVBAoMC1BFQyBUZXN0IENBMRQwEgYDVQQDDAtQRUMgVGVzdCBDQQIUFESd3Usx
 QiWYblRId7EtTJYtX+kwDQYJYIZIAWUDBAIBBQCggeQwGAYJKoZIhvcNAQkDMQsG
-CSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMTA5MTYzNDI4WjAvBgkqhkiG
-9w0BCQQxIgQgHX8jrTyZm8aINfo+EaM5uSCYOg0W5qddlXFRyn+yxJQweQYJKoZI
+CSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMTA5MTY0MDEwWjAvBgkqhkiG
+9w0BCQQxIgQgXgC2soxlMl2N0CHmYHp3YEf0jS19oKUSj7rzaBIxE4MweQYJKoZI
 hvcNAQkPMWwwajALBglghkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQB
 AjAKBggqhkiG9w0DBzAOBggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYF
-Kw4DAgcwDQYIKoZIhvcNAwICASgwCgYIKoZIzj0EAwIERzBFAiEAmW0CVtZ2ygD8
-TKBPbxgB39cDDrdG5AbqjcrTI056wbYCIBf5CsuaZ7gUg53qhqMw8Tjjx+u1NCqD
-1YvKNbdfc4bD
+Kw4DAgcwDQYIKoZIhvcNAwICASgwCgYIKoZIzj0EAwIERjBEAiBRUatg1dKJLvGc
+wEtVmW+gYrY0Z6pk/gBlzx2yXnzeQwIgHdkhwkm8UTNZE3vMmcZKR8/T5IyhGKkY
+yCDpuY/P9ss=
 
-------AA31A21D30367E9E7BFA0D1EBFDF2D93--
+------79CFE0D12B0BCA8209AD29990A2F3E59--
 
