@@ -1,0 +1,33 @@
+From: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Subject: Invio fattura 00012
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="pec-short"
+
+--pec-short
+Content-Type: text/plain; charset="utf-8"
+
+Buongiorno,
+in allegato la fattura 00012 con la nota e l'ordine.
+--pec-short
+Content-Type: text/plain; name="fattura.xml.hash"
+Content-Disposition: attachment; filename="fattura.xml.hash"
+Content-Transfer-Encoding: 7bit
+
+FF20C898B2AB8B020F1F3D3F07FFF7BC37A988A5
+--pec-short
+Content-Type: text/plain; name="nota.txt.hash"
+Content-Disposition: attachment; filename="nota.txt.hash"
+Content-Transfer-Encoding: 7bit
+
+6a07a23ff2f2c1f378da855d1ae1218bb1ab539c
+--pec-short
+Content-Type: text/plain; name="null.hash"
+Content-Disposition: attachment; filename="null.hash"
+Content-Transfer-Encoding: 7bit
+
+5668EBDFEC476CFB773752C7875F9C9DD778B778
+--pec-short--
