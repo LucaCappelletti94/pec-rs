@@ -8,8 +8,8 @@
 use jiff::civil::{Date, Time};
 use jiff::tz::Offset;
 use pec::{
-    CertificationData, CertifiedAt, Data, Error, ErrorCode, Header, Kind, ReceiptKind, Recipient,
-    RecipientKind,
+    CertificationData, CertifiedAt, Data, Error, ErrorCode, Header, Kind, MessageId, ReceiptKind,
+    Recipient, RecipientKind,
 };
 
 /// Reads a `daticert.xml` fixture.
@@ -67,8 +67,14 @@ fn acceptance_reads_every_field() {
                 Offset::from_hours(1).expect("offset"),
             )
             .expect("a representable instant"),
-            identifier: "opec001.20261108101500.00001.01.1.1@pec.example.it".to_owned(),
-            message_id: Some("<20261108101458.0001@client.example.it>".to_owned()),
+            identifier: "opec001.20261108101500.00001.01.1.1@pec.example.it"
+                .parse::<MessageId>()
+                .expect("an identifier"),
+            message_id: Some(
+                "20261108101458.0001@client.example.it"
+                    .parse::<MessageId>()
+                    .expect("an identifier"),
+            ),
             receipt: None,
             delivered_to: None,
             received_for: vec![],
@@ -124,6 +130,40 @@ fn every_fixture_round_trips() {
             "{name}"
         );
     }
+}
+
+/// Providers write `msgid` as a `Message-ID` header carries it, between angle brackets, and `identificativo` bare
+/// (§6.3), so the written file keeps both forms.
+#[test]
+fn identifiers_keep_their_provider_forms() {
+    let written = CertificationData::from_xml(&fixture("acceptance.xml"))
+        .expect("valid")
+        .to_xml()
+        .expect("writes");
+    assert!(
+        written.contains("<msgid>&lt;20261108101458.0001@client.example.it&gt;</msgid>"),
+        "{written}"
+    );
+    assert!(
+        written.contains(
+            "<identificativo>opec001.20261108101500.00001.01.1.1@pec.example.it</identificativo>"
+        ),
+        "{written}"
+    );
+}
+
+#[test]
+fn invalid_identifiers_are_rejected() {
+    let result = edited(|xml| {
+        xml.replace(
+            "<msgid>&lt;20261108101458.0001@client.example.it&gt;</msgid>",
+            "<msgid>no-at-sign</msgid>",
+        )
+    });
+    assert!(
+        matches!(result, Err(Error::CertificationData(_))),
+        "{result:?}"
+    );
 }
 
 #[test]

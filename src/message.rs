@@ -2,7 +2,7 @@
 
 use mail_parser::{Headers, MessageParser, PartId};
 
-use crate::{CertificationData, Error, Kind, MessageKind};
+use crate::{CertificationData, Error, Kind, MessageId, MessageKind};
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
 ///
@@ -21,6 +21,10 @@ pub struct Message<'a> {
     certification: Option<CertificationData>,
     /// The `message/rfc822` part holding the original or arrived message.
     original: Option<PartId>,
+    /// This message's `Message-ID`.
+    id: Option<MessageId>,
+    /// The `X-Riferimento-Message-ID`.
+    reference_id: Option<MessageId>,
 }
 
 impl<'a> Message<'a> {
@@ -95,6 +99,10 @@ impl<'a> Message<'a> {
         {
             return Err(Error::MissingOriginal);
         }
+        let id = headers.message_id().and_then(|id| id.parse().ok());
+        let reference_id = header_bytes(&headers, "X-Riferimento-Message-ID")
+            .and_then(|value| core::str::from_utf8(value).ok())
+            .and_then(|value| value.parse().ok());
         Ok(Self {
             parsed,
             kind,
@@ -102,6 +110,8 @@ impl<'a> Message<'a> {
             prefix_len: prefix.len(),
             certification,
             original,
+            id,
+            reference_id,
         })
     }
 
@@ -128,27 +138,17 @@ impl<'a> Message<'a> {
             .unwrap_or_default()
     }
 
-    /// The `Message-ID` of this message, without angle brackets.
+    /// The `Message-ID` of this message, `None` when absent or not a valid identifier.
     #[must_use]
-    pub fn message_id(&self) -> Option<&str> {
-        self.parsed.root().headers().message_id()
+    pub const fn message_id(&self) -> Option<&MessageId> {
+        self.id.as_ref()
     }
 
     /// The `Message-ID` the sender's client gave the original message before its provider replaced it,
-    /// `X-Riferimento-Message-ID`, without angle brackets (§6.3).
+    /// `X-Riferimento-Message-ID` (§6.3). `None` when absent or not a valid identifier.
     #[must_use]
-    pub fn reference_message_id(&self) -> Option<&str> {
-        let value = core::str::from_utf8(header_bytes(
-            &self.parsed.root().headers(),
-            "X-Riferimento-Message-ID",
-        )?)
-        .ok()?;
-        Some(
-            value
-                .strip_prefix('<')
-                .and_then(|id| id.strip_suffix('>'))
-                .unwrap_or(value),
-        )
+    pub const fn reference_message_id(&self) -> Option<&MessageId> {
+        self.reference_id.as_ref()
     }
 
     /// The `daticert.xml` of a receipt, notice or transport envelope. An anomaly envelope has none.

@@ -45,4 +45,7 @@ pub enum Error {
     /// The `daticert.xml` does not follow the DTD of §7.4.
     #[error("invalid daticert.xml: {0}")]
     CertificationData(String),
+    /// A message identifier is not an RFC 5322 `msg-id`.
+    #[error("invalid message identifier {0:?}")]
+    InvalidMessageId(String),
 }
