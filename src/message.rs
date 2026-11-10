@@ -1,6 +1,6 @@
 //! Reading a message a PEC provider generated: its kind, its certification data and the message it carries.
 
-use mail_parser::{Headers, MessageParser, PartId};
+use mail_parser::{Headers, MessageParser, MessageRef, PartId};
 
 use crate::{
     AttachmentCheck, AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind,
@@ -24,9 +24,6 @@ pub struct Message<'a> {
     certification: Option<CertificationData>,
     /// The `message/rfc822` part holding the original or arrived message.
     original: Option<PartId>,
-    /// The `.hash` parts of the original of a short delivery receipt, `None` for every other message and for a
-    /// short receipt without the original.
-    hashes: Option<Vec<AttachmentHash>>,
     /// This message's `Message-ID`.
     id: Option<MessageId>,
     /// The `X-Riferimento-Message-ID`.
@@ -41,8 +38,8 @@ impl<'a> Message<'a> {
     /// Fails when the bytes are not MIME, when no PEC header names a kind or the header names one the rules do
     /// not define, when the subject lacks the prefix of its kind (§6.3 to §6.5), when `X-VerificaSicurezza`
     /// appears outside the virus notices (§6.4.3), when a certified kind lacks its `daticert.xml` or that file is
-    /// invalid or names another kind, when an envelope lacks the message it wraps, when a summary delivery receipt
-    /// carries one (§6.5.2.3), and when a `.hash` part of a short delivery receipt is not a SHA-1 (§6.5.2.2).
+    /// invalid or names another kind, when an envelope lacks the message it wraps, or when a summary delivery receipt
+    /// carries one (§6.5.2.3).
     pub fn parse(raw: &'a [u8]) -> Result<Self, Error> {
         let parsed = MessageParser::default().parse(raw).ok_or(Error::NotMime)?;
         let root = parsed.root();
@@ -114,17 +111,6 @@ impl<'a> Message<'a> {
         {
             return Err(Error::OriginalInSummaryReceipt);
         }
-        let short_receipt = kind == MessageKind::Certified(Kind::Delivery)
-            && certification
-                .as_ref()
-                .is_some_and(|data| data.data.receipt == Some(ReceiptKind::Short));
-        let hashes = match original
-            .and_then(|id| parsed.part(id))
-            .and_then(|part| part.nested())
-        {
-            Some(original) if short_receipt => Some(attachment_hash::read(original)?),
-            _ => None,
-        };
         let id = headers.message_id().and_then(|id| id.parse().ok());
         let reference_id = header_bytes(&headers, "X-Riferimento-Message-ID")
             .and_then(|value| core::str::from_utf8(value).ok())
@@ -136,7 +122,6 @@ impl<'a> Message<'a> {
             prefix_len: prefix.len(),
             certification,
             original,
-            hashes,
             id,
             reference_id,
         })
@@ -192,39 +177,51 @@ impl<'a> Message<'a> {
         Some(part.nested()?.raw())
     }
 
-    /// The SHA-1 of each attachment a short delivery receipt replaced in the original message (§6.5.2.2), in the
-    /// order the receipt carries them. Empty for every other message, and for a short receipt whose original was
-    /// encrypted or had no attachment.
-    #[must_use]
-    pub fn attachment_hashes(&self) -> &[AttachmentHash] {
-        self.hashes.as_deref().unwrap_or_default()
-    }
-
-    /// Checks a short delivery receipt against the message the sender sent, given as its raw bytes (§6.5.2.2). Each
-    /// attachment of the sent message, hashed as the provider hashes it, is paired with what the receipt carries
-    /// under its file name, and failing that with what holds its SHA-1: a hash, or the attachment itself when the
-    /// provider left it in place. A text attachment's hash may be over its canonical CRLF form only, or over that
-    /// or its LF form, as `line_ends` says. The checks follow the order of the sent attachments, then list what
-    /// the receipt carries for no sent attachment.
+    /// Identifies a short receipt's generated hashes using the sent message, in receipt order (§6.5.2.2).
+    ///
+    /// Carried user files are excluded even when their names end in `.hash`.
+    /// Returns an empty list for other messages or a receipt without an original.
     ///
     /// # Errors
     ///
-    /// Returns [`Error::NotShortReceipt`] when this message is not a short delivery receipt carrying the original,
-    /// and [`Error::NotMime`] when `sent` is not MIME.
+    /// Returns [`Error::NotMime`] for an invalid sent message or [`Error::InvalidAttachmentHash`] for malformed generated hashes.
+    pub fn attachment_hashes(
+        &self,
+        sent: &[u8],
+        line_ends: TextLineEnds,
+    ) -> Result<Vec<AttachmentHash>, Error> {
+        self.short_original().map_or_else(
+            || Ok(Vec::new()),
+            |original| attachment_hash::read(original, sent, line_ends),
+        )
+    }
+
+    /// Compares a short receipt's attachments against the sent message (§6.5.2.2).
+    ///
+    /// Exact named matches precede name-only differences, then renamed content is paired by digest.
+    /// `line_ends` selects the accepted text/message hash forms, while carried bytes must be unchanged.
+    /// Results follow sent attachment order, followed by unpaired receipt parts.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotShortReceipt`] without a short receipt's original, [`Error::NotMime`] for an invalid sent message, or [`Error::InvalidAttachmentHash`] for malformed generated hashes.
     pub fn check_attachments(
         &self,
         sent: &[u8],
         line_ends: TextLineEnds,
     ) -> Result<Vec<AttachmentCheck>, Error> {
-        let (Some(hashes), Some(original)) = (
-            self.hashes.as_deref(),
-            self.original
-                .and_then(|id| self.parsed.part(id))
-                .and_then(|part| part.nested()),
-        ) else {
-            return Err(Error::NotShortReceipt);
-        };
-        attachment_hash::check(hashes, original, sent, line_ends)
+        let original = self.short_original().ok_or(Error::NotShortReceipt)?;
+        attachment_hash::check(original, sent, line_ends)
+    }
+
+    /// The original carried by a short delivery receipt.
+    fn short_original(&self) -> Option<MessageRef<'_>> {
+        if self.kind != MessageKind::Certified(Kind::Delivery)
+            || self.certification.as_ref()?.data.receipt != Some(ReceiptKind::Short)
+        {
+            return None;
+        }
+        self.parsed.part(self.original?)?.nested()
     }
 }
 

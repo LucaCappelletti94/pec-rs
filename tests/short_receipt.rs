@@ -67,10 +67,11 @@ fn sha1(hex: &str) -> [u8; 20] {
 }
 
 /// The name and digest of every hash the receipt carries, in order.
-fn hashes(raw: &[u8]) -> Vec<(String, [u8; 20])> {
+fn hashes(raw: &[u8], sent: &[u8]) -> Vec<(String, [u8; 20])> {
     Message::parse(raw)
         .expect("a valid short receipt")
-        .attachment_hashes()
+        .attachment_hashes(sent, TextLineEnds::Canonical)
+        .expect("valid generated hashes")
         .iter()
         .map(|hash| (hash.name().to_owned(), *hash.sha1()))
         .collect()
@@ -98,19 +99,34 @@ fn expected() -> Vec<(String, [u8; 20])> {
 /// Each `.hash` part names the replaced file and holds its SHA-1 in upper or lower case, as providers differ.
 #[test]
 fn short_receipt_carries_one_hash_per_attachment() {
-    assert_eq!(hashes(&message("delivery-short.eml")), expected());
+    assert_eq!(
+        hashes(&message("delivery-short.eml"), &sent("attachments.eml")),
+        expected()
+    );
 }
 
 /// A signed original keeps its signature part, and the hashes replace the attachments inside the signed part.
 #[test]
 fn signed_original_carries_its_hashes_inside_the_signed_part() {
-    assert_eq!(hashes(&message("delivery-short-signed.eml")), expected());
+    assert_eq!(
+        hashes(
+            &message("delivery-short-signed.eml"),
+            &sent("attachments-signed.eml")
+        ),
+        expected()
+    );
 }
 
 /// An encrypted original is left whole, since its attachments cannot be found inside the CMS object.
 #[test]
 fn encrypted_original_carries_no_hash() {
-    assert_eq!(hashes(&message("delivery-short-encrypted.eml")), Vec::new());
+    assert_eq!(
+        hashes(
+            &message("delivery-short-encrypted.eml"),
+            &sent("encrypted.eml")
+        ),
+        Vec::new()
+    );
 }
 
 /// Only a short receipt replaces attachments, so a full receipt keeps a sender's own attachment named `.hash` as it
@@ -118,7 +134,7 @@ fn encrypted_original_carries_no_hash() {
 #[test]
 fn full_receipt_reads_no_hash() {
     let raw = message("delivery-full-user-hash.eml");
-    assert_eq!(hashes(&raw), Vec::new());
+    assert_eq!(hashes(&raw, &sent("user-hash.eml")), Vec::new());
 }
 
 /// A `.hash` part holds exactly 40 hexadecimal digits.
@@ -134,11 +150,22 @@ fn malformed_hash_is_refused() {
         "FF20C898B2AB8B020F1F3D3F07FFF7BC37A988AG",
     ] {
         let raw = replaced(&message("delivery-short.eml"), digits, broken);
-        assert_eq!(
-            Message::parse(&raw).map(|_| ()),
-            Err(Error::InvalidAttachmentHash("fattura.xml.hash".to_owned())),
-            "{broken}"
-        );
+        let receipt = Message::parse(&raw).expect("the envelope is readable");
+        let original = sent("attachments.eml");
+        for result in [
+            receipt
+                .attachment_hashes(&original, TextLineEnds::Canonical)
+                .map(|_| ()),
+            receipt
+                .check_attachments(&original, TextLineEnds::Canonical)
+                .map(|_| ()),
+        ] {
+            assert_eq!(
+                result,
+                Err(Error::InvalidAttachmentHash("fattura.xml.hash".to_owned())),
+                "{broken}"
+            );
+        }
     }
 }
 
@@ -151,7 +178,7 @@ fn hash_may_end_with_a_line_end() {
         digits,
         &format!("{digits}\r\n"),
     );
-    assert_eq!(hashes(&raw), expected());
+    assert_eq!(hashes(&raw, &sent("attachments.eml")), expected());
 }
 
 /// An attachment the provider left in place is not one of the hashes.
@@ -160,7 +187,7 @@ fn unreplaced_attachment_is_no_hash() {
     let raw = replaced(&message("delivery-short.eml"), "nota.txt.hash", "nota.txt");
     let mut expected = expected();
     expected.remove(1);
-    assert_eq!(hashes(&raw), expected);
+    assert_eq!(hashes(&raw, &sent("attachments.eml")), expected);
 }
 
 /// The hash of each sent attachment is the SHA-1 of its decoded content, or of an attached message as sent. The
@@ -331,6 +358,155 @@ fn renamed_text_hashed_with_lf_pairs_by_digest() {
         receipt.check_attachments(&sent("attachments-lines.eml"), TextLineEnds::CanonicalOrLf),
         Ok(vec![
             AttachmentCheck::Matches(Some("righe.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+}
+
+/// Wraps one multipart's children in an unnamed multipart container.
+fn nested(raw: &[u8], boundary: &str) -> Vec<u8> {
+    let raw = replaced(
+        raw,
+        &format!("boundary=\"{boundary}\""),
+        "boundary=\"nested-container\"",
+    );
+    let text = core::str::from_utf8(&raw).expect("ascii fixture");
+    let text = text.replacen(
+        &format!("--{boundary}\r\n"),
+        &format!(
+            "--nested-container\r\nContent-Type: multipart/mixed; boundary=\"{boundary}\"\r\n\r\n--{boundary}\r\n"
+        ),
+        1,
+    );
+    replaced(
+        text.as_bytes(),
+        &format!("--{boundary}--"),
+        &format!("--{boundary}--\r\n--nested-container--"),
+    )
+}
+
+#[test]
+fn nested_attachments_are_checked() {
+    let raw = nested(&message("delivery-short.eml"), "pec-short");
+    let original = nested(&sent("attachments.eml"), "pec-sent");
+    let receipt = Message::parse(&raw).expect("nested receipt");
+    assert_eq!(hashes(&raw, &original), expected());
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(all_match())
+    );
+    let changed = replaced(&original, "Nota con", "Nota sul");
+    assert_eq!(
+        receipt.check_attachments(&changed, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
+            AttachmentCheck::Differs("nota.txt".to_owned()),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+}
+
+#[test]
+fn carried_hash_suffix_is_not_a_generated_hash() {
+    let original = replaced(
+        &sent("attachments-kept.eml"),
+        "fattura.xml",
+        "document.hash",
+    );
+    let raw = replaced(
+        &message("delivery-short-kept.eml"),
+        "fattura.xml",
+        "document.hash",
+    );
+    let receipt = Message::parse(&raw).expect("a carried user file");
+    assert_eq!(hashes(&raw, &original), expected()[1..]);
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Carried(Some("document.hash".to_owned())),
+            AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+}
+
+#[test]
+fn carried_text_hash_files_use_sent_content() {
+    for content in [
+        "0000000000000000000000000000000000000000",
+        "user data rather than hexadecimal digits",
+    ] {
+        let original = replaced(&sent("attachments-kept.eml"), "nota.txt", "document.hash");
+        let original = replaced(
+            &original,
+            "Nota con una lettera accentata: =C3=A8.=0A",
+            content,
+        );
+        let raw = replaced(
+            &message("delivery-short-kept.eml"),
+            "nota.txt.hash",
+            "document.hash",
+        );
+        let raw = replaced(&raw, "6A07A23FF2F2C1F378DA855D1AE1218BB1AB539C", content);
+        let receipt = Message::parse(&raw).expect("a carried text file");
+        assert_eq!(hashes(&raw, &original), expected()[2..]);
+        assert_eq!(
+            receipt.check_attachments(&original, TextLineEnds::Canonical),
+            Ok(vec![
+                AttachmentCheck::Carried(Some("fattura.xml".to_owned())),
+                AttachmentCheck::Carried(Some("document.hash".to_owned())),
+                AttachmentCheck::Matches(None),
+            ]),
+            "{content}"
+        );
+    }
+}
+
+#[test]
+fn duplicate_names_pair_by_content() {
+    let original = replaced(&sent("attachments-kept.eml"), "nota.txt", "fattura.xml");
+    let raw = replaced(
+        &message("delivery-short-kept.eml"),
+        "nota.txt.hash",
+        "fattura.xml.hash",
+    );
+    let receipt = Message::parse(&raw).expect("same-named attachments");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Carried(Some("fattura.xml".to_owned())),
+            AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
+    );
+}
+
+#[test]
+fn changed_duplicate_does_not_consume_another_attachments_hash() {
+    let original = replaced(&sent("attachments.eml"), "nota.txt", "fattura.xml");
+    let original = replaced(
+        &original,
+        "PD94bWwgdmVyc2lvbj0iMS4w",
+        "PD94bWwgdmVyc2lvbj0iMS4x",
+    );
+    let raw = replaced(
+        &message("delivery-short.eml"),
+        "nota.txt.hash",
+        "fattura.xml.hash",
+    );
+    let raw = replaced(&raw, "FF20C898B2AB8B020F1F3D3F07FFF7BC37A988A5", "SWAP");
+    let raw = replaced(
+        &raw,
+        "6a07a23ff2f2c1f378da855d1ae1218bb1ab539c",
+        "FF20C898B2AB8B020F1F3D3F07FFF7BC37A988A5",
+    );
+    let raw = replaced(&raw, "SWAP", "6a07a23ff2f2c1f378da855d1ae1218bb1ab539c");
+    let receipt = Message::parse(&raw).expect("same-named hashes");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Differs("fattura.xml".to_owned()),
+            AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
             AttachmentCheck::Matches(None),
         ])
     );

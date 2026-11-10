@@ -282,3 +282,15 @@ fn utc_zone_is_written_positive() {
     let written = data.to_xml().expect("writes");
     assert!(written.contains("zona=\"+0000\""), "{written}");
 }
+
+#[test]
+fn sub_minute_offsets_are_rejected() {
+    for seconds in [1, -1, 19_830, -19_830] {
+        let result = CertifiedAt::new(
+            Date::new(2026, 11, 8).expect("date"),
+            Time::new(10, 15, 0, 0).expect("time"),
+            Offset::from_seconds(seconds).expect("offset"),
+        );
+        assert!(result.is_err(), "{seconds}: {result:?}");
+    }
+}
