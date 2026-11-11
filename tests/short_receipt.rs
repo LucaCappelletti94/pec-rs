@@ -263,6 +263,56 @@ fn kept_attachment_is_carried() {
     );
 }
 
+#[test]
+fn carried_attached_message_preserves_headers_and_body() {
+    let original = sent("attachments.eml");
+    let attached = core::str::from_utf8(&original)
+        .expect("ASCII sent fixture")
+        .split_once("Content-Type: message/rfc822\r\n")
+        .expect("attached message")
+        .1
+        .split_once("\r\n--pec-sent--")
+        .expect("closing MIME boundary")
+        .0;
+    let raw = replaced(
+        &message("delivery-short.eml"),
+        concat!(
+            "Content-Type: text/plain; name=\"null.hash\"\r\n",
+            "Content-Disposition: attachment; filename=\"null.hash\"\r\n",
+            "Content-Transfer-Encoding: 7bit\r\n\r\n",
+            "5668EBDFEC476CFB773752C7875F9C9DD778B778",
+        ),
+        &format!("Content-Type: message/rfc822\r\n{attached}"),
+    );
+    let receipt = Message::parse(&raw).expect("receipt carrying the attached message");
+    assert_eq!(hashes(&raw, &original), expected()[..2]);
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
+            AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+            AttachmentCheck::Carried(None),
+        ])
+    );
+    for (from, to) in [
+        ("Subject: Ordine di acquisto", "Subject: Ordine modificato"),
+        ("Ordine numero 42", "Ordine numero 43"),
+    ] {
+        let changed = replaced(&raw, from, to);
+        let receipt = Message::parse(&changed).expect("receipt carrying a changed message");
+        assert_eq!(
+            receipt.check_attachments(&original, TextLineEnds::Canonical),
+            Ok(vec![
+                AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
+                AttachmentCheck::Matches(Some("nota.txt".to_owned())),
+                AttachmentCheck::Missing(None),
+                AttachmentCheck::NotSent(None),
+            ]),
+            "{from}"
+        );
+    }
+}
+
 /// A kept attachment that is not the sent one differs, and when the sent one is renamed as well the receipt's copy
 /// is reported as not sent.
 #[test]
