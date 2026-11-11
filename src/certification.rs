@@ -196,12 +196,16 @@ impl CertifiedAt {
     ///
     /// # Errors
     ///
-    /// Fails when `time` has a sub-second part, which the format of §7.2 cannot carry, or when the instant falls
-    /// outside the range [`Timestamp`] represents.
+    /// Fails when the time has fractional seconds, the offset has fractional minutes, or the instant exceeds [`Timestamp`]'s range.
     pub fn new(date: Date, time: Time, offset: Offset) -> Result<Self, jiff::Error> {
         if time.subsec_nanosecond() != 0 {
             return Err(jiff::Error::from_args(format_args!(
                 "{time} has a sub-second part"
+            )));
+        }
+        if offset.seconds() % 60 != 0 {
+            return Err(jiff::Error::from_args(format_args!(
+                "{offset} has a sub-minute part"
             )));
         }
         let timestamp = offset.to_timestamp(date.to_datetime(time))?;

@@ -1,8 +1,8 @@
-//! The errors of reading a PEC message or its certification data.
+//! Errors from reading PEC data and checking receipt attachments.
 
 use crate::{Kind, MessageKind};
 
-/// Why a message or a `daticert.xml` could not be read as PEC.
+/// Why PEC data could not be read or a receipt's attachments could not be checked.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
     /// The input is not a MIME message.
@@ -45,7 +45,7 @@ pub enum Error {
     /// A summary delivery receipt carries an original message, though it carries only `daticert.xml` (§6.5.2.3).
     #[error("the summary delivery receipt carries an original message")]
     OriginalInSummaryReceipt,
-    /// A `.hash` part of a short delivery receipt, named here, does not hold 40 hexadecimal digits (§6.5.2.2).
+    /// A generated hash part identified against the sent message does not hold 40 hexadecimal digits (§6.5.2.2).
     #[error("the part {0:?} does not hold 40 hexadecimal digits")]
     InvalidAttachmentHash(String),
     /// The message is not a short delivery receipt carrying the original, so it holds no hashes to check (§6.5.2.2).
