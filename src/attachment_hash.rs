@@ -6,6 +6,8 @@ use sha1::{Digest, Sha1};
 
 use crate::Error;
 
+mod assignment;
+
 /// An attachment of the original message that a short delivery receipt replaced with its SHA-1 (§6.5.2.2).
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AttachmentHash {
@@ -16,8 +18,7 @@ pub struct AttachmentHash {
 }
 
 impl AttachmentHash {
-    /// The file name of the replaced attachment. A provider names an attachment that has none as it sees fit,
-    /// and Aruba writes `null`.
+    /// The receipt's filename with any `.hash` suffix removed.
     #[must_use]
     pub fn name(&self) -> &str {
         &self.name
@@ -78,7 +79,7 @@ pub(crate) fn read(
         .filter(|candidate| !candidate.carried)
         .filter_map(|candidate| {
             Some(AttachmentHash {
-                name: candidate.hash_name()?.to_owned(),
+                name: candidate.name()?.to_owned(),
                 sha1: candidate.hash?,
             })
         })
@@ -151,61 +152,8 @@ impl<'r, 's> Comparison<'r, 's> {
     ) -> Result<Self, Error> {
         let outgoing = attachments(sent, line_ends);
         let mut candidates: Vec<_> = replaceable(original).map(Candidate::new).collect();
-        let mut pairs = vec![None; outgoing.len()];
-        pair(
-            &outgoing,
-            &mut candidates,
-            &mut pairs,
-            true,
-            |sent, candidate| {
-                sent.name.is_some() && sent.name == candidate.file && sent.sha1 == candidate.sha1
-            },
-        );
-        pair(
-            &outgoing,
-            &mut candidates,
-            &mut pairs,
-            false,
-            |sent, candidate| {
-                sent.name.is_some()
-                    && sent.name == candidate.hash_name()
-                    && candidate.hash.is_some_and(|hash| sent.has(&hash))
-            },
-        );
-        pair(
-            &outgoing,
-            &mut candidates,
-            &mut pairs,
-            true,
-            |sent, candidate| sent.name.is_some() && sent.name == candidate.file,
-        );
-        pair(
-            &outgoing,
-            &mut candidates,
-            &mut pairs,
-            false,
-            |sent, candidate| sent.name.is_some() && sent.name == candidate.hash_name(),
-        );
-        pair(
-            &outgoing,
-            &mut candidates,
-            &mut pairs,
-            false,
-            |sent, candidate| candidate.hash.is_some_and(|hash| sent.has(&hash)),
-        );
-        pair(
-            &outgoing,
-            &mut candidates,
-            &mut pairs,
-            true,
-            |sent, candidate| sent.sha1 == candidate.sha1,
-        );
+        let pairs = assignment::assign(&outgoing, &mut candidates)?;
         for candidate in &mut candidates {
-            if !candidate.paired && !candidate.carried {
-                candidate.carried = outgoing
-                    .iter()
-                    .any(|sent| sent.name.is_some() && sent.name == candidate.file);
-            }
             if let Some(file) = candidate.file
                 && !candidate.carried
                 && candidate.hash.is_none()
@@ -230,45 +178,13 @@ struct Pair<'a> {
     changed_name: Option<&'a str>,
 }
 
-/// Assigns unpaired candidates satisfying one comparison phase.
-fn pair<'s>(
-    outgoing: &[Attachment<'s>],
-    candidates: &mut [Candidate<'_>],
-    pairs: &mut [Option<Pair<'s>>],
-    carried: bool,
-    matches: impl Fn(&Attachment<'s>, &Candidate<'_>) -> bool,
-) {
-    for (sent, pair) in outgoing.iter().zip(pairs) {
-        if pair.is_some() {
-            continue;
-        }
-        if let Some((index, candidate)) = candidates
-            .iter_mut()
-            .enumerate()
-            .find(|(_, candidate)| !candidate.paired && matches(sent, candidate))
-        {
-            candidate.paired = true;
-            candidate.carried = carried;
-            let equal = if carried {
-                sent.sha1 == candidate.sha1
-            } else {
-                candidate.hash.is_some_and(|hash| sent.has(&hash))
-            };
-            *pair = Some(Pair {
-                candidate: index,
-                changed_name: sent.name.filter(|_| !equal),
-            });
-        }
-    }
-}
-
 /// A receipt attachment with both its carried bytes and possible generated digest.
 struct Candidate<'a> {
     /// The complete filename, including any `.hash` suffix.
     file: Option<&'a str>,
     /// The digest of this part's content.
     sha1: [u8; 20],
-    /// A digest written inside a `.hash` part.
+    /// A possible generated digest written inside a named part.
     hash: Option<[u8; 20]>,
     /// Whether the part represents carried content.
     carried: bool,
@@ -291,7 +207,7 @@ impl<'a> Candidate<'a> {
         Self {
             file,
             sha1: Sha1::digest(content).into(),
-            hash: hash_name.and_then(|_| digest(content.trim_ascii())),
+            hash: file.and_then(|_| digest(content.trim_ascii())),
             carried: hash_name.is_none(),
             paired: false,
         }
@@ -307,7 +223,7 @@ impl<'a> Candidate<'a> {
         if self.carried {
             self.file
         } else {
-            self.hash_name()
+            self.hash_name().or(self.file)
         }
     }
 
