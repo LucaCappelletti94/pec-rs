@@ -215,6 +215,13 @@ fn no_recipient_is_rejected() {
 }
 
 #[test]
+fn empty_recipients_cannot_be_serialized() {
+    let mut data = CertificationData::from_xml(&fixture("acceptance.xml")).expect("valid");
+    data.header.recipients.clear();
+    assert!(matches!(data.to_xml(), Err(Error::CertificationData(_))));
+}
+
+#[test]
 fn unknown_kind_is_rejected() {
     let result = edited(|xml| xml.replace("tipo=\"accettazione\"", "tipo=\"consegna\""));
     assert!(
@@ -292,5 +299,32 @@ fn sub_minute_offsets_are_rejected() {
             Offset::from_seconds(seconds).expect("offset"),
         );
         assert!(result.is_err(), "{seconds}: {result:?}");
+    }
+}
+
+#[test]
+fn negative_certification_year_is_rejected() {
+    let result = CertifiedAt::new(
+        Date::new(-1, 1, 1).expect("date"),
+        Time::new(0, 0, 0, 0).expect("time"),
+        Offset::UTC,
+    );
+    assert!(result.is_err(), "{result:?}");
+}
+
+#[test]
+fn four_digit_year_boundaries_round_trip() {
+    for year in [0, 9999] {
+        let mut data = CertificationData::from_xml(&fixture("acceptance.xml")).expect("valid");
+        data.data.at = CertifiedAt::new(
+            Date::new(year, 1, 1).expect("date"),
+            Time::new(0, 0, 0, 0).expect("time"),
+            Offset::UTC,
+        )
+        .expect("a representable certification date");
+        assert_eq!(
+            CertificationData::from_xml(&data.to_xml().expect("writes")).expect("reads"),
+            data
+        );
     }
 }

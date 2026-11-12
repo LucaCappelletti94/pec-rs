@@ -196,8 +196,13 @@ impl CertifiedAt {
     ///
     /// # Errors
     ///
-    /// Fails when the time has fractional seconds, the offset has fractional minutes, or the instant exceeds [`Timestamp`]'s range.
+    /// Fails when the year is negative, the time has fractional seconds, the offset has fractional minutes, or the instant exceeds [`Timestamp`]'s range.
     pub fn new(date: Date, time: Time, offset: Offset) -> Result<Self, jiff::Error> {
+        if date.year() < 0 {
+            return Err(jiff::Error::from_args(format_args!(
+                "{date} has a negative year"
+            )));
+        }
         if time.subsec_nanosecond() != 0 {
             return Err(jiff::Error::from_args(format_args!(
                 "{time} has a sub-second part"
@@ -341,9 +346,13 @@ impl CertificationData {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::CertificationData`] when the serializer fails, which a value built from this crate's types
-    /// does not cause.
+    /// Returns [`Error::CertificationData`] when there are no recipients or serialization fails.
     pub fn to_xml(&self) -> Result<String, Error> {
+        if self.header.recipients.is_empty() {
+            return Err(Error::CertificationData(
+                "at least one recipient is required".to_owned(),
+            ));
+        }
         let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         let mut serializer = quick_xml::se::Serializer::new(&mut xml);
         serializer.indent(' ', 2);
