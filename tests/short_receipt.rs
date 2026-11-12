@@ -5,7 +5,9 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
+use core::fmt::Write as _;
 use pec::{AttachmentCheck, Error, Message, TextLineEnds};
+use sha1::{Digest, Sha1};
 
 /// Reads a signed message fixture.
 fn message(name: &str) -> Vec<u8> {
@@ -559,5 +561,56 @@ fn changed_duplicate_does_not_consume_another_attachments_hash() {
             AttachmentCheck::Matches(Some("fattura.xml".to_owned())),
             AttachmentCheck::Matches(None),
         ])
+    );
+}
+
+/// Wraps a replacement original in the short receipt fixture.
+fn receipt_with(original: &[u8]) -> Vec<u8> {
+    let raw = message("delivery-short.eml");
+    let raw = core::str::from_utf8(&raw).expect("ASCII fixture");
+    let marker = "Content-Disposition: inline; filename=\"postacert.eml\"\r\n\r\n";
+    let start = raw.find(marker).expect("original header") + marker.len();
+    let end = start
+        + raw[start..]
+            .find("\r\n--pec-inner--")
+            .expect("original end");
+    let mut result = Vec::with_capacity(start + original.len() + raw.len() - end);
+    result.extend_from_slice(&raw.as_bytes()[..start]);
+    result.extend_from_slice(original);
+    result.extend_from_slice(&raw.as_bytes()[end..]);
+    result
+}
+
+/// Hexadecimal SHA-1 of a decoded payload.
+fn hex_digest(payload: &[u8]) -> String {
+    let mut hex = String::with_capacity(40);
+    for byte in Sha1::digest(payload) {
+        write!(hex, "{byte:02x}").expect("writing a string");
+    }
+    hex
+}
+
+#[test]
+fn named_single_part_roots_are_checked() {
+    let original = b"Content-Type: text/plain\r\nContent-Disposition: attachment; filename=\"only.txt\"\r\n\r\ndata";
+    let hash = hex_digest(b"data");
+    let raw = receipt_with(
+        format!("Content-Type: text/plain\r\nContent-Disposition: attachment; filename=\"only.txt.hash\"\r\n\r\n{hash}").as_bytes(),
+    );
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        hashes(&raw, original),
+        vec![("only.txt".to_owned(), sha1(&hash))]
+    );
+    assert_eq!(
+        receipt.check_attachments(original, TextLineEnds::Canonical),
+        Ok(vec![AttachmentCheck::Matches(Some("only.txt".to_owned()))])
+    );
+    assert_eq!(
+        receipt.check_attachments(
+            &replaced(original, "data", "tampered"),
+            TextLineEnds::Canonical
+        ),
+        Ok(vec![AttachmentCheck::Differs("only.txt".to_owned())])
     );
 }

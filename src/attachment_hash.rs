@@ -394,17 +394,22 @@ fn replaceable(message: MessageRef<'_>) -> impl Iterator<Item = MessagePart<'_>>
     };
     let range = content.map(|part| part.offset_header()..part.offset_end());
     let mut after = 0;
-    message.parts().skip(1).filter(move |part| {
-        let offset = part.offset_header();
-        if offset < after || !range.as_ref().is_some_and(|range| range.contains(&offset)) {
-            return false;
-        }
-        if part.attachment_name().is_none() && !part.is_message() {
-            return false;
-        }
-        after = part.offset_end();
-        true
-    })
+    let skip_root = root.is_content_type("application", "pkcs7-mime")
+        || root.is_content_type("application", "x-pkcs7-mime");
+    message
+        .parts()
+        .skip(usize::from(skip_root))
+        .filter(move |part| {
+            let offset = part.offset_header();
+            if offset < after || !range.as_ref().is_some_and(|range| range.contains(&offset)) {
+                return false;
+            }
+            if part.attachment_name().is_none() && !part.is_message() {
+                return false;
+            }
+            after = part.offset_end();
+            true
+        })
 }
 
 /// The 20 bytes written as exactly 40 hexadecimal digits of either case.
