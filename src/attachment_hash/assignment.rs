@@ -110,7 +110,7 @@ impl Matrix {
     /// Returns a feasible edge's lexicographic cost.
     fn cost(&self, row: usize, column: usize) -> Option<Cost> {
         if column >= self.receipts {
-            return Some([0; 3]);
+            return (column - self.receipts == row).then_some([0; 3]);
         }
         match self.at(row, column).level {
             3 => Some([-1, 0, 0]),
@@ -174,10 +174,14 @@ impl Matching {
             loop {
                 used[column] = true;
                 let owner = matching.owners[column];
-                let mut next = 0;
-                let mut delta = None;
+                // Each reached row has a free private missing column.
+                let missing = matrix.receipts + owner;
+                let mut next = missing;
+                let mut delta = subtract([0; 3], matching.row_cost[owner]);
+                distances[missing] = Some(delta);
+                previous[missing] = column;
                 for (candidate, &visited) in used.iter().enumerate().skip(1) {
-                    if visited {
+                    if visited || candidate == missing {
                         continue;
                     }
                     if let Some(cost) = matrix.cost(owner - 1, candidate - 1) {
@@ -191,16 +195,12 @@ impl Matching {
                         }
                     }
                     if let Some(distance) = distances[candidate]
-                        && delta.is_none_or(|best| distance < best)
+                        && (distance, candidate) < (delta, next)
                     {
-                        delta = Some(distance);
+                        delta = distance;
                         next = candidate;
                     }
                 }
-                // A free missing column always completes the augmenting path.
-                let Some(delta) = delta else {
-                    unreachable!("missing columns make every row assignable")
-                };
                 for (candidate, &visited) in used.iter().enumerate() {
                     if visited {
                         let owner = matching.owners[candidate];
