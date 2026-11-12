@@ -762,19 +762,29 @@ fn distinguishable_receipt_assignments_are_ambiguous() {
 #[test]
 fn identical_generated_extras_remain_in_receipt_order() {
     let hash = hex_digest(b"data");
-    let original = text_attachments(&[("document", "data")]);
-    let raw = receipt_with(&text_attachments(&[("document.hash", hash.as_str()); 2]));
+    let independent = hex_digest(b"independent");
+    let original = text_attachments(&[("document", "data"), ("other", "independent")]);
+    let raw = receipt_with(&text_attachments(&[
+        ("document.hash", &hash),
+        ("document.hash", &hash),
+        ("other.hash", &independent),
+    ]));
     let receipt = Message::parse(&raw).expect("a short receipt");
     assert_eq!(
         receipt.check_attachments(&original, TextLineEnds::Canonical),
         Ok(vec![
             AttachmentCheck::Matches(Some("document".to_owned())),
+            AttachmentCheck::Matches(Some("other".to_owned())),
             AttachmentCheck::NotSent(Some("document".to_owned())),
         ])
     );
     assert_eq!(
         hashes(&raw, &original),
-        vec![("document".to_owned(), sha1(&hash)); 2]
+        vec![
+            ("document".to_owned(), sha1(&hash)),
+            ("document".to_owned(), sha1(&hash)),
+            ("other".to_owned(), sha1(&independent)),
+        ]
     );
 }
 
