@@ -48,6 +48,9 @@ pub enum Error {
     /// A generated hash part identified against the sent message does not hold 40 hexadecimal digits (§6.5.2.2).
     #[error("the part {0:?} does not hold 40 hexadecimal digits")]
     InvalidAttachmentHash(String),
+    /// Equally supported assignments disagree on attachment outcomes or receipt interpretations.
+    #[error("the receipt attachments have ambiguous interpretations")]
+    AmbiguousAttachments,
     /// The message is not a short delivery receipt carrying the original, so it holds no hashes to check (§6.5.2.2).
     #[error("the message is not a short delivery receipt carrying the original")]
     NotShortReceipt,

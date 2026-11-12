@@ -184,7 +184,7 @@ impl<'a> Message<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::NotMime`] for an invalid sent message or [`Error::InvalidAttachmentHash`] for malformed generated hashes.
+    /// Returns [`Error::NotMime`] for an invalid sent message, [`Error::InvalidAttachmentHash`] for malformed generated hashes, or [`Error::AmbiguousAttachments`] when equally supported assignments disagree on outcomes or evidence interpretations.
     pub fn attachment_hashes(
         &self,
         sent: &[u8],
@@ -204,7 +204,7 @@ impl<'a> Message<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::NotShortReceipt`] without a short receipt's original, [`Error::NotMime`] for an invalid sent message, or [`Error::InvalidAttachmentHash`] for malformed generated hashes.
+    /// Returns [`Error::NotShortReceipt`] without a short receipt's original, [`Error::NotMime`] for an invalid sent message, [`Error::InvalidAttachmentHash`] for malformed generated hashes, or [`Error::AmbiguousAttachments`] when equally supported assignments disagree on outcomes or evidence interpretations.
     pub fn check_attachments(
         &self,
         sent: &[u8],

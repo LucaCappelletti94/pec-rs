@@ -5,7 +5,9 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
+use core::fmt::Write as _;
 use pec::{AttachmentCheck, Error, Message, TextLineEnds};
+use sha1::{Digest, Sha1};
 
 /// Reads a signed message fixture.
 fn message(name: &str) -> Vec<u8> {
@@ -560,4 +562,315 @@ fn changed_duplicate_does_not_consume_another_attachments_hash() {
             AttachmentCheck::Matches(None),
         ])
     );
+}
+
+/// Builds named text attachments from quoted-printable payloads.
+fn text_attachments(parts: &[(&str, &str)]) -> Vec<u8> {
+    let mut raw = String::from(
+        "MIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"assignment\"\r\n\r\n",
+    );
+    for (name, body) in parts {
+        write!(
+            raw,
+            "--assignment\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"{name}\"\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n{body}\r\n"
+        )
+        .expect("writing a string");
+    }
+    raw.push_str("--assignment--\r\n");
+    raw.into_bytes()
+}
+
+/// Wraps a replacement original in the short receipt fixture.
+fn receipt_with(original: &[u8]) -> Vec<u8> {
+    let raw = message("delivery-short.eml");
+    let raw = core::str::from_utf8(&raw).expect("ASCII fixture");
+    let marker = "Content-Disposition: inline; filename=\"postacert.eml\"\r\n\r\n";
+    let start = raw.find(marker).expect("original header") + marker.len();
+    let end = start
+        + raw[start..]
+            .find("\r\n--pec-inner--")
+            .expect("original end");
+    let mut result = Vec::with_capacity(start + original.len() + raw.len() - end);
+    result.extend_from_slice(&raw.as_bytes()[..start]);
+    result.extend_from_slice(original);
+    result.extend_from_slice(&raw.as_bytes()[end..]);
+    result
+}
+
+/// Hexadecimal SHA-1 of a decoded payload.
+fn hex_digest(payload: &[u8]) -> String {
+    let mut hex = String::with_capacity(40);
+    for byte in Sha1::digest(payload) {
+        write!(hex, "{byte:02x}").expect("writing a string");
+    }
+    hex
+}
+
+#[test]
+fn named_single_part_roots_are_checked() {
+    let original = b"Content-Type: text/plain\r\nContent-Disposition: attachment; filename=\"only.txt\"\r\n\r\ndata";
+    let hash = hex_digest(b"data");
+    let raw = receipt_with(
+        format!("Content-Type: text/plain\r\nContent-Disposition: attachment; filename=\"only.txt.hash\"\r\n\r\n{hash}").as_bytes(),
+    );
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        hashes(&raw, original),
+        vec![("only.txt".to_owned(), sha1(&hash))]
+    );
+    assert_eq!(
+        receipt.check_attachments(original, TextLineEnds::Canonical),
+        Ok(vec![AttachmentCheck::Matches(Some("only.txt".to_owned()))])
+    );
+    assert_eq!(
+        receipt.check_attachments(
+            &replaced(original, "data", "tampered"),
+            TextLineEnds::Canonical
+        ),
+        Ok(vec![AttachmentCheck::Differs("only.txt".to_owned())])
+    );
+}
+
+#[test]
+fn checksum_chain_uses_a_complete_assignment() {
+    let hash = hex_digest(b"data");
+    let checksum_hash = hex_digest(hash.as_bytes());
+    let original = text_attachments(&[("document", "data"), ("document.hash", &hash)]);
+    let raw = receipt_with(&text_attachments(&[
+        ("document.hash", &hash),
+        ("document.hash.hash", &checksum_hash),
+    ]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("document".to_owned())),
+            AttachmentCheck::Matches(Some("document.hash".to_owned())),
+        ])
+    );
+    assert_eq!(
+        hashes(&raw, &original),
+        vec![
+            ("document".to_owned(), sha1(&hash)),
+            ("document.hash".to_owned(), sha1(&checksum_hash)),
+        ]
+    );
+}
+
+#[test]
+fn indistinguishable_checksum_interpretations_are_rejected() {
+    let hash = hex_digest(b"data");
+    let original = text_attachments(&[("document", "data"), ("document.hash", &hash)]);
+    let raw = receipt_with(&text_attachments(&[("document.hash", &hash)]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Err(Error::AmbiguousAttachments)
+    );
+    assert_eq!(
+        receipt.attachment_hashes(&original, TextLineEnds::Canonical),
+        Err(Error::AmbiguousAttachments)
+    );
+}
+
+#[test]
+fn line_ending_alternatives_reserve_required_hashes() {
+    let canonical = hex_digest(b"a\r\nb");
+    let lf = hex_digest(b"a\nb");
+    let originals = [
+        text_attachments(&[("text", "a=0D=0Ab"), ("text", "a=0Ab")]),
+        text_attachments(&[("text", "a=0Ab"), ("text", "a=0D=0Ab")]),
+    ];
+    for original in originals {
+        for hashes in [[&lf, &canonical], [&canonical, &lf]] {
+            let raw = receipt_with(&text_attachments(&[
+                ("text.hash", hashes[0]),
+                ("text.hash", hashes[1]),
+            ]));
+            let receipt = Message::parse(&raw).expect("a short receipt");
+            assert_eq!(
+                receipt.check_attachments(&original, TextLineEnds::CanonicalOrLf),
+                Ok(vec![AttachmentCheck::Matches(Some("text".to_owned())); 2])
+            );
+            assert_eq!(
+                receipt
+                    .attachment_hashes(&original, TextLineEnds::CanonicalOrLf)
+                    .expect("unambiguous hashes")
+                    .iter()
+                    .map(|hash| *hash.sha1())
+                    .collect::<Vec<_>>(),
+                hashes.map(|hash| sha1(hash))
+            );
+        }
+    }
+}
+
+#[test]
+fn identical_receipt_copies_preserve_interpretation_counts() {
+    let hash = hex_digest(b"data");
+    let original = text_attachments(&[("document", "data"), ("document.hash", &hash)]);
+    let raw = receipt_with(&text_attachments(&[("document.hash", hash.as_str()); 3]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("document".to_owned())),
+            AttachmentCheck::Carried(Some("document.hash".to_owned())),
+            AttachmentCheck::NotSent(Some("document.hash".to_owned())),
+        ])
+    );
+    assert_eq!(
+        hashes(&raw, &original),
+        vec![("document".to_owned(), sha1(&hash))]
+    );
+}
+
+#[test]
+fn distinguishable_receipt_assignments_are_ambiguous() {
+    let hash = hex_digest(b"data");
+    let cases = [
+        (
+            text_attachments(&[("document", "data")]),
+            text_attachments(&[("first.hash", &hash), ("second.hash", &hash)]),
+        ),
+        (
+            text_attachments(&[("document", "data"), ("document.hash", "checksum")]),
+            text_attachments(&[
+                ("document.hash", "0000000000000000000000000000000000000000"),
+                ("document.hash", "1111111111111111111111111111111111111111"),
+            ]),
+        ),
+        (
+            text_attachments(&[("document", "data"); 2]),
+            text_attachments(&[("document.hash", &hash)]),
+        ),
+    ];
+    for (original, evidence) in cases {
+        let raw = receipt_with(&evidence);
+        let receipt = Message::parse(&raw).expect("a short receipt");
+        assert_eq!(
+            receipt.check_attachments(&original, TextLineEnds::Canonical),
+            Err(Error::AmbiguousAttachments)
+        );
+        assert_eq!(
+            receipt.attachment_hashes(&original, TextLineEnds::Canonical),
+            Err(Error::AmbiguousAttachments)
+        );
+    }
+}
+
+#[test]
+fn identical_generated_extras_remain_in_receipt_order() {
+    let hash = hex_digest(b"data");
+    let independent = hex_digest(b"independent");
+    let original = text_attachments(&[("document", "data"), ("other", "independent")]);
+    let raw = receipt_with(&text_attachments(&[
+        ("document.hash", &hash),
+        ("document.hash", &hash),
+        ("other.hash", &independent),
+    ]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("document".to_owned())),
+            AttachmentCheck::Matches(Some("other".to_owned())),
+            AttachmentCheck::NotSent(Some("document".to_owned())),
+        ])
+    );
+    assert_eq!(
+        hashes(&raw, &original),
+        vec![
+            ("document".to_owned(), sha1(&hash)),
+            ("document".to_owned(), sha1(&hash)),
+            ("other".to_owned(), sha1(&independent)),
+        ]
+    );
+}
+
+#[test]
+fn filename_differences_take_priority_over_renamed_content() {
+    let hash = hex_digest(b"second");
+    let original = text_attachments(&[("first", "first"), ("second", "second")]);
+    let raw = receipt_with(&text_attachments(&[("first.hash", &hash)]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Differs("first".to_owned()),
+            AttachmentCheck::Missing(Some("second".to_owned())),
+        ])
+    );
+}
+
+#[test]
+fn empty_attachment_sides_report_missing_and_unsent_evidence() {
+    let empty = text_attachments(&[]);
+    let original = text_attachments(&[("document", "data")]);
+    let raw = receipt_with(&empty);
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![AttachmentCheck::Missing(Some("document".to_owned()))])
+    );
+    assert_eq!(
+        receipt.check_attachments(&empty, TextLineEnds::Canonical),
+        Ok(vec![])
+    );
+    let hash = hex_digest(b"data");
+    let raw = receipt_with(&text_attachments(&[
+        ("document.hash", &hash),
+        ("extra", "extra"),
+    ]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&empty, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::NotSent(Some("document".to_owned())),
+            AttachmentCheck::NotSent(Some("extra".to_owned())),
+        ])
+    );
+    assert_eq!(
+        hashes(&raw, &empty),
+        vec![("document".to_owned(), sha1(&hash))]
+    );
+}
+
+#[test]
+fn renamed_generated_digest_needs_no_hash_suffix() {
+    let hash = hex_digest(b"data");
+    let unrelated = hex_digest(b"unrelated");
+    let original = text_attachments(&[("document", "data")]);
+    let raw = receipt_with(&text_attachments(&[
+        ("checksum.txt", &hash),
+        ("unrelated.txt", &unrelated),
+    ]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("document".to_owned())),
+            AttachmentCheck::NotSent(Some("unrelated.txt".to_owned())),
+        ])
+    );
+    assert_eq!(
+        hashes(&raw, &original),
+        vec![("checksum.txt".to_owned(), sha1(&hash))]
+    );
+}
+
+#[test]
+fn carried_digest_text_retains_full_filename_priority() {
+    let hash = hex_digest(b"data");
+    let original = text_attachments(&[("document", "data"), ("checksum.txt", &hash)]);
+    let raw = receipt_with(&text_attachments(&[("checksum.txt", &hash)]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Missing(Some("document".to_owned())),
+            AttachmentCheck::Carried(Some("checksum.txt".to_owned())),
+        ])
+    );
+    assert_eq!(hashes(&raw, &original), vec![]);
 }
