@@ -31,7 +31,7 @@ pub struct Message<'a> {
 }
 
 impl<'a> Message<'a> {
-    /// Reads a message as delivered to a PEC mailbox.
+    /// Reads a message as delivered to a PEC mailbox, allowing an empty original subject.
     ///
     /// # Errors
     ///
@@ -57,7 +57,7 @@ impl<'a> Message<'a> {
         }
         let prefix = subject_prefix(kind, security_error);
         let subject = headers.subject().unwrap_or_default();
-        if !subject.starts_with(prefix) {
+        if !subject.starts_with(prefix) && subject != prefix.trim_end() {
             return Err(Error::SubjectMismatch {
                 expected: prefix,
                 subject: subject.to_owned(),
@@ -139,7 +139,7 @@ impl<'a> Message<'a> {
         self.security_error
     }
 
-    /// The subject of the original message, without the prefix the provider added.
+    /// The possibly empty subject of the original message, without the prefix the provider added.
     #[must_use]
     pub fn subject(&self) -> &str {
         self.parsed

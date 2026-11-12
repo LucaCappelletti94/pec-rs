@@ -185,6 +185,38 @@ fn subject_prefix_must_match_the_kind() {
 }
 
 #[test]
+fn empty_original_subject_is_accepted() {
+    let cases = [
+        (
+            "acceptance.eml",
+            SUBJECT,
+            MessageKind::Certified(Kind::Acceptance),
+        ),
+        (
+            "non-acceptance-virus.eml",
+            SUBJECT,
+            MessageKind::Certified(Kind::NonAcceptance),
+        ),
+        (
+            "transport.eml",
+            SUBJECT,
+            MessageKind::Certified(Kind::Transport),
+        ),
+        (
+            "anomaly.eml",
+            "Richiesta informazioni",
+            MessageKind::Anomaly,
+        ),
+    ];
+    for (name, subject, kind) in cases {
+        let raw = replaced(&message(name), subject, "");
+        let parsed = Message::parse(&raw).unwrap_or_else(|error| panic!("{name}: {error}"));
+        assert_eq!(parsed.kind(), kind, "{name}");
+        assert_eq!(parsed.subject(), "", "{name}");
+    }
+}
+
+#[test]
 fn certification_data_must_match_the_kind() {
     let raw = replaced(
         &replaced(
