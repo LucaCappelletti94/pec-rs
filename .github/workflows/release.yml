@@ -1,0 +1,67 @@
+name: Release
+
+# Publishes a `vX.Y.Z` tag whose version matches the manifest, through crates.io trusted publishing.
+# Trusted publishing needs the crate to exist, so the first release is published by hand and this
+# workflow is then registered at https://crates.io/crates/postacert/settings.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # The whole of CI, called rather than copied, so a release passes the same gate as a pull request.
+  ci:
+    permissions:
+      contents: read
+      id-token: write
+    uses: $/.github/workflows/ci.yml
+
+  package:
+    name: tag and package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - name: Tag matches the manifest version
+        run: |
+          manifest=$(cargo metadata --format-version 1 --no-deps --locked | jq -r '.packages[0].version')
+          if [ "v$manifest" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match Cargo.toml version $manifest"
+            exit 1
+          fi
+      # A stray directory in the package fails the release instead of being published.
+      - name: Package stays small
+        run: |
+          cargo package --list --locked
+          cargo package --locked
+          bytes=$(stat -c%s target/package/postacert-*.crate)
+          echo "packaged $bytes bytes"
+          if [ "$bytes" -gt 1048576 ]; then
+            echo "::error::package is $bytes bytes, over the 1 MiB expected for this crate"
+            exit 1
+          fi
+
+  publish:
+    needs: [ci, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
+        id: auth
+      - run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
