@@ -418,13 +418,28 @@ fn a_line_ending_in_lf_alone_counts_as_crlf_as_smtp_sends_it() {
 }
 
 #[test]
+fn a_message_without_a_final_line_break_counts_the_crlf_smtp_adds() {
+    // SMTP ends the last line with the first CRLF of `<CRLF>.<CRLF>` (RFC 5321 §4.1.1.4), and the size counts it.
+    let outgoing = with_body("Fattura in allegato.");
+    let total = 3 * (length(&outgoing) + 2);
+    assert_eq!(outgoing.check_limits(limits(50, total)), Ok(()));
+    assert_eq!(
+        outgoing.check_limits(limits(50, total - 1)),
+        Err(Error::Outgoing(OutgoingError::TooLarge {
+            total,
+            limit: total - 1
+        }))
+    );
+}
+
+#[test]
 fn every_provider_accepts_fifty_recipients_and_thirty_megabytes_in_all() {
     // Three recipients share 30,000,000 bytes, so a message of 10,000,000 bytes fits and one byte more does not.
-    let header = usize::try_from(length(&with_body(""))).expect("a length");
-    let fits = with_body(&"a".repeat(10_000_000 - header));
+    let header = usize::try_from(length(&with_body("\r\n"))).expect("a length");
+    let fits = with_body(&format!("{}\r\n", "a".repeat(10_000_000 - header)));
     assert_eq!(length(&fits), 10_000_000);
     assert_eq!(fits.check_limits(Limits::GUARANTEED), Ok(()));
-    let over = with_body(&"a".repeat(10_000_001 - header));
+    let over = with_body(&format!("{}\r\n", "a".repeat(10_000_001 - header)));
     assert_eq!(
         over.check_limits(Limits::GUARANTEED),
         Err(Error::Outgoing(OutgoingError::TooLarge {

@@ -186,7 +186,7 @@ impl OutgoingMessage {
     }
 
     /// Checks the message against the sender's provider `limits`, counting its size as SMTP sends it, with every line
-    /// ended by CRLF (RFC 5321 §2.3.8), the size the SMTP `SIZE` parameter declares (RFC 1870 §3).
+    /// ended by CRLF (RFC 5321 §2.3.8, §4.1.1.4), the size the SMTP `SIZE` parameter declares (RFC 1870 §5).
     ///
     /// ```
     /// use postacert::{Limits, OutgoingMessage, ReceiptKind};
@@ -229,12 +229,15 @@ impl OutgoingMessage {
     }
 }
 
-/// The size of `raw` once every line feed not after a carriage return becomes CRLF.
+/// The size of `raw` as SMTP sends it, with every line feed not after a carriage return sent as CRLF, and a CRLF after
+/// a last line without a line break, which the client adds before `.<CRLF>` (RFC 5321 §4.1.1.4).
 fn smtp_size(raw: &[u8]) -> usize {
     let mut lines = raw.split(|&byte| byte == b'\n');
     // The text after the last line feed ends no line.
-    lines.next_back();
-    raw.len() + lines.filter(|line| !line.ends_with(b"\r")).count()
+    let last = lines.next_back().unwrap_or_default();
+    let bare_line_feeds = lines.filter(|line| !line.ends_with(b"\r")).count();
+    let final_line_break = if last.is_empty() { 0 } else { 2 };
+    raw.len() + bare_line_feeds + final_line_break
 }
 
 /// The address of the only mailbox the only `From` field names.
