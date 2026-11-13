@@ -3,7 +3,7 @@
 use std::io::{Read, Write};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use pec::{Kind, Message, MessageKind, ReceiptKind};
+use postacert::{Kind, Message, MessageKind, ReceiptKind};
 
 /// How long a provider gets to deliver every receipt.
 pub const RECEIPT_WAIT: Duration = Duration::from_secs(600);

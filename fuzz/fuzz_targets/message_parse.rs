@@ -3,7 +3,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use pec::Message;
+use postacert::Message;
 
 fuzz_target!(|input: &[u8]| {
     let Ok(message) = Message::parse(input) else {

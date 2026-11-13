@@ -6,7 +6,7 @@
 )]
 
 use core::fmt::Write as _;
-use pec::{AttachmentCheck, Error, Message, TextLineEnds};
+use postacert::{AttachmentCheck, Error, Message, TextLineEnds};
 use sha1::{Digest, Sha1};
 
 /// Reads a signed message fixture.

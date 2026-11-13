@@ -695,30 +695,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pec"
-version = "0.1.0"
-dependencies = [
- "jiff",
- "mail-parser",
- "quick-xml",
- "serde",
- "sha1",
- "thiserror",
-]
-
-[[package]]
-name = "pec-provider-tests"
-version = "0.0.0"
-dependencies = [
- "imap",
- "lettre",
- "native-tls",
- "pec",
- "serde",
- "toml",
-]
-
-[[package]]
 name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -749,6 +725,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10ab3eb7f3becc3a1cbc4f2c6f20267996cfc1a6467a873763411b136a122715"
 dependencies = [
  "portable-atomic",
+]
+
+[[package]]
+name = "postacert"
+version = "0.1.0"
+dependencies = [
+ "jiff",
+ "mail-parser",
+ "quick-xml",
+ "serde",
+ "sha1",
+ "thiserror",
+]
+
+[[package]]
+name = "postacert-provider-tests"
+version = "0.0.0"
+dependencies = [
+ "imap",
+ "lettre",
+ "native-tls",
+ "postacert",
+ "serde",
+ "toml",
 ]
 
 [[package]]

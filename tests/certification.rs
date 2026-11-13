@@ -7,7 +7,7 @@
 
 use jiff::civil::{Date, Time};
 use jiff::tz::Offset;
-use pec::{
+use postacert::{
     CertificationData, CertifiedAt, Data, Error, ErrorCode, Header, Kind, MessageId, ReceiptKind,
     Recipient, RecipientKind,
 };

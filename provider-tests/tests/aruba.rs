@@ -16,7 +16,7 @@ use common::{RECEIPT_WAIT, Receipts, fetch, message, receipt_form, token};
 use lettre::address::Envelope;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{SmtpTransport, Transport};
-use pec::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
+use postacert::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
 use serde::Deserialize;
 
 /// The mailbox the messages leave from and arrive at.
@@ -67,8 +67,8 @@ fn aruba_receipts_verify() {
         toml::from_str(&std::fs::read_to_string(path).expect("the credential file is readable"))
             .expect("the credential file holds address and password");
     let token = token();
-    let short_subject = format!("pec-rs ricevuta breve {token}");
-    let summary_subject = format!("pec-rs ricevuta sintetica {token}");
+    let short_subject = format!("postacert ricevuta breve {token}");
+    let summary_subject = format!("postacert ricevuta sintetica {token}");
     let short_sent = message(&account.address, &account.address, "breve", &short_subject);
     let summary_sent = message(
         &account.address,
