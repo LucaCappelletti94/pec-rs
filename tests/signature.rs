@@ -743,6 +743,14 @@ fn from_must_be_an_address_of_the_signer() {
         (Some("protocollo@pec.example.it"), false),
         (Some("posta-certificata"), false),
         (
+            Some("attacker@example.it\r\nFrom: posta-certificata@pec.example.it"),
+            false,
+        ),
+        (
+            Some("posta-certificata@pec.example.it\r\nFrom: attacker@example.it"),
+            false,
+        ),
+        (
             Some("posta-certificata@pec.example.it, protocollo@pec.example.it"),
             false,
         ),

@@ -1,7 +1,7 @@
 //! Reading a message a PEC provider generated: its kind, its certification data and the message it carries.
 
 use jiff::Timestamp;
-use mail_parser::{Address, Headers, MessageParser, MessageRef, PartId};
+use mail_parser::{Address, HeaderName, Headers, MessageParser, MessageRef, PartId};
 
 use crate::{
     AttachmentCheck, AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind,
@@ -222,8 +222,12 @@ impl<'a> Message<'a> {
         )?)
     }
 
-    /// The address of the message's `From` field when it names exactly one mailbox.
+    /// The address of the message's `From` field when the message has one such field naming exactly one mailbox.
     fn sender(&self) -> Option<&str> {
+        // RFC 5322 §3.6 allows one From field, and `from()` reads only the last of several.
+        if self.parsed.headers().all(HeaderName::From).count() != 1 {
+            return None;
+        }
         let from = self.parsed.from()?;
         let mut addresses = from.iter();
         match (addresses.next(), addresses.next()) {
