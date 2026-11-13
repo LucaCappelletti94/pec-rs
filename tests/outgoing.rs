@@ -130,16 +130,23 @@ fn the_message_id_is_the_one_the_client_wrote() {
 }
 
 #[test]
-fn the_receipt_form_keeps_the_header_line_ends() {
-    let raw = message(&valid())
-        .iter()
-        .copied()
-        .filter(|&byte| byte != b'\r')
-        .collect::<Vec<u8>>();
-    let outgoing = OutgoingMessage::prepare(&raw, ReceiptKind::Summary).expect("a valid message");
-    let mut expected = valid().join("\n");
-    expected.push_str("\nX-TipoRicevuta: sintetica\n\nFattura in allegato.\n");
-    assert_eq!(outgoing.as_bytes(), expected.as_bytes());
+fn a_bare_line_feed_or_carriage_return_is_refused() {
+    // CR and LF only occur together (RFC 5322 §2.3), and an SMTP client sends the bytes as given.
+    let refused_at = |raw: &[u8], at: usize| {
+        assert_eq!(
+            OutgoingMessage::prepare(raw, ReceiptKind::Short),
+            Err(Error::Outgoing(OutgoingError::BareLineBreak(at)))
+        );
+    };
+    let crlf = message(&valid());
+    let lf: Vec<u8> = crlf.iter().copied().filter(|&byte| byte != b'\r').collect();
+    refused_at(&lf, FROM.len());
+    refused_at(
+        &[crlf.as_slice(), b"riga con\ra capo\r\n"].concat(),
+        crlf.len() + "riga con".len(),
+    );
+    refused_at(&[b"\n".as_slice(), &crlf].concat(), 0);
+    refused_at(&[crlf.as_slice(), b"\r"].concat(), crlf.len());
 }
 
 #[test]
@@ -391,25 +398,6 @@ fn the_size_times_the_recipients_is_within_the_limit() {
     assert_eq!(outgoing.check_limits(limits(50, total)), Ok(()));
     assert_eq!(
         outgoing.check_limits(limits(50, total - 1)),
-        Err(Error::Outgoing(OutgoingError::TooLarge {
-            total,
-            limit: total - 1
-        }))
-    );
-}
-
-#[test]
-fn a_line_ending_in_lf_alone_counts_as_crlf_as_smtp_sends_it() {
-    let crlf = prepared(&valid()).expect("a valid message");
-    let raw: Vec<u8> = message(&valid())
-        .into_iter()
-        .filter(|&byte| byte != b'\r')
-        .collect();
-    let lf = OutgoingMessage::prepare(&raw, ReceiptKind::Short).expect("a valid message");
-    let total = 3 * length(&crlf);
-    assert_eq!(lf.check_limits(limits(50, total)), Ok(()));
-    assert_eq!(
-        lf.check_limits(limits(50, total - 1)),
         Err(Error::Outgoing(OutgoingError::TooLarge {
             total,
             limit: total - 1

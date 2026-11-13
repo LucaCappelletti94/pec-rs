@@ -24,6 +24,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - run: cargo test --manifest-path provider-tests/Cargo.toml --locked --test loopback
       - run: docker build -t pec-openpec provider-tests/openpec
       - run: docker run -d --name pec-openpec -p 127.0.0.1:2525:25 -p 127.0.0.1:2143:143 pec-openpec
       - run: timeout 300 bash -c 'until docker logs pec-openpec 2>&1 | grep -q "PING LDAP 127.0.0.1 Ok"; do sleep 2; done'

@@ -18,6 +18,10 @@ name = "aruba"
 path = "tests/aruba.rs"
 
 [[test]]
+name = "loopback"
+path = "tests/loopback.rs"
+
+[[test]]
 name = "openpec"
 path = "tests/openpec.rs"
 
