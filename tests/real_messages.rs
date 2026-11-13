@@ -7,7 +7,8 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use postacert::{Message, MessageKind};
+use mail_parser::MessageParser;
+use postacert::{AGID_PROVIDER_CAS, Message, MessageKind};
 
 #[test]
 fn every_real_pec_message_parses() {
@@ -39,8 +40,14 @@ fn every_real_pec_message_parses() {
             }
             MessageKind::Anomaly => assert!(message.original_message().is_some(), "{name}"),
         }
+        // Each message was received around its Date, which falls inside its signer's validity.
+        let date = MessageParser::default()
+            .parse(&raw)
+            .and_then(|parsed| parsed.date())
+            .and_then(|date| jiff::Timestamp::from_second(date.to_timestamp()).ok())
+            .expect("a Date field");
         let signature = message
-            .provider_signature()
+            .provider_signature(AGID_PROVIDER_CAS, date)
             .unwrap_or_else(|error| panic!("{name}: {error}"));
         assert!(!signature.signer_certificate().is_empty(), "{name}");
         checked += 1;

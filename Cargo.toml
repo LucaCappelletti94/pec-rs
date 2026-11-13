@@ -17,8 +17,10 @@ include = [
     "/tests/fixtures/daticert",
     "/tests/fixtures/messages",
     "/tests/fixtures/original",
+    "/tests/fixtures/pki/anchors",
     "/tests/fixtures/pki/provider.der",
     "/tests/fixtures/pki/provider.key.der",
+    "/tests/fixtures/pki/signers",
     "/README.md",
     "/LICENSE",
 ]
@@ -31,6 +33,9 @@ jiff = { version = "0.2.39", default-features = false, features = ["alloc"] }
 mail-parser = "1.0.1"
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 rsa = { version = "0.10.0", default-features = false, features = ["encoding", "pkcs1v15"] }
+rustls-pki-types = { version = "1.16.0", default-features = false, features = ["alloc"] }
+# Without ring, which fails to build for wasm32-unknown-unknown.
+rustls-webpki = { version = "0.103.17", default-features = false, features = ["alloc"] }
 serde = { version = "1.0.229", features = ["derive"] }
 sha1 = { version = "0.11.0", default-features = false }
 sha2 = { version = "0.11.1", default-features = false, features = ["oid"] }

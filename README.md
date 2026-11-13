@@ -12,7 +12,7 @@ Parsing PEC messages, Italian certified email, and reading and writing their `da
 - the certification data of `daticert.xml`, read and written
 - the original message out of a transport envelope or a delivery receipt, and the arrived message out of an anomaly envelope
 - short-receipt hashes identified and checked against the sent message, including named roots, nested attachments and carried user files, with ambiguous assignments rejected
-- the provider's S/MIME signature checked against the signed part, in the DER or BER form providers send
+- the provider's S/MIME signature checked against the signed part, in the DER or BER form providers send, and its signer against AgID's provider CAs at a given time
 
 The crate works on bytes already fetched, so any SMTP or IMAP client can feed it. It follows the AgID technical rules annexed to DM 2 November 2005.
 

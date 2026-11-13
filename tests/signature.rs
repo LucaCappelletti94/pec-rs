@@ -1,4 +1,4 @@
-//! The provider's S/MIME signature over every receipt, notice and envelope (§6.1).
+//! The provider's S/MIME signature over every receipt, notice and envelope, and the trust in its signer (§6.1).
 
 #![expect(
     clippy::expect_used,
@@ -9,13 +9,14 @@ use base64ct::{Base64, Encoding};
 use cms::cert::x509::Certificate;
 use cms::cert::x509::attr::Attribute;
 use cms::cert::x509::ext::pkix::SubjectKeyIdentifier;
-use cms::cert::{CertificateChoices, OtherCertificateFormat};
+use cms::cert::{CertificateChoices, IssuerAndSerialNumber, OtherCertificateFormat};
 use cms::content_info::ContentInfo;
 use cms::der::asn1::{Any, ObjectIdentifier, OctetString, SetOfVec};
 use cms::der::{Decode, Encode, Tag};
 use cms::signed_data::CertificateSet;
 use cms::signed_data::{SignedData, SignerIdentifier, SignerInfo, SignerInfos};
-use postacert::{Error, Message, SignatureError};
+use jiff::Timestamp;
+use postacert::{AGID_PROVIDER_CAS, Error, Message, ProviderSignature, SignatureError};
 use rsa::pkcs8::DecodePrivateKey;
 use rsa::{Pkcs1v15Sign, PrivateKey};
 use sha2::digest::const_oid::AssociatedOid;
@@ -189,11 +190,59 @@ fn signed_content(raw: &[u8]) -> &[u8] {
     &raw[start..end]
 }
 
-/// The verification result of a fixture whose signature the test rewrote.
-fn verify(raw: &[u8]) -> Result<postacert::ProviderSignature, Error> {
+/// A test anchor, the test CA with the name constraints its file is named after.
+fn anchor(name: &str) -> Vec<u8> {
+    fixture(&format!("pki/anchors/{name}.der"))
+}
+
+/// An instant written in RFC 3339.
+fn time(text: &str) -> Timestamp {
+    text.parse().expect("an RFC 3339 instant")
+}
+
+/// A validation time inside the validity of the whole test PKI.
+fn now() -> Timestamp {
+    time("2030-01-01T00:00:00Z")
+}
+
+/// The verification result of a fixture under `anchors` at `at`.
+fn verify_with(raw: &[u8], anchors: &[&[u8]], at: Timestamp) -> Result<ProviderSignature, Error> {
     Message::parse(raw)
         .expect("a PEC message")
-        .provider_signature()
+        .provider_signature(anchors, at)
+}
+
+/// The verification result of a fixture under the test anchor constrained as AgID's are.
+fn verify(raw: &[u8]) -> Result<ProviderSignature, Error> {
+    verify_with(raw, &[&anchor("agid-like")], now())
+}
+
+/// The fixture signed by the provider key under the test signer certificate `name`.
+fn signed_by(raw: &[u8], name: &str) -> Vec<u8> {
+    let certificate = Certificate::from_der(&fixture(&format!("pki/signers/{name}.der")))
+        .expect("a signer certificate");
+    let mut data = signed_data(raw);
+    let mut only = take_signer(&mut data);
+    only.sid = SignerIdentifier::IssuerAndSerialNumber(IssuerAndSerialNumber {
+        issuer: certificate.tbs_certificate().issuer().clone(),
+        serial_number: certificate.tbs_certificate().serial_number().clone(),
+    });
+    data.certificates = Some(CertificateSet(
+        SetOfVec::try_from(vec![CertificateChoices::Certificate(certificate)])
+            .expect("one certificate"),
+    ));
+    with_signed_data(raw, &with_signers(data, vec![only]))
+}
+
+/// The acceptance fixture with `from` as its `From` field, or without one.
+fn acceptance_from(from: Option<&str>) -> Vec<u8> {
+    let raw = fixture("messages/acceptance.eml");
+    let text = core::str::from_utf8(&raw).expect("ASCII fixture");
+    let (head, tail) = text
+        .split_once("From: posta-certificata@pec.example.it\r\n")
+        .expect("a From field");
+    let field = from.map_or_else(String::new, |from| format!("From: {from}\r\n"));
+    format!("{head}{field}{tail}").into_bytes()
 }
 
 #[test]
@@ -547,4 +596,168 @@ fn forged_signature_is_detected() {
             .expect_err("forged signature"),
         Error::Signature(SignatureError::BadSignature)
     );
+}
+
+#[test]
+fn signer_must_chain_to_a_given_anchor() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_with(&raw, AGID_PROVIDER_CAS, now()).expect_err("a test signer"),
+        Error::Signature(SignatureError::UnknownIssuer)
+    );
+}
+
+#[test]
+fn unreadable_anchor_constraints_refuse_the_anchor() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_with(&raw, &[&anchor("unreadable-constraints")], now())
+            .expect_err("constraints the crate cannot read"),
+        Error::Signature(SignatureError::InvalidAnchor)
+    );
+}
+
+#[test]
+fn anchor_must_be_a_certificate() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_with(&raw, &[b"not a certificate"], now()).expect_err("no anchor"),
+        Error::Signature(SignatureError::InvalidAnchor)
+    );
+}
+
+#[test]
+fn signer_must_be_valid_at_the_validation_time() {
+    let raw = fixture("messages/acceptance.eml");
+    let anchor = anchor("agid-like");
+    for (at, expected) in [
+        ("2026-01-01T00:00:00Z", SignatureError::NotYetValid),
+        ("1969-12-31T23:59:59Z", SignatureError::NotYetValid),
+        ("2127-01-01T00:00:00Z", SignatureError::Expired),
+    ] {
+        assert_eq!(
+            verify_with(&raw, &[&anchor], time(at)).expect_err(at),
+            Error::Signature(expected),
+            "{at}"
+        );
+    }
+}
+
+#[test]
+fn email_constraints_follow_rfc_5280() {
+    let raw = fixture("messages/acceptance.eml");
+    for (name, permitted) in [
+        ("agid-like", true),
+        ("unconstrained", true),
+        ("mailbox", true),
+        ("subdomains", true),
+        ("other-mailbox", false),
+        ("subdomains-only", false),
+        ("other-host", false),
+        ("excluded-host", false),
+    ] {
+        let expected = if permitted {
+            Ok(())
+        } else {
+            Err(Error::Signature(SignatureError::OutsideNameConstraints))
+        };
+        assert_eq!(
+            verify_with(&raw, &[&anchor(name)], now()).map(|_| ()),
+            expected,
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn subject_must_start_with_a_permitted_directory_name() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_with(&raw, &[&anchor("other-organisation")], now()).expect_err("another provider"),
+        Error::Signature(SignatureError::OutsideNameConstraints)
+    );
+}
+
+#[test]
+fn excluded_directory_names_refuse_the_anchor() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_with(&raw, &[&anchor("excluded-organisation")], now())
+            .expect_err("an exclusion the crate does not compare"),
+        Error::Signature(SignatureError::OutsideNameConstraints)
+    );
+}
+
+#[test]
+fn constraints_on_other_name_forms_stay_enforced() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "dns");
+    assert_eq!(
+        verify(&raw).expect_err("an excluded DNS name"),
+        Error::Signature(SignatureError::OutsideNameConstraints)
+    );
+    verify_with(&raw, &[&anchor("unconstrained")], now()).expect("no constraint");
+}
+
+#[test]
+fn signer_must_allow_digital_signatures() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "no-signing");
+    assert_eq!(
+        verify(&raw).expect_err("a key for encipherment only"),
+        Error::Signature(SignatureError::NotForSigning)
+    );
+}
+
+#[test]
+fn signer_must_be_for_email_protection() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "no-email");
+    assert_eq!(
+        verify(&raw).expect_err("a client authentication certificate"),
+        Error::Signature(SignatureError::NotForEmail)
+    );
+}
+
+#[test]
+fn unknown_critical_extension_is_refused() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "critical");
+    assert!(matches!(
+        verify(&raw).expect_err("an unknown critical extension"),
+        Error::Signature(SignatureError::InvalidCertificate(_))
+    ));
+}
+
+#[test]
+fn sha512_certificate_signature_verifies() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "sha512");
+    verify(&raw).expect("a certificate signed with SHA-512");
+}
+
+#[test]
+fn from_must_be_an_address_of_the_signer() {
+    for (from, matches) in [
+        (Some("posta-certificata@PEC.Example.IT"), true),
+        (
+            Some("\"Posta Certificata\" <posta-certificata@pec.example.it>"),
+            true,
+        ),
+        (Some("Posta-Certificata@pec.example.it"), false),
+        (Some("protocollo@pec.example.it"), false),
+        (Some("posta-certificata"), false),
+        (
+            Some("posta-certificata@pec.example.it, protocollo@pec.example.it"),
+            false,
+        ),
+        (Some("Gestore: posta-certificata@pec.example.it;"), false),
+        (None, false),
+    ] {
+        let expected = if matches {
+            Ok(())
+        } else {
+            Err(Error::Signature(SignatureError::SenderMismatch))
+        };
+        assert_eq!(
+            verify(&acceptance_from(from)).map(|_| ()),
+            expected,
+            "{from:?}"
+        );
+    }
 }
