@@ -4,7 +4,7 @@ use mail_parser::{Headers, MessageParser, MessageRef, PartId};
 
 use crate::{
     AttachmentCheck, AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind,
-    ReceiptKind, TextLineEnds, attachment_hash,
+    ProviderSignature, ReceiptKind, TextLineEnds, attachment_hash, signature,
 };
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
@@ -175,6 +175,36 @@ impl<'a> Message<'a> {
     pub fn original_message(&self) -> Option<&[u8]> {
         let part = self.parsed.part(self.original?)?;
         Some(part.nested()?.raw())
+    }
+
+    /// Verifies the provider's S/MIME signature over the message (§6.1): the digest of the signed part and the RSA
+    /// signature with the key of the signer's certificate. Whether that certificate belongs to a PEC provider is not
+    /// checked here.
+    ///
+    /// The signed part has to be as the provider sent it, with CRLF line ends, as IMAP delivers it.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotSigned`] when the message is not `multipart/signed` with a PKCS #7 signature, or
+    /// [`Error::Signature`] when the signature does not verify.
+    pub fn provider_signature(&self) -> Result<ProviderSignature, Error> {
+        let root = self.parsed.root_part();
+        let pkcs7 = root
+            .content_type()
+            .and_then(|content_type| content_type.attribute("protocol"))
+            .is_some_and(|protocol| {
+                protocol.eq_ignore_ascii_case("application/pkcs7-signature")
+                    || protocol.eq_ignore_ascii_case("application/x-pkcs7-signature")
+            });
+        let mut parts = root.children();
+        let (true, Some(content), Some(signature)) = (
+            pkcs7 && root.is_content_type("multipart", "signed"),
+            parts.next(),
+            parts.next(),
+        ) else {
+            return Err(Error::NotSigned);
+        };
+        Ok(signature::verify(content.raw(), &signature.decoded())?)
     }
 
     /// Identifies a short receipt's generated hashes using the sent message, in receipt order (§6.5.2.2).

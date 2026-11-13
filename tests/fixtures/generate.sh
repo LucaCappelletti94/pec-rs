@@ -23,6 +23,8 @@ if [[ ! -f pki/provider.pem ]]; then
   openssl x509 -req -sha256 -in pki/provider.csr -CA pki/ca.pem -CAkey pki/ca.key -CAcreateserial -days 36500 \
     -extfile <(printf 'keyUsage=critical,digitalSignature\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it\n') \
     -out pki/provider.pem 2>/dev/null
+  openssl x509 -in pki/provider.pem -outform DER -out pki/provider.der
+  openssl pkcs8 -topk8 -nocrypt -in pki/provider.key -outform DER -out pki/provider.key.der
   rm -f pki/ca.csr pki/provider.csr pki/root.srl pki/ca.srl
 fi
 

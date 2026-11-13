@@ -6,6 +6,7 @@ mod error;
 mod kind;
 pub mod message;
 mod message_id;
+mod signature;
 
 pub use attachment_hash::{AttachmentCheck, AttachmentHash, TextLineEnds};
 pub use certification::{
@@ -15,3 +16,4 @@ pub use error::Error;
 pub use kind::{Kind, MessageKind};
 pub use message::Message;
 pub use message_id::MessageId;
+pub use signature::{ProviderSignature, SignatureError};

@@ -1,6 +1,6 @@
 //! Errors from reading PEC data and checking receipt attachments.
 
-use crate::{Kind, MessageKind};
+use crate::{Kind, MessageKind, SignatureError};
 
 /// Why PEC data could not be read or a receipt's attachments could not be checked.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
@@ -60,4 +60,10 @@ pub enum Error {
     /// A message identifier is not an RFC 5322 `msg-id`.
     #[error("invalid message identifier {0:?}")]
     InvalidMessageId(String),
+    /// The message is not a `multipart/signed` S/MIME message, so it carries no provider signature (§6.1).
+    #[error("the message is not a multipart/signed S/MIME message")]
+    NotSigned,
+    /// The provider's signature does not verify (§6.1).
+    #[error("invalid provider signature: {0}")]
+    Signature(#[from] SignatureError),
 }
