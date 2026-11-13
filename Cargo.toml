@@ -11,6 +11,15 @@ documentation = "https://docs.rs/postacert"
 authors = ["Luca Cappelletti <cappelletti.luca94@gmail.com>"]
 keywords = ["pec", "certified-email", "italy", "email", "daticert"]
 categories = ["email", "parser-implementations"]
+include = [
+    "/src",
+    "/tests/*.rs",
+    "/tests/fixtures/daticert",
+    "/tests/fixtures/messages",
+    "/tests/fixtures/original",
+    "/README.md",
+    "/LICENSE",
+]
 
 [dependencies]
 jiff = { version = "0.2.39", default-features = false, features = ["alloc"] }
