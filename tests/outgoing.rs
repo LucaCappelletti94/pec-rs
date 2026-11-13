@@ -6,7 +6,7 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use postacert::{Error, MessageId, OutgoingError, OutgoingMessage, ReceiptKind};
+use postacert::{Error, Limits, MessageId, OutgoingError, OutgoingMessage, ReceiptKind};
 
 /// The sender.
 const FROM: &str = "From: Mario Rossi <mario.rossi@pec.example.it>";
@@ -333,5 +333,126 @@ fn bytes_that_are_not_a_message_are_refused() {
     assert_eq!(
         OutgoingMessage::prepare(b"", ReceiptKind::Full),
         Err(Error::NotMime)
+    );
+}
+
+/// The valid message with `body` as its body, checked for short delivery receipts.
+fn with_body(body: &str) -> OutgoingMessage {
+    let mut raw = valid().join("\r\n");
+    raw.push_str("\r\n\r\n");
+    raw.push_str(body);
+    OutgoingMessage::prepare(raw.as_bytes(), ReceiptKind::Short).expect("a valid message")
+}
+
+/// The valid message with `count` distinct primary recipients and no copy recipient.
+fn with_recipients(count: usize) -> OutgoingMessage {
+    let addresses: Vec<String> = (0..count)
+        .map(|n| format!("ufficio{n}@pec.example.it"))
+        .collect();
+    let to = format!("To: {}", addresses.join(", "));
+    let mut fields: Vec<&str> = valid()
+        .into_iter()
+        .filter(|field| !field.starts_with("To:") && !field.starts_with("Cc:"))
+        .collect();
+    fields.push(&to);
+    prepared(&fields).expect("a valid message")
+}
+
+/// Limits of `recipients` and `size_times_recipients` bytes.
+const fn limits(recipients: usize, size_times_recipients: u64) -> Limits {
+    Limits {
+        recipients,
+        size_times_recipients,
+    }
+}
+
+/// The length of `outgoing` in bytes.
+fn length(outgoing: &OutgoingMessage) -> u64 {
+    u64::try_from(outgoing.as_bytes().len()).expect("a length")
+}
+
+#[test]
+fn the_recipients_are_within_the_limit() {
+    let outgoing = prepared(&valid()).expect("a valid message");
+    assert_eq!(outgoing.check_limits(limits(3, u64::MAX)), Ok(()));
+    assert_eq!(
+        outgoing.check_limits(limits(2, u64::MAX)),
+        Err(Error::Outgoing(OutgoingError::TooManyRecipients {
+            recipients: 3,
+            limit: 2
+        }))
+    );
+}
+
+#[test]
+fn the_size_times_the_recipients_is_within_the_limit() {
+    let outgoing = prepared(&valid()).expect("a valid message");
+    let total = 3 * length(&outgoing);
+    assert_eq!(outgoing.check_limits(limits(50, total)), Ok(()));
+    assert_eq!(
+        outgoing.check_limits(limits(50, total - 1)),
+        Err(Error::Outgoing(OutgoingError::TooLarge {
+            total,
+            limit: total - 1
+        }))
+    );
+}
+
+#[test]
+fn a_line_ending_in_lf_alone_counts_as_crlf_as_smtp_sends_it() {
+    let crlf = prepared(&valid()).expect("a valid message");
+    let raw: Vec<u8> = message(&valid())
+        .into_iter()
+        .filter(|&byte| byte != b'\r')
+        .collect();
+    let lf = OutgoingMessage::prepare(&raw, ReceiptKind::Short).expect("a valid message");
+    let total = 3 * length(&crlf);
+    assert_eq!(lf.check_limits(limits(50, total)), Ok(()));
+    assert_eq!(
+        lf.check_limits(limits(50, total - 1)),
+        Err(Error::Outgoing(OutgoingError::TooLarge {
+            total,
+            limit: total - 1
+        }))
+    );
+}
+
+#[test]
+fn a_message_without_a_final_line_break_counts_the_crlf_smtp_adds() {
+    // SMTP ends the last line with the first CRLF of `<CRLF>.<CRLF>` (RFC 5321 §4.1.1.4), and the size counts it.
+    let outgoing = with_body("Fattura in allegato.");
+    let total = 3 * (length(&outgoing) + 2);
+    assert_eq!(outgoing.check_limits(limits(50, total)), Ok(()));
+    assert_eq!(
+        outgoing.check_limits(limits(50, total - 1)),
+        Err(Error::Outgoing(OutgoingError::TooLarge {
+            total,
+            limit: total - 1
+        }))
+    );
+}
+
+#[test]
+fn every_provider_accepts_fifty_recipients_and_thirty_megabytes_in_all() {
+    // Three recipients share 30,000,000 bytes, so a message of 10,000,000 bytes fits and one byte more does not.
+    let header = usize::try_from(length(&with_body("\r\n"))).expect("a length");
+    let fits = with_body(&format!("{}\r\n", "a".repeat(10_000_000 - header)));
+    assert_eq!(length(&fits), 10_000_000);
+    assert_eq!(fits.check_limits(Limits::GUARANTEED), Ok(()));
+    let over = with_body(&format!("{}\r\n", "a".repeat(10_000_001 - header)));
+    assert_eq!(
+        over.check_limits(Limits::GUARANTEED),
+        Err(Error::Outgoing(OutgoingError::TooLarge {
+            total: 30_000_003,
+            limit: 30_000_000
+        }))
+    );
+    assert_eq!(with_recipients(50).check_limits(Limits::GUARANTEED), Ok(()));
+    assert_eq!(
+        with_recipients(51).check_limits(Limits::GUARANTEED),
+        Err(Error::Outgoing(OutgoingError::TooManyRecipients {
+            recipients: 51,
+            limit: 50
+        }))
     );
 }
