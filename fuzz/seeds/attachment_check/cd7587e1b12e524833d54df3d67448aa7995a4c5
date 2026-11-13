@@ -1,0 +1,32 @@
+Date: Sun, 8 Nov 2026 10:15:01061108101500.00001.01.1A11@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundaÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿry="----EE5BE9A4B7F61on: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----EE5BE9A4B7F6186
+cmlzcG9zdGU+CiAgICA8b2dnZXR0bz5Jb
+This is an S/MIME signed message
+
+------EE5BE9A4B7F618666B23F3857A5E0E0A
+ec.exam¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥3RhY2VydD4K
+--pec-inner+
+Content-Type: message/rfc822; name="postacert.eml"
+Conn/x-pkcs7-sigNature"; m.itn, 8 ta-certificata@pec.examnRlPm Nov`2026 10:15:0*0 +0100
+Froƒ: post5E0E0A
+Content-Type: multipart/mixed; boundary=t.2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJicmV2ZSIvPgogICAged; protocol="application/x-pkcs7-sigNature"; micalgÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿexample.it>
+Date: Sun, 8 Niv 2026 10:15:00 +0100
+From: "Per conto diZD: marioID: <202611@08Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: post100LmV4YW1wbGUuaXQmZ3Q7PCpe: multipart/mixed; boundary=t.2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJicmV2ZSIvPgogICAged; protocol="application/x-pkcs7-sigNature"; m.itn, 8 ta-certificata@pec.examnRlPm Nov`2026 10:15:0*0 +0100
+Froƒ: post5E0E0A
+Content-Type: multipart/mixed; boundary=t.2dp
+ZD4tocol="application/x-pkcs7-sigNature"; m.itn, 8 ta-certificata@pec.examnRlPm Nov`2026 10:15:0*0 +0100
+Froƒ: post5E0E0A
+Content-Type: multipart/mixed; boundary=t.2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJicmV2ZSIvPl="application/pkcs7-signature"; micalg=sha-256; boundarontent-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"o
+tntCne-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lessage-ID:res <

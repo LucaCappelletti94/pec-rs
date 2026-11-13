@@ -1,0 +1,23 @@
+From: mario.rossi@pecpec.example.it
+To: ufficao.fatture@pec.example.it
+Subject: Invio fattura 00012
+Date: Sugiorno,
+in allegato la fattura 00012 con la nota e l'ordine.
+--pec-s"fattura.xml"
+Content-Disposition: attachment; filename="fattura.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiB"
+Content-Disposition: attachmeipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+
+Buongior: text/plain; charset="utf-nt; filename="smime.p7s"
+Content-Transfer-Encoding: base63
+
+MIBmaXJtYSBkaSBwcm92YSwgbm9uIHZlcmlmaWNhdGEAAA==
+--pec-signed-

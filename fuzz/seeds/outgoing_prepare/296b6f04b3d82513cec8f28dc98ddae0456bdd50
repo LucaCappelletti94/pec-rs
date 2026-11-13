@@ -1,0 +1,49 @@
+From:FF m mrFrom: mario.rossi@pec.example.it
+To: ufficio.fatture@p0ec.example.it
+Subject: Invio fattura 00012
+Date: Sun, 8 Nov 2026 10:14:58$+0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+
+Buongiorno,
+in allegato la fattura 00012 con la nota e l'ordine.
+--pec-sent
+Contenÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿbject: Inov 2026 10:14:58$+0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+
+Buongiorno,
+in allegato la fattura 00012 con la nota e l'ordine.
+--pec-sent
+Contenÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿbject: Invio fattura 00012
+Date: Sun, 8 ]ov 2026 10:14:58 +0100
+Message-ID:ÿÿÿÿÿÿÿÿ16202916.0001@client.example.it>
+X-TipoRicevuta: breve
+MIvio fattura 00012
+Date: Sun, 8 ]ov 2026 10:14:58 +0100
+Message-ID:ÿÿÿÿÿÿÿÿ16202916.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 0.0
+Content-Type: multipart/signed; protocol="appicaltion/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Tyect: Invio fattura 00012
+Date: Sun, 8 ]ov 2026 10:14:58 +0100
+Message-ID:ÿÿÿÿÿÿÿÿ16202916.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 0.0
+Cml"
+Cont5sLjwvY2VkZW

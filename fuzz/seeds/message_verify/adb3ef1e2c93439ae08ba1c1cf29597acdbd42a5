@@ -1,0 +1,20 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rosÿÿÿÿÿÿÿÿÿsi@pec.example.it
+Message-ID: <opec000.20261108101500.00001.01.1.21@pec.eÿxample.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00006
+MIME-Version: 1.0
+Content-Type: multipart/signed; protoDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.2026108101500.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: mult-7rzaBIxE4MweQYJKoZIhvcNAQkPMWwwajALBglghkgBZQMEASowCwYJ
+YIZIAWUDype: application/xml; name="daticert.xml"
+Content-Disposition: inline; filento consegnato nella casella di destContent-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----D4EF031AD504F67050585F5783D2CCFamÿÿÿÿÿÿÿe="4"
+

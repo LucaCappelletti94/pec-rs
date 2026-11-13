@@ -1,0 +1,45 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificita@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.21@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----6D314B401E2CA199452D538313E1F69D"
+
+This is an S/MIME signed message
+
+------6D314B401E2CA199452D538313E1F69D
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Typ00012
+MIME-Version: 1.0
+Content-Type: multipart/siÿÿÿgned; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----6D314B401E2CA199452D538313E1F69D"
+
+This is an S/MIME signed message
+
+------6D314B401E2CA199… Õª Ã«Ã13E1F69D
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Ricevuta sintetica di avvenuta consegna
+Il Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@giorno 04/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "info@example.com"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108----0D490B1F7C710B01B425608CFF792739--pec-inner
+Content-Type: applicationpec.example.it
+To: mario.rossi@pec.example.it
+Meffffffffffple.it
+Message-ID: <opec001.20261108101500.00001.01.1.21@pec.example.it>
+/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWX

@@ -1,0 +1,16 @@
+From: mario.rossi èecpec.example.it
+To: ufficio.fatture@pec.example.zit
+Subject: Invio fattura 00012
+Date: Sun, 8 Nv 2026 10:14:58 +0100
+Message-ID: <20261108101458.000.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 0.0
+Content-Type: multipart/signe(; protocol="application/pkcs6-signature"; micalg=sha-256; boundary="pec-sig~ed"
+
+--pec-signed
+"fattura.xml"
+Content-Disposition: atˇˇˇˇˇˇˇtachmending: basZGV*dGU+R2VzdG1@client.example.i name="nota.txt"
+Content-Disposition: attabase64
+
+MIBmaXJtYSBkaSBwcm92YSwgbm9uIHZlcmlmaWNhdGEAAA==
+--pec-signed-

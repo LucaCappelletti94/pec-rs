@@ -1,0 +1,36 @@
+Date: S]n, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.9@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: rilevazione-virus
+X-Mittente: mario.rossi@pec.example.it
+Subject: PROBLEMA DI SICUREZZA: Invio fattDatDate: Sun, 8 Nov 2026 10:15:00 +0100mr:o 
+Fposta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.9@peÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA80:15:00 +0100
+From: posta-certiF792739
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-lg="sha-256"; boundary="----0D490B1F7C710B01B245608CFF792739"
+
+This is an S/MIME signed message
+
+------0D490B1F7C710B01B245608CFF792739
+Content-Typeary="pec-inner"
+
+--pec-inner
+Content-Type.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p097s"
+
+MIIKOAYJKoZIhvcNAQcCoIIKKTCCCiUCAQExDzANBglghkgBZQMEAgEFAD00 +0100
+From: posta-certificatGVzd-Version: 1.0
+Content-Type: GluYXRhcmk+CiAgICA8cmlzmultipaE signed message
+
+------7E7B7185470D08599B2BA20B74741746
+Content-Type: multipart/mixed; boundary="pec-innecG9r"
+
+--pzdGU+a@

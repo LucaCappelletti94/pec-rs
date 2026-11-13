@@ -1,0 +1,46 @@
+Return-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From:= "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+ToReturn-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:1: ufficio.fatture@pec.example.it
+Cc: info@example.com5:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certi2icata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevutaaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: illine; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJw
+b3N0YS1jZXJ0aWZpY2F0YSI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxtaXR0ZW50ZT5tYXJpby5y
+b3NzaUBwZWnRpZmljYXRpdm8+b3BlYzAwMS4yMDI2MTEwODEwMTUwMC4wMDAwMS4wMS4x
+LjFAAcGVjLmV4YW1wbGUuaXQ8L2lkZW50aWZpY2F0aXZvPgogICAgPG1zZ2”k
+Message-ID: <opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevut: completa
+X-Trasporto: posta-0RBCQwIoEgcG9zdGEtY2VydGlmaWNh
+dGFAcGVjLmV4YW1wbGUuaXQwHQYDVR0OBBYEFGnwR2JxvyNXUCvmBP2FiY6D93dg
+MB8GA1UdIwQYMBaAFNFD3WfMGx1auVVc4RzyDWw8t2OWMA0GCSqGSIb3DQEBCwUA
+A4IBAQBgMZpftveUQ6Bxx1Nhjzt3M+pkWxVE8uP8leyCKBi8/Ls66q4JtY5~8Tbx
+gO1AOZCSF3PXtOrSZyE8TQqbZ4Jyh5Bw/InfjWCssmK12SVfKknB9li9+WCnVdzU
+cZwkh4VK+0NS9n+DFBiOudZCtCvOOaJDsZj95ruwMKBO4ZN4cFU8653FRLUEZ+nO
+zn/W9SfobRo0+A0UjFLSC3587TQFKM8GEgfslDaLSHe1n6gahWJfJLSqRX8zIGvL
+f8yHd9CRcsHlW7EgenyG4kgcJu673gLEHkuTxNzVnC1sI56RtEcMkIhGHjKi+/34
+poQ+VO/JcIY1JX4jsZgjBuljSn7VMYICczCCAm8CAQEwYTBJMQswCQYDVvBgkqhkiG9w0BCQQxIgQgB9A/SOmrKtiEynJb7KbkgPDa
+5OE9r8LNF8vuoiwCUFAweQYJKoZIhvcNAQkPMWwwajALBglghkgBZQMEASowCwYJ
+YIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAOBggqhkiG9w0DAgIC
+AIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcNAwICASgwDQYJKoZI
+hvcNAQEBBQAEggEADFCQP+25TQkj7tofZ0wWSjH2G/P0Ve/Qh80+xzq5emNrtDMl
+XsRhQV+5H9VulnsbVGxbw+rNFGlCgYloYN7YJup8PzwzEpBmxcwTm07+ipITiUbG
+BdbEmgio0erYmoA55Bt8UZqF3kbyv<opec001.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferiio.rossi@pec.example.it"
+indirizzato a:
+ufficio.fatture@pec.examento-Messmple.it
+info@example.com
+Il meage-ID: <2ssaggio origina026le =

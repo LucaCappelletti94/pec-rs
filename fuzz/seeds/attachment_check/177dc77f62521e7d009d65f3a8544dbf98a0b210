@@ -1,0 +1,155 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: poÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿsta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.0.111.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----EE5BE9A4B7F618666B23F3857A5E0E0A"
+
+This is an S/MIME signed message
+
+------EE5BE9A4B7F618666B23F3857A5E0E0A
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Ricevuta breve di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "ufficio.fatture@pec.example.it"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pecT4KICAgIDxyaXNwb3N0ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwv
+cmlzcG9zdGU+CiAgICA8b2dnZXR0bz5JbnZpbyBmYÿXR0dXJhIDAwMDEyPC9vZ2dldHRvPgogIDwv
+aW50ZXN0YXppb25lPgogIDxkYXRpPgogICAgPGdlc3RvcmUtZW1pdHRlbnRlPkdlc3RvcmUgUEVD
+IGRpIEVzZW1waW8gUy5wLkEuPC9nZXN0b3JlLWVtaXR0ZW50ZT4KICAgIDxkYXRhIHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb3Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjEuMUBwZWMuZXhhbXBsZS5pdDwvaWRlbnRpZmljYXRpdm8+CiAgICA8
+bXNnaWQ+Jmx0OzIwMjYxMTA4MTAxNDU4LjAwMDFAY2xpZW50LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJicmV2ZSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8uZmF0
+dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Disp.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJh
+dnZlbnV0YS1jb25zZWduYSIgZXJyb3JlPSJuZXNzdW5vIj4KICA8aW50ZXN0YXppb25lPgogICAg
+PG1pdHRlbnRlPm1hcmlvLnJvc3NpQHBlYy5leGFtcGxlLml0PC9taXR0ZW50ZT4KICAgIDxkZXN0
+aW5hdGFyaSB0aXBvPSJjZXJ0aWZpY2F0byI+dWZmaWNpby5mYXR0dXJlQHBlYy5leGFtcGxlLml0
+PC9kZXN0aW5hdGFyaT4KICAgIDxyaXNwb3N0ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwv
+cmlzcG9zdGU+CiAgICA8b2lnZXR0bz5JbnZpbyBmYÿXR0dXJhIDAwMDEyPC9vZ2dldHRvPgogIDwv
+aW50ZXN0YXppb25lPgogIDxkYXRpPgogICAgPGdlc3RvcmUtZW1pdHRlbnRlPkdlc3RvcmUgUEVD
+IGRpIEVzZW1waW8gUy5wLkEuPC9nZXN0b3JlLWVtaXR0ZW50ZT4KICAgIDxkYXRhIHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb3Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjEuMUBwZWMuZXhhbXBsZS5pdDwvaWRlbnRpZmljYXRpdm8+CiAgICA8
+bXNnaWQ+Jmx0OzIwMjYxMTA4MTAxNDU4LjAwMDFAY2xpZW50LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJicmV2ZSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8uZmF0
+dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Disposition: inline; filename="postacert.eml"
+
+From: mario.rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Subject: Invio fattura 00012
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/mixed; boundary="pec-short"
+
+--pec-short
+Content-Type: text/plain; charset="utf-8"
+
+Buongiozno,
+in allegato la fatDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.21@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----6D314B401E2CA199452D538313E1F69D"
+
+This is an S/MIME signed message
+
+------6D314B401E2CA199452D538313E1F69D
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Ricevuta sintetica di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "info@example.com"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xtura 00012 con la nota e l'ordine.
+--pec-short
+Content-Type: text/plain; name="fattura.xml.hash"
+Content-Disposition: attachment; filename="fattura.xml.hash"
+Content-Transfer-Encoding: 7bit
+
+FF20C898B2AB8B020F1F3D3F07FFF7BC37A988A5
+--pec-short
+Content-Type: text/plain; name="nota.txt.hash"
+Content-Disposition: attachment; filename="nota.txt.hash"
+Content-Transfer-Encoding: 7bit
+
+6a07a23ff2f2c1f378da855d1ae1218bb1ab539c
+--pec-short
+Content-Type: text/plain; name="null.hash"
+Content-Disposition: attachment; filename="null.hash"
+Content-Transfer-Encoding: 7bit
+
+5668EBDFEC476CFB773752C7875F9C9DD778B778
+--pec-short--
+
+--pec-signed
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Transfer-Encoding: base64
+
+MIBmaXJtYSBkaSBwcm92YSwgbm9uIHZlcmlmaWNhdGEAAA==
+--pec-signed--
+
+--pec-inner--
+
+-----ml; name="daticert.xml"
+Content-Disposition: inline; filename="datibert.xml"
+Content-Transfer-E-EE5BE9A4B7F618666B23F3857A5E0E0A
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIIKOAYJKoZIhvcNAQcCoIIKKTCCCiUCAQExDzANBgncoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJh
+dnZlbnV0YS1jb25zZWduYSIgZXJyb3JlPSJuZXNzdW5vIj4KICA8aW50ZXN0YXppb25lPgogICAg
+PG1pdHRlbnRlPm1hcmlvLnJvc3NpQHBlYy5leGFtcGxlLml0PC9taXR0ZW50ZT4KICAgIDxkZXN0
+aW5hdGFyיייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייaSB0aXBvPSJlc3Rlcm5vIj5pbmZvQGV4YW1wbGUuY29tPC9kZXN0aW5hdGFyaT4KICAg
+IDxyaXNwb3N0ZT5tYXJpbyHF057UKJOKQSKUU2gJR/fqrcmnH1kolghkgBZQMEAgEFADALBgkq
+hkiG9w0BBwGgggeJMIIDlzCCAn+gAwIBAgIUCCkJNZbWKLBqGUBllwd+BG2RbU0w
+DQYJKoZIhvcNAQELBQAwQzELMAkGA1UEBhMCSVQxGTAXBgNVBAoMEFBFQyBUZXN0
+IFJvb3QgQ0ExGTAXBgNVBAMMEFBFQyBUZXN0IFJvb3QgQ0EwIBcNMjYxMTEzMTE0
+MTM0WhgPMjEyNjEc1C1+
+up+hjoLDCqpCsIJQ9V7piXJigiOg92XIiK/Fzhz0jCdiq7GfP/xNPwBsrBnb5B03
+jViJS50tL3Up5EAvIBJG46sXsvCmRfn5NG8e4x/RUMzyMkN0UzK5LKdISNMRJbVo
+DQIDAQABo3sweTASBgNVHRMBAf8ECDAwMjAxMTQxGAQH/AgEAMA4GA1UdDwEB/wQEAwIBBjAT
+BgMzRaMEkxCzAJBgNVBAYTAklUMQNV0HS

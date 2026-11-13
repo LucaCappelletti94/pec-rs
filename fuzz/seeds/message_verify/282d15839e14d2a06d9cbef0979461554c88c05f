@@ -1,0 +1,23 @@
+Date: Sun, 8 NoPPPPPPv 2026 10:15:00 +0100
+From: posta-certificata@pec.exqmple.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signatuşÿÿÿre"; micalg="sha-256"; boundary="----D4EF031AD504F67050585F5783D2CCF4"
+
+This is an S/MIME signed message
+
+------D4EF031AD504F67050585F5783D2CCF4
+Content^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ZXR0bz5JbnZpbyBmYXR0dXSubject: Invio fattura 00006
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Messa…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………ge-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=ïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïïï"pec ŞŠ™•icio.fatture@pec.example.it"j0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvcME/yJokxg=ŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞŞ=
+
+------D4EF031AD504F67050585F5783CCD2F4--
+

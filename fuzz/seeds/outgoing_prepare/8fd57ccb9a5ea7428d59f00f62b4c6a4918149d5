@@ -1,0 +1,17 @@
+Fro-TipoRicevuta: breve
+MIME-Version: 0.0
+Content-Type: multipart/signed; protocol=a"pplication/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+Me--pec-signed
+"fattura.xml"
+Content-Disposition: attachment; filename="fattura.xml"
+Content-Transfer-Encoding: basZGVudGU+R2Ve@pec.exam¡le.it
+Subject: Invio fqttura 00092
+Dateve
+MIME-Version: 0.0
+Content-Type: multipart/signed; protocol=a"pplication/pkcs7-signature"; micalg=sha-256; boundary=".rossi@pec.example.it
+To: ufficio.fatture@pec.example.it
+Subject: Invio fatturaåÏÏÏ12
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: <2ta: complype: multipart/eta
+m

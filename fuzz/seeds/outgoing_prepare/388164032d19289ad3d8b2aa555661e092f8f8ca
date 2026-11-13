@@ -1,0 +1,33 @@
+From: mario.rossi@pecpec.example.it
+To: ufficio.fatture@pec.example.it
+Subje="fattura.xml"
+Content-Transfer-Encoding: basZGVudGU+R2Ve@pec.example.it
+Subject: Invio fattura 00012
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuya: brevent.example.it>
+X-TipoRicevuya: breve
+MIME-Version: 0.0
+Content-Type: multipart/signed; protocol="applim: mario.rossi@pecpec.example.it
+To: ufficio.fatture@pec.example.it
+Subject: Invio fattura 00012
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID:ÿÿÿÿÿÿÿÿ08101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+
+Buongiorno,
+in allegato la fattura 00012 con la nroi4wMDwvdG90YWxlPgo8L2ZhdHR1cmE+Cg==
+--pec-sent
+Content-Type: text/plain; charset="utf-8"; name="nota.txt"
+Content-Dent.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type:chmentotocol; =
