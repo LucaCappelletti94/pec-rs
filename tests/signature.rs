@@ -822,7 +822,7 @@ fn stale_crl_is_not_used() {
             .expect_err("nextUpdate before the validation time"),
         Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
     );
-    verify_crls(&raw, &[&crl("stale")], time("2026-12-01T12:00:00Z")).expect("fresh then");
+    verify_crls(&raw, &[&crl("stale")], time("2027-02-01T12:00:00Z")).expect("fresh then");
 }
 
 #[test]
@@ -916,4 +916,37 @@ fn unreadable_crl_is_refused() {
 fn signer_without_an_expiration_date_is_checked_against_the_crl() {
     let raw = signed_by(&fixture("messages/acceptance.eml"), "no-expiry");
     verify(&raw).expect("a CRL issued before 9999-12-31");
+}
+
+#[test]
+fn an_older_fresh_crl_cannot_hide_a_newer_stale_one() {
+    let raw = fixture("messages/acceptance.eml");
+    let (current, stale, stale_revoked) = (crl("current"), crl("stale"), crl("stale-revoked"));
+    for crls in [
+        [&current[..], &stale_revoked[..]],
+        [&stale_revoked[..], &current[..]],
+    ] {
+        assert_eq!(
+            verify_crls(&raw, &crls, now()).expect_err("revoked in the newer CRL"),
+            Error::Signature(SignatureError::Revoked {
+                revoked_at: time("2027-01-01T00:00:00Z")
+            })
+        );
+    }
+    for crls in [[&current[..], &stale[..]], [&stale[..], &current[..]]] {
+        assert_eq!(
+            verify_crls(&raw, &crls, now()).expect_err("the newer CRL is stale"),
+            Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
+        );
+    }
+}
+
+#[test]
+fn crl_of_a_ca_not_allowed_to_sign_crls_is_refused() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_full(&raw, &[&anchor("no-crl-sign")], &[&crl("current")], now())
+            .expect_err("a keyUsage without cRLSign"),
+        Error::Signature(SignatureError::InvalidCrl)
+    );
 }

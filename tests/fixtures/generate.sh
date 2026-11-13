@@ -92,11 +92,13 @@ if [[ ! -f pki/crls/current.der ]]; then
   revoked=$(printf 'R\t%s\t270101000000Z,keyCompromise\t%s\tunknown\t/CN=Gestore PEC di Esempio S.p.A.\n' "$end" "$serial")
   crl current ca 261201000000Z 21261001000000Z
   crl revoked ca 270201000000Z 21261001000000Z "$revoked"
-  crl stale ca 261201000000Z 261202000000Z
+  crl stale ca 270201000000Z 270202000000Z
   crl after-expiry ca 21270101000000Z 21280101000000Z
   crl before-ca ca 260101000000Z 21261001000000Z
   crl critical ca 261201000000Z 21261001000000Z '' '1.3.6.1.4.1.32473.2=critical,ASN1:NULL'
   crl other-ca root 261201000000Z 21261001000000Z
+  # Issued after current.der and stale since, revoking the provider, so the older current.der cannot hide it.
+  crl stale-revoked ca 270201000000Z 270301000000Z "$revoked"
   csr=$(mktemp)
   openssl req -new -key pki/provider.key \
     -subj "/C=IT/ST=Roma/L=Roma/O=Gestore PEC di Esempio S.p.A./CN=Gestore PEC di Esempio S.p.A." -out "$csr"
@@ -109,6 +111,11 @@ if [[ ! -f pki/crls/current.der ]]; then
   # RFC 5280 §4.1.2.5 gives a certificate with no well-defined expiration this notAfter.
   openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 301 -not_after 99991231235959Z \
     -extfile <(printf '%s\n' "$profile") -outform DER -out pki/signers/no-expiry.der 2>/dev/null
+  # The test CA re-issued with a keyUsage that allows certificates but not CRLs (RFC 5280 §6.3.3).
+  openssl req -new -key pki/ca.key -subj "/C=IT/L=Roma/O=PEC Test CA/CN=PEC Test CA1" -out "$csr"
+  openssl x509 -req -sha256 -in "$csr" -CA pki/root.pem -CAkey pki/root.key -set_serial 302 -days 36500 \
+    -extfile <(printf 'basicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign\nextendedKeyUsage=emailProtection\n') \
+    -outform DER -out pki/anchors/no-crl-sign.der 2>/dev/null
   rm -rf "$db" "$csr"
 fi
 
