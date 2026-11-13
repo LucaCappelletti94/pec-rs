@@ -15,10 +15,11 @@ use std::net::TcpStream;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use common::{RECEIPT_WAIT, Receipts, fetch, message, receipt_form, token};
-use lettre::address::Envelope;
+use common::{
+    RECEIPT_WAIT, Receipts, assert_about, envelope, fetch, outgoing, receipt_form, token,
+};
 use lettre::{SmtpTransport, Transport};
-use postacert::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
+use postacert::{AttachmentCheck, Error, Message, OutgoingMessage, ReceiptKind, TextLineEnds};
 
 /// The mailbox the messages leave from, which gets the acceptance and the delivery receipt.
 const SENDER: &str = "mittente@pec.test";
@@ -29,18 +30,13 @@ const RECIPIENT: &str = "destinatario@pec.test";
 /// The password the container gives every mailbox.
 const PASSWORD: &str = "prova";
 
-/// Sends `raw` from the sender to the recipient over plain SMTP to `address`, `host:port`.
-fn send(address: &str, raw: &[u8]) {
+/// Sends `outgoing` over plain SMTP to `address`, `host:port`, with the envelope the crate gives it.
+fn send(address: &str, outgoing: &OutgoingMessage) {
     let (host, port) = address.rsplit_once(':').expect("host:port");
-    let envelope = Envelope::new(
-        Some(SENDER.parse().expect("valid")),
-        vec![RECIPIENT.parse().expect("valid")],
-    )
-    .expect("an envelope");
     SmtpTransport::builder_dangerous(host)
         .port(port.parse().expect("a port number"))
         .build()
-        .send_raw(&envelope, raw)
+        .send_raw(&envelope(outgoing), outgoing.as_bytes())
         .expect("the provider accepts the message");
 }
 
@@ -69,8 +65,20 @@ fn openpec_receipts_verify() {
     let token = token();
     let short_subject = format!("postacert ricevuta breve {token}");
     let summary_subject = format!("postacert ricevuta sintetica {token}");
-    let short_sent = message(SENDER, RECIPIENT, "breve", &short_subject);
-    let summary_sent = message(SENDER, RECIPIENT, "sintetica", &summary_subject);
+    let short_sent = outgoing(
+        SENDER,
+        RECIPIENT,
+        &short_subject,
+        &format!("breve.{token}@postacert.test"),
+        ReceiptKind::Short,
+    );
+    let summary_sent = outgoing(
+        SENDER,
+        RECIPIENT,
+        &summary_subject,
+        &format!("sintetica.{token}@postacert.test"),
+        ReceiptKind::Summary,
+    );
     send(&smtp, &short_sent);
     send(&smtp, &summary_sent);
 
@@ -100,11 +108,18 @@ fn openpec_receipts_verify() {
     let short_delivery = short.delivery.expect("complete");
     assert_eq!(receipt_form(&short_transport), Some(ReceiptKind::Short));
     assert_eq!(receipt_form(&short_delivery), Some(ReceiptKind::Short));
+    for raw in [
+        &short.acceptance.expect("complete"),
+        &short_transport,
+        &short_delivery,
+    ] {
+        assert_about(raw, &short_sent);
+    }
     let receipt = Message::parse(&short_delivery).expect("a valid receipt");
     // OpenPEC hashes text and attached messages with LF line ends and names each hash after a temporary file, so the
     // attachments pair by digest once LF is accepted.
     assert_eq!(
-        receipt.check_attachments(&short_sent, TextLineEnds::CanonicalOrLf),
+        receipt.check_attachments(short_sent.as_bytes(), TextLineEnds::CanonicalOrLf),
         Ok(vec![
             AttachmentCheck::Matches(Some("righe.txt".to_owned())),
             AttachmentCheck::Matches(Some("dati.bin".to_owned())),
@@ -113,7 +128,7 @@ fn openpec_receipts_verify() {
     );
     assert!(
         receipt
-            .check_attachments(&short_sent, TextLineEnds::Canonical)
+            .check_attachments(short_sent.as_bytes(), TextLineEnds::Canonical)
             .expect("a short receipt")
             .contains(&AttachmentCheck::Missing(Some("righe.txt".to_owned()))),
         "the canonical form alone misses OpenPEC's LF hash"
@@ -121,10 +136,17 @@ fn openpec_receipts_verify() {
 
     let summary_delivery = summary.delivery.expect("complete");
     assert_eq!(receipt_form(&summary_delivery), Some(ReceiptKind::Summary));
+    for raw in [
+        &summary.acceptance.expect("complete"),
+        &summary.transport.expect("complete"),
+        &summary_delivery,
+    ] {
+        assert_about(raw, &summary_sent);
+    }
     let summary_receipt = Message::parse(&summary_delivery).expect("a valid receipt");
     assert_eq!(summary_receipt.original_message(), None);
     assert_eq!(
-        summary_receipt.check_attachments(&summary_sent, TextLineEnds::CanonicalOrLf),
+        summary_receipt.check_attachments(summary_sent.as_bytes(), TextLineEnds::CanonicalOrLf),
         Err(Error::NotShortReceipt)
     );
 }
