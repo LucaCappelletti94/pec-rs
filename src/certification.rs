@@ -69,8 +69,8 @@ pub struct Recipient {
     /// Whether the recipient is a PEC mailbox, the `tipo` attribute.
     #[serde(rename = "@tipo", default)]
     pub kind: RecipientKind,
-    /// The recipient's address.
-    #[serde(rename = "$text")]
+    /// The recipient's address, which the certification DTD permits to be empty.
+    #[serde(rename = "$text", default)]
     pub address: String,
 }
 

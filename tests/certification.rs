@@ -222,6 +222,16 @@ fn empty_recipients_cannot_be_serialized() {
 }
 
 #[test]
+fn empty_recipient_text_round_trips() {
+    let mut data = CertificationData::from_xml(&fixture("acceptance.xml")).expect("valid");
+    for recipient in &mut data.header.recipients {
+        recipient.address.clear();
+    }
+    let written = data.to_xml().expect("empty recipient text follows the DTD");
+    assert_eq!(CertificationData::from_xml(&written), Ok(data));
+}
+
+#[test]
 fn unknown_kind_is_rejected() {
     let result = edited(|xml| xml.replace("tipo=\"accettazione\"", "tipo=\"consegna\""));
     assert!(
