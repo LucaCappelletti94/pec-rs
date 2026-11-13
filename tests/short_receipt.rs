@@ -5,6 +5,10 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
+extern crate alloc;
+
+use alloc::collections::BTreeSet;
+use core::cmp::Ordering;
 use core::fmt::Write as _;
 use postacert::{AttachmentCheck, Error, Message, TextLineEnds};
 use sha1::{Digest, Sha1};
@@ -476,6 +480,42 @@ fn renamed_text_hashed_with_lf_pairs_by_digest() {
     );
 }
 
+/// The LF form of a text attachment turns each CRLF into LF and keeps every other byte, a lone line break included,
+/// and a binary attachment has none.
+#[test]
+fn lf_form_turns_only_crlf_into_lf_and_only_in_text() {
+    let sent = b"MIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"sent\"\r\n\r\n\
+        --sent\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"riga.txt\"\r\n\
+        Content-Transfer-Encoding: quoted-printable\r\n\r\n=0D=0A\r\n\
+        --sent\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"misto.txt\"\r\n\
+        Content-Transfer-Encoding: quoted-printable\r\n\r\nuno=0D=0Adue=0Atre=0D\r\n\
+        --sent\r\nContent-Type: application/octet-stream\r\nContent-Disposition: attachment; filename=\"dati.bin\"\r\n\
+        Content-Transfer-Encoding: quoted-printable\r\n\r\nuno=0D=0Adue=0D=0A\r\n\
+        --sent--\r\n";
+    let raw = receipt_with(&text_attachments(&[
+        ("riga.txt.hash", &hex_digest(b"\n")),
+        ("misto.txt.hash", &hex_digest(b"uno\ndue\ntre\r")),
+        ("dati.bin.hash", &hex_digest(b"uno\ndue\n")),
+    ]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(sent, TextLineEnds::CanonicalOrLf),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("riga.txt".to_owned())),
+            AttachmentCheck::Matches(Some("misto.txt".to_owned())),
+            AttachmentCheck::Differs("dati.bin".to_owned()),
+        ])
+    );
+    assert_eq!(
+        receipt.check_attachments(sent, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Differs("riga.txt".to_owned()),
+            AttachmentCheck::Differs("misto.txt".to_owned()),
+            AttachmentCheck::Differs("dati.bin".to_owned()),
+        ])
+    );
+}
+
 /// Wraps one multipart's children in an unnamed multipart container.
 fn nested(raw: &[u8], boundary: &str) -> Vec<u8> {
     let raw = replaced(
@@ -820,6 +860,55 @@ fn distinguishable_receipt_assignments_are_ambiguous() {
     }
 }
 
+/// Two attachments with the same content leave open which one a renamed digest hashes and which one a renamed copy
+/// carries.
+#[test]
+fn swapped_hash_and_copy_of_equal_attachments_are_ambiguous() {
+    let hash = hex_digest(b"data");
+    let original = text_attachments(&[("first", "data"), ("second", "data")]);
+    let raw = receipt_with(&text_attachments(&[
+        ("checksum.txt", &hash),
+        ("copy.txt", "data"),
+    ]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Err(Error::AmbiguousAttachments)
+    );
+}
+
+#[test]
+fn missing_first_attachment_leaves_later_ones_paired() {
+    let original = text_attachments(&[("first", "first"), ("second", "second")]);
+    let raw = receipt_with(&text_attachments(&[(
+        "second.hash",
+        &hex_digest(b"second"),
+    )]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Missing(Some("first".to_owned())),
+            AttachmentCheck::Matches(Some("second".to_owned())),
+        ])
+    );
+}
+
+#[test]
+fn identical_attachments_pair_with_identical_hashes_one_to_one() {
+    let hash = hex_digest(b"data");
+    let original = text_attachments(&[("document", "data"); 2]);
+    let raw = receipt_with(&text_attachments(&[("document.hash", hash.as_str()); 2]));
+    let receipt = Message::parse(&raw).expect("a short receipt");
+    assert_eq!(
+        receipt.check_attachments(&original, TextLineEnds::Canonical),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("document".to_owned()));
+            2
+        ])
+    );
+}
+
 #[test]
 fn identical_generated_extras_remain_in_receipt_order() {
     let hash = hex_digest(b"data");
@@ -998,4 +1087,307 @@ fn limit_inside_attached_message_is_rejected() {
         "--inner--\r\n\r\n--outer\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"outer.txt\"\r\n\r\npayload\r\n--outer--\r\n",
     );
     assert_incomplete_message_is_rejected(original.as_bytes());
+}
+
+/// A file name and its content, for a sent attachment or a receipt part of the exhaustive cross-check.
+type Part<'a> = (&'a str, &'a str);
+
+/// What one sent attachment comes to under one assignment of the exhaustive cross-check.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Outcome {
+    /// No receipt part is assigned.
+    Missing,
+    /// A part's hash holds the attachment's digest.
+    Matches,
+    /// A part carries the attachment unchanged.
+    Carried,
+    /// A part under the attachment's name holds something else.
+    Differs,
+}
+
+/// How strongly a receipt part stands for a sent attachment, named and equal 3, named 2, equal 1, unrelated 0.
+const fn level(named: bool, equal: bool) -> u8 {
+    match (named, equal) {
+        (true, true) => 3,
+        (true, false) => 2,
+        (false, true) => 1,
+        (false, false) => 0,
+    }
+}
+
+/// The digest a receipt part's content writes as 40 hexadecimal digits.
+fn written_digest(content: &str) -> Option<[u8; 20]> {
+    let content = content.trim_ascii();
+    (content.len() == 40 && content.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| sha1(content))
+}
+
+/// For each sent attachment and receipt part, the level and whether a hash and a carried copy each reach it.
+type Evidence = Vec<Vec<(u8, bool, bool)>>;
+
+/// Every attachment's outcome and, for each group of identical parts, how many are paired and how many of those carry
+/// the attachment, under one complete assignment.
+type Observation = (Vec<Outcome>, Vec<(usize, usize)>);
+
+/// The checks and hashes the brute force gives.
+type Expected = (Vec<AttachmentCheck>, Vec<(String, [u8; 20])>);
+
+/// How every part of `parts` stands for every attachment of `sent`.
+fn evidence(sent: &[Part<'_>], parts: &[Part<'_>]) -> Evidence {
+    let content_digest = |content: &str| -> [u8; 20] { Sha1::digest(content.as_bytes()).into() };
+    sent.iter()
+        .map(|&(name, content)| {
+            parts
+                .iter()
+                .map(|&(file, part)| {
+                    let carried = level(
+                        name == file,
+                        content_digest(content) == content_digest(part),
+                    );
+                    let generated = level(
+                        file.strip_suffix(".hash") == Some(name),
+                        written_digest(part) == Some(content_digest(content)),
+                    );
+                    let best = carried.max(generated);
+                    (
+                        best,
+                        best != 0 && generated == best,
+                        best != 0 && carried == best,
+                    )
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// The score of one complete assignment, its named and equal pairs, named ones and equal ones, and what it shows.
+/// `groups` numbers each part by the first part identical to it.
+fn observe(
+    evidence: &Evidence,
+    groups: &[usize],
+    assignment: &[Option<(usize, bool)>],
+) -> ([usize; 3], Observation) {
+    let mut score = [0; 3];
+    let mut outcomes = Vec::with_capacity(assignment.len());
+    let mut counts = vec![(0, 0); groups.len()];
+    for (row, choice) in assignment.iter().enumerate() {
+        let Some((part, carried)) = *choice else {
+            outcomes.push(Outcome::Missing);
+            continue;
+        };
+        let best = evidence[row][part].0;
+        score[usize::from(3 - best)] += 1;
+        counts[groups[part]].0 += 1;
+        counts[groups[part]].1 += usize::from(carried);
+        outcomes.push(if best == 2 {
+            Outcome::Differs
+        } else if carried {
+            Outcome::Carried
+        } else {
+            Outcome::Matches
+        });
+    }
+    (score, (outcomes, counts))
+}
+
+/// What every complete assignment with the best score shows, each part used at most once and read as a hash or a
+/// carried copy only when that reading reaches the part's level.
+fn optimal_observations(evidence: &Evidence, groups: &[usize]) -> BTreeSet<Observation> {
+    let options: Vec<Vec<Option<(usize, bool)>>> = evidence
+        .iter()
+        .map(|row| {
+            let mut options = vec![None];
+            for (part, &(_, generated, carried)) in row.iter().enumerate() {
+                if generated {
+                    options.push(Some((part, false)));
+                }
+                if carried {
+                    options.push(Some((part, true)));
+                }
+            }
+            options
+        })
+        .collect();
+    let mut best_score = None;
+    let mut observations = BTreeSet::new();
+    let mut chosen = vec![0; evidence.len()];
+    loop {
+        let assignment: Vec<_> = chosen
+            .iter()
+            .zip(&options)
+            .map(|(&index, row)| row[index])
+            .collect();
+        let used: Vec<usize> = assignment.iter().flatten().map(|&(part, _)| part).collect();
+        if used
+            .iter()
+            .enumerate()
+            .all(|(at, part)| !used[..at].contains(part))
+        {
+            let (score, observation) = observe(evidence, groups, &assignment);
+            match best_score.map_or(Ordering::Greater, |best| score.cmp(&best)) {
+                Ordering::Greater => {
+                    best_score = Some(score);
+                    observations.clear();
+                    observations.insert(observation);
+                }
+                Ordering::Equal => {
+                    observations.insert(observation);
+                }
+                Ordering::Less => {}
+            }
+        }
+        let mut exhausted = true;
+        for (index, row) in chosen.iter_mut().zip(&options) {
+            *index += 1;
+            if *index < row.len() {
+                exhausted = false;
+                break;
+            }
+            *index = 0;
+        }
+        if exhausted {
+            return observations;
+        }
+    }
+}
+
+/// The checks and hashes of `parts` against `sent`, by brute force over every complete assignment. The assignments
+/// pairing the most named and equal parts, then named ones, then equal ones, must agree on every outcome and on how
+/// many parts of each set of identical ones are paired and carried, or the receipt is ambiguous.
+fn brute_force(sent: &[Part<'_>], parts: &[Part<'_>]) -> Result<Expected, Error> {
+    let groups: Vec<usize> = parts
+        .iter()
+        .enumerate()
+        .map(|(index, part)| {
+            parts
+                .iter()
+                .position(|other| other == part)
+                .unwrap_or(index)
+        })
+        .collect();
+    let mut observations = optimal_observations(&evidence(sent, parts), &groups).into_iter();
+    let (Some((outcomes, counts)), None) = (observations.next(), observations.next()) else {
+        return Err(Error::AmbiguousAttachments);
+    };
+    // The first parts of each group in receipt order are the paired ones, hashes before carried copies, and the
+    // others are carried copies unless only their name ending in `.hash` names a sent attachment.
+    let mut seen = vec![0_usize; parts.len()];
+    let mut states = Vec::with_capacity(parts.len());
+    for (&(file, _), &group) in parts.iter().zip(&groups) {
+        let (paired, carried) = counts[group];
+        let rank = seen[group];
+        seen[group] += 1;
+        states.push(if rank < paired {
+            (true, rank >= paired - carried)
+        } else {
+            (
+                false,
+                file.strip_suffix(".hash").is_none() || sent.iter().any(|&(name, _)| name == file),
+            )
+        });
+    }
+    for (&(file, part), &(_, carried)) in parts.iter().zip(&states) {
+        if !carried && written_digest(part).is_none() {
+            return Err(Error::InvalidAttachmentHash(file.to_owned()));
+        }
+    }
+    let name_of = |file: &str, carried: bool| -> String {
+        if carried {
+            file.to_owned()
+        } else {
+            file.strip_suffix(".hash").unwrap_or(file).to_owned()
+        }
+    };
+    let mut checks: Vec<_> = sent
+        .iter()
+        .zip(outcomes)
+        .map(|(&(name, _), outcome)| match outcome {
+            Outcome::Missing => AttachmentCheck::Missing(Some(name.to_owned())),
+            Outcome::Matches => AttachmentCheck::Matches(Some(name.to_owned())),
+            Outcome::Carried => AttachmentCheck::Carried(Some(name.to_owned())),
+            Outcome::Differs => AttachmentCheck::Differs(name.to_owned()),
+        })
+        .collect();
+    let mut hashes = Vec::new();
+    for (&(file, part), &(paired, carried)) in parts.iter().zip(&states) {
+        if !paired {
+            checks.push(AttachmentCheck::NotSent(Some(name_of(file, carried))));
+        }
+        if let (false, Some(digest)) = (carried, written_digest(part)) {
+            hashes.push((name_of(file, carried), digest));
+        }
+    }
+    Ok((checks, hashes))
+}
+
+/// Every sequence of up to `length` of `kinds`, repetitions included.
+fn sequences<'a>(kinds: &[Part<'a>], length: usize) -> Vec<Vec<Part<'a>>> {
+    let mut all = vec![Vec::new()];
+    let mut shorter = 0;
+    for _ in 0..length {
+        let longest = all.len();
+        for prefix in shorter..longest {
+            for &kind in kinds {
+                let sequence = [all[prefix].as_slice(), &[kind]].concat();
+                all.push(sequence);
+            }
+        }
+        shorter = longest;
+    }
+    all
+}
+
+/// Every receipt of up to three parts against every sent message of up to three attachments, drawn from names and
+/// contents that meet as equal, named, renamed, unrelated and invalid, with a sent `.hash` file that one part can stand
+/// for as a carried copy while hashing another attachment, checks as the brute force over every assignment.
+#[test]
+fn every_small_receipt_checks_as_the_brute_force_does() {
+    let (x_digest, y_digest) = (hex_digest(b"x"), hex_digest(b"y"));
+    let sent_kinds: [Part<'_>; 4] = [("a", "x"), ("a", "y"), ("b", "x"), ("a.hash", &x_digest)];
+    let part_kinds: [Part<'_>; 7] = [
+        ("a", "x"),
+        ("a", "y"),
+        ("c", "x"),
+        ("a.hash", &x_digest),
+        ("a.hash", &y_digest),
+        ("c.hash", &x_digest),
+        ("c.hash", "junk"),
+    ];
+    let receipts: Vec<_> = sequences(&part_kinds, 3)
+        .into_iter()
+        .map(|parts| {
+            let raw = receipt_with(&text_attachments(&parts));
+            (parts, raw)
+        })
+        .collect();
+    let receipts: Vec<_> = receipts
+        .iter()
+        .map(|(parts, raw)| (parts, Message::parse(raw).expect("a short receipt")))
+        .collect();
+    for sent in sequences(&sent_kinds, 3) {
+        let original = text_attachments(&sent);
+        for (parts, receipt) in &receipts {
+            let (checks, hashes) = match brute_force(&sent, parts) {
+                Ok((checks, hashes)) => (Ok(checks), Ok(hashes)),
+                Err(error) => (Err(error.clone()), Err(error)),
+            };
+            assert_eq!(
+                receipt.check_attachments(&original, TextLineEnds::Canonical),
+                checks,
+                "{sent:?} {parts:?}"
+            );
+            assert_eq!(
+                receipt
+                    .attachment_hashes(&original, TextLineEnds::Canonical)
+                    .map(|hashes| {
+                        hashes
+                            .iter()
+                            .map(|hash| (hash.name().to_owned(), *hash.sha1()))
+                            .collect::<Vec<_>>()
+                    }),
+                hashes,
+                "{sent:?} {parts:?}"
+            );
+        }
+    }
 }
