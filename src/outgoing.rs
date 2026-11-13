@@ -38,6 +38,46 @@ pub enum OutgoingError {
     /// An `X-TipoRicevuta` field already asks for another receipt form, with the value it holds (§6.5.2.2).
     #[error("X-TipoRicevuta already asks for {0:?}")]
     ReceiptKind(String),
+    /// The message has more distinct recipients than the provider accepts (DM 2 November 2005, art. 12).
+    #[error("the message has {recipients} recipients and the provider accepts {limit}")]
+    TooManyRecipients {
+        /// The distinct `To` and `Cc` recipients.
+        recipients: usize,
+        /// The most the provider accepts.
+        limit: usize,
+    },
+    /// The message's size times its recipient count exceeds what the provider accepts (DM 2 November 2005, art. 12).
+    #[error(
+        "the message's size times its recipients is {total} bytes and the provider accepts {limit}"
+    )]
+    TooLarge {
+        /// The size in bytes as SMTP sends it, times the distinct recipients.
+        total: u64,
+        /// The most the provider accepts.
+        limit: u64,
+    },
+}
+
+/// The recipient count and size a sender's provider accepts in one message, which art. 12 of DM 2 November 2005 lets
+/// each provider fix.
+///
+/// The decree bounds the size times the recipient count, and Aruba applies its 100 MB the same way, so a message to
+/// ten recipients counts ten times. The receiving provider may accept less, which no sender can learn beforehand.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Limits {
+    /// The most distinct recipients in one message.
+    pub recipients: usize,
+    /// The most bytes the message's size times its distinct recipients may reach.
+    pub size_times_recipients: u64,
+}
+
+impl Limits {
+    /// The least every provider accepts (art. 12(2)): 50 recipients, and a size times recipients of 30 megabytes,
+    /// read as 30,000,000 bytes so that a message within it fits under the binary reading too.
+    pub const GUARANTEED: Self = Self {
+        recipients: 50,
+        size_times_recipients: 30_000_000,
+    };
 }
 
 /// A message the caller built, checked for submission to the sender's PEC provider and asking for a delivery receipt
@@ -144,6 +184,57 @@ impl OutgoingMessage {
     pub const fn forward_paths(&self) -> &[String] {
         self.forward_paths.as_slice()
     }
+
+    /// Checks the message against the sender's provider `limits`, counting its size as SMTP sends it, with every line
+    /// ended by CRLF (RFC 5321 §2.3.8), the size the SMTP `SIZE` parameter declares (RFC 1870 §3).
+    ///
+    /// ```
+    /// use postacert::{Limits, OutgoingMessage, ReceiptKind};
+    ///
+    /// let raw = b"From: mario.rossi@pec.example.it\r\n\
+    ///     To: ufficio.fatture@pec.example.it\r\n\
+    ///     Date: Sun, 8 Nov 2026 10:14:58 +0100\r\n\
+    ///     Message-ID: <20261108101458.0001@client.example.it>\r\n\
+    ///     \r\n\
+    ///     Fattura in allegato.\r\n";
+    /// let outgoing = OutgoingMessage::prepare(raw, ReceiptKind::Full)?;
+    /// outgoing.check_limits(Limits::GUARANTEED)?;
+    /// # Ok::<(), postacert::Error>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Outgoing`] with [`OutgoingError::TooManyRecipients`] when the message has more distinct
+    /// recipients than `limits` allows, or [`OutgoingError::TooLarge`] when its size times its recipients exceeds it.
+    pub fn check_limits(&self, limits: Limits) -> Result<(), Error> {
+        let recipients = self.forward_paths.len();
+        if recipients > limits.recipients {
+            return Err(OutgoingError::TooManyRecipients {
+                recipients,
+                limit: limits.recipients,
+            }
+            .into());
+        }
+        // Neither conversion fails where `usize` has at most 64 bits, and a product past `u64::MAX` exceeds any limit.
+        let size = u64::try_from(smtp_size(&self.raw)).unwrap_or(u64::MAX);
+        let total = size.saturating_mul(u64::try_from(recipients).unwrap_or(u64::MAX));
+        if total > limits.size_times_recipients {
+            return Err(OutgoingError::TooLarge {
+                total,
+                limit: limits.size_times_recipients,
+            }
+            .into());
+        }
+        Ok(())
+    }
+}
+
+/// The size of `raw` once every line feed not after a carriage return becomes CRLF.
+fn smtp_size(raw: &[u8]) -> usize {
+    let mut lines = raw.split(|&byte| byte == b'\n');
+    // The text after the last line feed ends no line.
+    lines.next_back();
+    raw.len() + lines.filter(|line| !line.ends_with(b"\r")).count()
 }
 
 /// The address of the only mailbox the only `From` field names.
