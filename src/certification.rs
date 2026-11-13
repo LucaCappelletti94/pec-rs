@@ -143,6 +143,17 @@ pub enum ReceiptKind {
     Summary,
 }
 
+impl ReceiptKind {
+    /// The token `daticert.xml` and `X-TipoRicevuta` write for the form (§6.5.2, §7.4).
+    pub(crate) const fn token(self) -> &'static str {
+        match self {
+            Self::Full => "completa",
+            Self::Short => "breve",
+            Self::Summary => "sintetica",
+        }
+    }
+}
+
 /// The `ricevuta` element, which carries the receipt format as its only attribute.
 mod receipt {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};

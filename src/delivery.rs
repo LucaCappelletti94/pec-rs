@@ -5,6 +5,7 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use jiff::{SignedDuration, Timestamp};
 
+use crate::mailbox::mailbox_key;
 use crate::{Error, ErrorCode, Kind, MessageId, RecipientKind, VerifiedMessage};
 
 /// How long after the acceptance a timeout notice is the final one, sent 22 to 24 hours after sending (§6.3.5).
@@ -283,15 +284,6 @@ impl Delivery {
             Status::Accepted
         }
     }
-}
-
-/// The key a mailbox is compared by, its local part as written and its domain in lower case.
-fn mailbox_key(address: &str) -> String {
-    let mut key = address.to_owned();
-    if let Some((local, _)) = address.rsplit_once('@') {
-        key[local.len()..].make_ascii_lowercase();
-    }
-    key
 }
 
 /// Keeps the earlier of a recorded time and a new one.

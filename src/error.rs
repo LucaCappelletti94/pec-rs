@@ -1,6 +1,6 @@
 //! Errors from reading PEC data and checking receipt attachments.
 
-use crate::{Kind, MessageKind, SignatureError};
+use crate::{Kind, MessageKind, OutgoingError, SignatureError};
 
 /// Why PEC data could not be read or a receipt's attachments could not be checked.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
@@ -69,4 +69,7 @@ pub enum Error {
     /// A taken-in-charge receipt has no `ricezione`, or a receipt naming one recipient has no `consegna` (§7.4).
     #[error("the {0:?} receipt names no recipient")]
     MissingRecipient(Kind),
+    /// The sender's provider would refuse the message at submission, or the message cannot be tracked (§6.3.1).
+    #[error("the message would be refused at submission: {0}")]
+    Outgoing(#[from] OutgoingError),
 }
