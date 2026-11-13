@@ -1,6 +1,8 @@
 //! Whether the signer's certificate was revoked by the validation time, from the CRLs of the CA that issued it (RFC 5280
 //! §5, ETSI EN 319 102-1 §5.2.5 and §5.2.6).
 
+use core::cmp::Ordering;
+
 use cms::cert::x509::Certificate;
 use cms::cert::x509::crl::CertificateList;
 use cms::cert::x509::ext::Extension;
@@ -22,7 +24,9 @@ const ISSUING_DISTRIBUTION_POINT: ObjectIdentifier = ObjectIdentifier::new_unwra
 const DELTA_CRL_INDICATOR: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.29.27");
 
 /// Checks `signer`, issued by `issuer`, against the latest of `crls` from `issuer` in scope for it, as ETSI EN 319
-/// 102-1 §5.2.6 picks revocation data before checking its freshness. CRLs of other CAs are ignored.
+/// 102-1 §5.2.6 picks revocation data before checking its freshness. CRLs of other CAs are ignored. CRLs sharing the
+/// latest `thisUpdate` decide together, whatever order they come in. Any of them revoking the signer counts, and one of
+/// them fresh is enough.
 pub(crate) fn check(
     signer: &Certificate,
     issuer: &Certificate,
@@ -30,7 +34,8 @@ pub(crate) fn check(
     at: Timestamp,
 ) -> Result<(), SignatureError> {
     let at_second = at.as_second();
-    let mut latest: Option<(i64, CertificateList)> = None;
+    let mut latest: Option<i64> = None;
+    let mut tied: Vec<CertificateList> = Vec::new();
     for der in crls {
         let list = CertificateList::from_der(der).map_err(|_| SignatureError::InvalidCrl)?;
         if list.tbs_cert_list.issuer != *issuer.tbs_certificate().subject() {
@@ -39,31 +44,39 @@ pub(crate) fn check(
         if !authentic(&list, issuer) {
             return Err(SignatureError::InvalidCrl);
         }
-        let this_update = seconds(list.tbs_cert_list.this_update);
-        if in_scope(&list, signer, issuer)
-            && latest
-                .as_ref()
-                .is_none_or(|(latest, _)| this_update > *latest)
-        {
-            latest = Some((this_update, list));
+        if !in_scope(&list, signer, issuer) {
+            continue;
         }
+        let this_update = seconds(list.tbs_cert_list.this_update);
+        match latest.map(|latest| this_update.cmp(&latest)) {
+            Some(Ordering::Less) => continue,
+            Some(Ordering::Equal) => {}
+            Some(Ordering::Greater) | None => {
+                latest = Some(this_update);
+                tied.clear();
+            }
+        }
+        tied.push(list);
     }
     let unusable = || SignatureError::NoUsableCrl {
         urls: distribution_points(signer),
     };
-    let Some((_, list)) = latest else {
+    if tied.is_empty() {
         return Err(unusable());
-    };
+    }
     let serial = signer.tbs_certificate().serial_number();
-    let entry = list
-        .tbs_cert_list
-        .revoked_certificates
+    let revoked_at = tied
         .iter()
-        .flatten()
-        .find(|entry| entry.serial_number == *serial);
-    let revoked_at = entry
+        .filter_map(|list| {
+            list.tbs_cert_list
+                .revoked_certificates
+                .iter()
+                .flatten()
+                .find(|entry| entry.serial_number == *serial)
+        })
         .map(|entry| seconds(entry.revocation_date))
-        .filter(|revoked_at| *revoked_at <= at_second);
+        .filter(|revoked_at| *revoked_at <= at_second)
+        .min();
     // A listed revocation counts however old the CRL (§5.2.6 b). No later than `at`, it is inside what `jiff`
     // represents.
     if let Some(revoked_at) = revoked_at {
@@ -72,10 +85,11 @@ pub(crate) fn check(
         });
     }
     // Fresh while `at` is before `nextUpdate`, the default freshness of §5.2.5.
-    let fresh = list
-        .tbs_cert_list
-        .next_update
-        .is_some_and(|next_update| at_second < seconds(next_update));
+    let fresh = tied.iter().any(|list| {
+        list.tbs_cert_list
+            .next_update
+            .is_some_and(|next_update| at_second < seconds(next_update))
+    });
     if fresh { Ok(()) } else { Err(unusable()) }
 }
 

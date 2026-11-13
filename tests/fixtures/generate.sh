@@ -109,6 +109,8 @@ if [[ ! -f pki/crls/current.der ]]; then
   crl other-ca root 261201000000Z 21261001000000Z
   # Issued after current.der and stale since, revoking the provider, so the older current.der cannot hide it.
   crl stale-revoked ca 270201000000Z 270301000000Z "$revoked"
+  # Issued with stale.der and fresh, revoking nothing, so a tie on thisUpdate has a fresh member.
+  crl tied-fresh ca 270201000000Z 21261001000000Z
   csr=$(mktemp)
   openssl req -new -key pki/provider.key \
     -subj "/C=IT/ST=Roma/L=Roma/O=Gestore PEC di Esempio S.p.A./CN=Gestore PEC di Esempio S.p.A." -out "$csr"
