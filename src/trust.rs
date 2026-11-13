@@ -33,7 +33,7 @@ pub const AGID_CA1: &[u8] = include_bytes!("anchors/agid-ca1.der");
 /// `AgID CA SMIME RSA 2026`, which issues PEC provider certificates until 2029-08-03 (SHA-256 `78A9F2A7…0CED80`).
 pub const AGID_CA_SMIME_RSA_2026: &[u8] = include_bytes!("anchors/agid-ca-smime-rsa-2026.der");
 
-/// The CAs AgID issues PEC provider certificates from, as anchors for [`crate::Message::provider_signature`].
+/// The CAs AgID issues PEC provider certificates from, as anchors for [`crate::Message::verify`].
 pub const AGID_PROVIDER_CAS: &[&[u8]] = &[AGID_CA1, AGID_CA_SMIME_RSA_2026];
 
 /// `id-kp-emailProtection`, the purpose of every provider certificate (CPS §7.1.2.3).

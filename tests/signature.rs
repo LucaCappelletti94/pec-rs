@@ -219,7 +219,8 @@ fn verify_full(
 ) -> Result<ProviderSignature, Error> {
     Message::parse(raw)
         .expect("a PEC message")
-        .provider_signature(anchors, crls, at)
+        .verify(anchors, crls, at)
+        .map(|verified| verified.signature().clone())
 }
 
 /// The verification result of a fixture under `anchors` at `at`, with a CRL that lists nothing.
@@ -296,6 +297,24 @@ fn every_fixture_carries_the_provider_signature() {
         checked += 1;
     }
     assert_eq!(checked, 17);
+}
+
+#[test]
+fn verification_yields_the_receipt_it_verified() {
+    let raw = fixture("messages/delivery-full.eml");
+    let message = Message::parse(&raw).expect("a PEC message");
+    let verified = message
+        .verify(&[&anchor("agid-like")], &[&crl("current")], now())
+        .expect("a valid signature");
+    assert_eq!(
+        verified.message().certification_data(),
+        message.certification_data()
+    );
+    assert_eq!(verified.message().message_id(), message.message_id());
+    assert_eq!(
+        verified.signature().signer_certificate(),
+        provider_certificate()
+    );
 }
 
 #[test]

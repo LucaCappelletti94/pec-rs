@@ -10,7 +10,7 @@ use crate::{
 
 /// A receipt, notice or envelope a PEC provider generated, read from its raw bytes.
 ///
-/// The provider's S/MIME signature is not checked here.
+/// The provider's S/MIME signature is not checked here, but by [`Message::verify`].
 #[derive(Debug)]
 pub struct Message<'a> {
     /// The parsed MIME tree, which owns any transfer-decoded buffer the original message lives in.
@@ -197,12 +197,12 @@ impl<'a> Message<'a> {
     /// Returns [`Error::NotSigned`] when the message is not `multipart/signed` with a PKCS #7 signature, or
     /// [`Error::Signature`] when the signature does not verify, its signer is not trusted or was revoked, or no CRL
     /// decides.
-    pub fn provider_signature(
+    pub fn verify(
         &self,
         anchors: &[&[u8]],
         crls: &[&[u8]],
         at: Timestamp,
-    ) -> Result<ProviderSignature, Error> {
+    ) -> Result<VerifiedMessage<'_, 'a>, Error> {
         let root = self.parsed.root_part();
         let pkcs7 = root
             .content_type()
@@ -220,14 +220,18 @@ impl<'a> Message<'a> {
             return Err(Error::NotSigned);
         };
         let sender = self.sender();
-        Ok(signature::verify(
+        let signature = signature::verify(
             content.raw(),
             &signature.decoded(),
             sender,
             anchors,
             crls,
             at,
-        )?)
+        )?;
+        Ok(VerifiedMessage {
+            message: self,
+            signature,
+        })
     }
 
     /// The address of the message's `From` field when the message has one such field naming exactly one mailbox.
@@ -298,6 +302,29 @@ impl<'a> Message<'a> {
         Ok(self
             .original
             .and_then(|original| self.parsed.part(original)?.nested()))
+    }
+}
+
+/// A message whose provider signature verified, which only [`Message::verify`] makes.
+#[derive(Debug)]
+pub struct VerifiedMessage<'m, 'a> {
+    /// The message verified.
+    message: &'m Message<'a>,
+    /// Its provider signature.
+    signature: ProviderSignature,
+}
+
+impl<'m, 'a> VerifiedMessage<'m, 'a> {
+    /// The message verified.
+    #[must_use]
+    pub const fn message(&self) -> &'m Message<'a> {
+        self.message
+    }
+
+    /// The provider signature over it.
+    #[must_use]
+    pub const fn signature(&self) -> &ProviderSignature {
+        &self.signature
     }
 }
 
