@@ -963,6 +963,24 @@ fn the_latest_crl_counts() {
 }
 
 #[test]
+fn crls_sharing_the_latest_update_decide_together() {
+    let raw = fixture("messages/acceptance.eml");
+    let (stale, revoked, fresh) = (crl("stale"), crl("revoked"), crl("tied-fresh"));
+    for crls in [[&stale[..], &revoked[..]], [&revoked[..], &stale[..]]] {
+        assert_eq!(
+            verify_crls(&raw, &crls, time("2027-02-01T12:00:00Z"))
+                .expect_err("revoked in a tied CRL"),
+            Error::Signature(SignatureError::Revoked {
+                revoked_at: time("2027-01-01T00:00:00Z")
+            })
+        );
+    }
+    for crls in [[&stale[..], &fresh[..]], [&fresh[..], &stale[..]]] {
+        verify_crls(&raw, &crls, time("2027-02-03T00:00:00Z")).expect("a tied CRL is fresh");
+    }
+}
+
+#[test]
 fn forged_crl_is_refused() {
     let raw = fixture("messages/acceptance.eml");
     let mut forged = crl("current");

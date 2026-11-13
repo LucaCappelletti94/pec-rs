@@ -183,8 +183,9 @@ impl<'a> Message<'a> {
     /// unrevoked at `at`, for signing the email of the `From` address. [`AGID_PROVIDER_CAS`](crate::AGID_PROVIDER_CAS)
     /// holds AgID's anchors in DER.
     ///
-    /// `crls` are the caller's CRLs in DER, of any CA. The latest from the signer's CA decides revocation, and unless
-    /// it revokes the signer it has to be fresh at `at`. When there is none, or it is stale,
+    /// `crls` are the caller's CRLs in DER, of any CA and in any order. The latest from the signer's CA decides
+    /// revocation together with any other sharing its `thisUpdate`, and unless one of them revokes the signer one of
+    /// them has to be fresh at `at`. When there is none, or none is fresh,
     /// [`SignatureError::NoUsableCrl`](crate::SignatureError::NoUsableCrl) names the URLs to fetch a newer one from,
     /// and a fetched CRL serves every message until its `nextUpdate`.
     ///
