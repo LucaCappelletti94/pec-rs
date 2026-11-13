@@ -66,4 +66,7 @@ pub enum Error {
     /// The provider's signature does not verify (§6.1).
     #[error("invalid provider signature: {0}")]
     Signature(#[from] SignatureError),
+    /// A taken-in-charge receipt has no `ricezione`, or a receipt naming one recipient has no `consegna` (§7.4).
+    #[error("the {0:?} receipt names no recipient")]
+    MissingRecipient(Kind),
 }

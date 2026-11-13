@@ -258,6 +258,55 @@ e destinato all=27utente "ufficio.fatture@pec.example.it"
 non e stato consegnato nelle prime dodici ore dal suo invio.
 Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' timeout-warning.xml '' ''
 
+# Receipts that a delivery tracker must place or refuse to place.
+build timeout-final.eml "$(RECEIPT=${RECEIPT/Sun, 8 Nov 2026 10:15:00/Mon, 9 Nov 2026 08:30:00} receipt 16 'X-Ricevuta: preavviso-errore-consegna')" 'AVVISO DI MANCATA CONSEGNA PER SUP. TEMPO MASSIMO: Invio fattura 00012' \
+  'Avviso di mancata consegna
+Il giorno 09/11/2026 alle ore 08:30:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+e destinato all=27utente "ufficio.fatture@pec.example.it"
+non e stato consegnato entro le ventiquattro ore dal suo invio.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' timeout-final.xml '' ''
+
+build taken-in-charge-late.eml "$(RECEIPT=${RECEIPT/Sun, 8 Nov 2026 10:15:00/Sun, 8 Nov 2026 23:00:00} receipt 17 'X-Ricevuta: presa-in-carico')" 'PRESA IN CARICO: Invio fattura 00012' \
+  'Ricevuta di presa in carico
+Il giorno 08/11/2026 alle ore 23:00:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a:
+ufficio.fatture@pec.example.it
+=E8 stato accettato dal sistema.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' taken-in-charge-late.xml '' ''
+
+build delivery-other-send.eml "$(RECEIPT=${RECEIPT/Sun, 8 Nov 2026 10:15:00/Sun, 8 Nov 2026 10:20:00} receipt 18 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  'Ricevuta sintetica di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:20:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "ufficio.fatture@pec.example.it"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec009.20261108101900.00001.01.1.1@pec.example.it' delivery-other-send.xml '' ''
+
+build delivery-unattributed.eml "$(receipt 19 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  'Ricevuta sintetica di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' delivery-unattributed.xml '' ''
+
+build delivery-unlisted.eml "$(receipt 20 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  'Ricevuta sintetica di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "protocollo@pec.example.it"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' delivery-unlisted.xml '' ''
+
+build delivery-external.eml "$(receipt 21 'X-Ricevuta: avvenuta-consegna')" 'CONSEGNA: Invio fattura 00012' \
+  'Ricevuta sintetica di avvenuta consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "info@example.com"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it' delivery-external.xml '' ''
+
 build virus-detected.eml "$(receipt 9 $'X-Ricevuta: rilevazione-virus\nX-Mittente: mario.rossi@pec.example.it')" 'PROBLEMA DI SICUREZZA: Invio fattura 00012' \
   'Avviso di rilevazione virus informatico
 Il giorno 08/11/2026 alle ore 10:15:00 (+0100) nel messaggio
