@@ -201,15 +201,17 @@ fn address(mailbox: Mailbox<'_>) -> Result<&str, OutgoingError> {
     }
 }
 
-/// The identifier of the only `Message-ID` field.
+/// The identifier of the only `Message-ID` field, read from the whole field, so a field holding more than one
+/// identifier is refused (RFC 5322 §3.6.4).
 fn message_id(headers: &Headers<'_>) -> Result<MessageId, OutgoingError> {
-    if headers.all(HeaderName::MessageId).count() != 1 {
-        return Err(OutgoingError::MessageId);
+    let mut fields = headers.all(HeaderName::MessageId);
+    match (fields.next(), fields.next()) {
+        (Some(field), None) => core::str::from_utf8(field.raw_value())
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .ok_or(OutgoingError::MessageId),
+        _ => Err(OutgoingError::MessageId),
     }
-    headers
-        .message_id()
-        .and_then(|id| id.parse().ok())
-        .ok_or(OutgoingError::MessageId)
 }
 
 /// `raw` with an `X-TipoRicevuta` field holding `token` after its last header field, with the line break that field

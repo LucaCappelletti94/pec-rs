@@ -299,6 +299,23 @@ fn the_message_has_one_valid_identifier() {
         &replacing("Message-ID", &["Message-ID: <senza-dominio>"]),
         OutgoingError::MessageId,
     );
+    // One field holds one identifier, so a second one is refused instead of choosing either (RFC 5322 §3.6.4).
+    refused(
+        &replacing(
+            "Message-ID",
+            &["Message-ID: <uno@client.example.it> <due@client.example.it>"],
+        ),
+        OutgoingError::MessageId,
+    );
+    let outgoing = prepared(&replacing(
+        "Message-ID",
+        &["Message-ID:\r\n <20261108101458.0001@client.example.it>"],
+    ))
+    .expect("a folded field");
+    let expected: MessageId = "<20261108101458.0001@client.example.it>"
+        .parse()
+        .expect("an identifier");
+    assert_eq!(outgoing.message_id(), &expected);
 }
 
 #[test]
