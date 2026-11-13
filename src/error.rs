@@ -5,8 +5,8 @@ use crate::{Kind, MessageKind};
 /// Why PEC data could not be read or a receipt's attachments could not be checked.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
-    /// The input is not a MIME message.
-    #[error("the input is not a MIME message")]
+    /// The input is not MIME or an attachment comparison reached a MIME parser limit.
+    #[error("the input is not MIME or a MIME parser limit was reached")]
     NotMime,
     /// The message carries neither `X-Ricevuta` nor `X-Trasporto`, so no PEC provider generated it.
     #[error("the message carries neither X-Ricevuta nor X-Trasporto")]

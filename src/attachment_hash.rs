@@ -150,6 +150,13 @@ impl<'r, 's> Comparison<'r, 's> {
         sent: MessageRef<'s>,
         line_ends: TextLineEnds,
     ) -> Result<Self, Error> {
+        if original
+            .parts()
+            .chain(sent.parts())
+            .any(|part| part.flags().contains(mail_parser::PartFlags::LIMIT_REACHED))
+        {
+            return Err(Error::NotMime);
+        }
         let outgoing = attachments(sent, line_ends);
         let mut candidates: Vec<_> = replaceable(original).map(Candidate::new).collect();
         let pairs = assignment::assign(&outgoing, &mut candidates)?;
