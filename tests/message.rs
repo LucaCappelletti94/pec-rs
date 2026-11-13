@@ -5,7 +5,7 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use pec::{Error, Kind, Message, MessageId, MessageKind};
+use postacert::{Error, Kind, Message, MessageId, MessageKind};
 
 /// Reads a fixture file under `tests/fixtures`.
 fn fixture(path: &str) -> Vec<u8> {

@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 use common::{RECEIPT_WAIT, Receipts, fetch, message, receipt_form, token};
 use lettre::address::Envelope;
 use lettre::{SmtpTransport, Transport};
-use pec::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
+use postacert::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
 
 /// The mailbox the messages leave from, which gets the acceptance and the delivery receipt.
 const SENDER: &str = "mittente@pec.test";
@@ -67,8 +67,8 @@ fn openpec_receipts_verify() {
         return;
     };
     let token = token();
-    let short_subject = format!("pec-rs ricevuta breve {token}");
-    let summary_subject = format!("pec-rs ricevuta sintetica {token}");
+    let short_subject = format!("postacert ricevuta breve {token}");
+    let summary_subject = format!("postacert ricevuta sintetica {token}");
     let short_sent = message(SENDER, RECIPIENT, "breve", &short_subject);
     let summary_sent = message(SENDER, RECIPIENT, "sintetica", &summary_subject);
     send(&smtp, &short_sent);

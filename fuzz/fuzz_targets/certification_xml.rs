@@ -3,7 +3,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use pec::CertificationData;
+use postacert::CertificationData;
 
 fuzz_target!(|input: &[u8]| {
     let Ok(text) = core::str::from_utf8(input) else {

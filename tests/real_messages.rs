@@ -7,7 +7,7 @@
     reason = "test code: the expect message names the failing helper"
 )]
 
-use pec::{Message, MessageKind};
+use postacert::{Message, MessageKind};
 
 #[test]
 fn every_real_pec_message_parses() {

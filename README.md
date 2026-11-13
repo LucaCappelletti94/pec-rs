@@ -1,10 +1,10 @@
-# pec
+# postacert
 
-[![CI](https://github.com/LucaCappelletti94/pec-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/LucaCappelletti94/pec-rs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/LucaCappelletti94/pec-rs/graph/badge.svg)](https://codecov.io/gh/LucaCappelletti94/pec-rs)
-[![crates.io](https://img.shields.io/crates/v/pec.svg)](https://crates.io/crates/pec)
-[![docs.rs](https://docs.rs/pec/badge.svg)](https://docs.rs/pec)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/LucaCappelletti94/pec-rs/blob/main/LICENSE)
+[![CI](https://github.com/LucaCappelletti94/postacert/actions/workflows/ci.yml/badge.svg)](https://github.com/LucaCappelletti94/postacert/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/LucaCappelletti94/postacert/graph/badge.svg)](https://codecov.io/gh/LucaCappelletti94/postacert)
+[![crates.io](https://img.shields.io/crates/v/postacert.svg)](https://crates.io/crates/postacert)
+[![docs.rs](https://docs.rs/postacert/badge.svg)](https://docs.rs/postacert)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/LucaCappelletti94/postacert/blob/main/LICENSE)
 
 Reading PEC messages, Italian certified email, in Rust.
 
@@ -17,7 +17,7 @@ The crate works on bytes already fetched, so any SMTP or IMAP client can feed it
 
 ```rust
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
-use pec::{Kind, Message, MessageKind};
+use postacert::{Kind, Message, MessageKind};
 
 let raw = std::fs::read("tests/fixtures/messages/delivery-full.eml")?;
 let receipt = Message::parse(&raw)?;
