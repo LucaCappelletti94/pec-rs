@@ -38,6 +38,11 @@ pub enum OutgoingError {
     /// An `X-TipoRicevuta` field already asks for another receipt form, with the value it holds (§6.5.2.2).
     #[error("X-TipoRicevuta already asks for {0:?}")]
     ReceiptKind(String),
+    /// A line feed not after a carriage return, or a carriage return not before a line feed, at this byte offset. CR
+    /// and LF only occur together in a message (RFC 5322 §2.3), and an SMTP client sends them only so (RFC 5321
+    /// §2.3.8).
+    #[error("a bare line break at byte {0}")]
+    BareLineBreak(usize),
     /// The message has more distinct recipients than the provider accepts (DM 2 November 2005, art. 12).
     #[error("the message has {recipients} recipients and the provider accepts {limit}")]
     TooManyRecipients {
@@ -102,7 +107,7 @@ pub struct OutgoingMessage {
 
 impl OutgoingMessage {
     /// Checks a message the caller built and asks for `receipt` delivery receipts with `X-TipoRicevuta` (§6.5.2.2,
-    /// §6.5.2.3), written after the last header field with the line break that field ends with.
+    /// §6.5.2.3), written after the last header field.
     ///
     /// A message already asking for `receipt` is kept as it is. The provider replaces the message's `Message-ID` and
     /// keeps it as `msgid` in every receipt (§6.3), so [`message_id`](Self::message_id) starts the
@@ -127,9 +132,13 @@ impl OutgoingMessage {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::NotMime`] when the bytes are not a message, or [`Error::Outgoing`] naming the first check the
+    /// Returns [`Error::Outgoing`] with [`OutgoingError::BareLineBreak`] when a line does not end with CRLF,
+    /// [`Error::NotMime`] when the bytes are not a message, or [`Error::Outgoing`] naming the first other check the
     /// message fails.
     pub fn prepare(raw: &[u8], receipt: ReceiptKind) -> Result<Self, Error> {
+        if let Some(at) = bare_line_break(raw) {
+            return Err(OutgoingError::BareLineBreak(at).into());
+        }
         let parsed = MessageParser::default().parse(raw).ok_or(Error::NotMime)?;
         let headers = parsed.headers();
         let reverse_path = sender(&headers)?.to_owned();
@@ -185,8 +194,9 @@ impl OutgoingMessage {
         self.forward_paths.as_slice()
     }
 
-    /// Checks the message against the sender's provider `limits`, counting its size as SMTP sends it, with every line
-    /// ended by CRLF (RFC 5321 §2.3.8, §4.1.1.4), the size the SMTP `SIZE` parameter declares (RFC 1870 §5).
+    /// Checks the message against the sender's provider `limits`, counting its size as SMTP sends it, the bytes as
+    /// given and a CRLF after a last line without one (RFC 5321 §4.1.1.4), the size the SMTP `SIZE` parameter declares
+    /// (RFC 1870 §5).
     ///
     /// ```
     /// use postacert::{Limits, OutgoingMessage, ReceiptKind};
@@ -229,15 +239,19 @@ impl OutgoingMessage {
     }
 }
 
-/// The size of `raw` as SMTP sends it, with every line feed not after a carriage return sent as CRLF, and a CRLF after
-/// a last line without a line break, which the client adds before `.<CRLF>` (RFC 5321 §4.1.1.4).
+/// The offset of the first line feed not after a carriage return, or carriage return not before a line feed.
+fn bare_line_break(raw: &[u8]) -> Option<usize> {
+    raw.iter().enumerate().position(|(at, &byte)| match byte {
+        b'\n' => at.checked_sub(1).and_then(|before| raw.get(before)) != Some(&b'\r'),
+        b'\r' => raw.get(at + 1) != Some(&b'\n'),
+        _ => false,
+    })
+}
+
+/// The size of `raw` as SMTP sends it, with a CRLF after a last line without one, which the client adds before
+/// `.<CRLF>` (RFC 5321 §4.1.1.4).
 fn smtp_size(raw: &[u8]) -> usize {
-    let mut lines = raw.split(|&byte| byte == b'\n');
-    // The text after the last line feed ends no line.
-    let last = lines.next_back().unwrap_or_default();
-    let bare_line_feeds = lines.filter(|line| !line.ends_with(b"\r")).count();
-    let final_line_break = if last.is_empty() { 0 } else { 2 };
-    raw.len() + bare_line_feeds + final_line_break
+    raw.len() + if raw.ends_with(b"\r\n") { 0 } else { 2 }
 }
 
 /// The address of the only mailbox the only `From` field names.
@@ -308,8 +322,8 @@ fn message_id(headers: &Headers<'_>) -> Result<MessageId, OutgoingError> {
     }
 }
 
-/// `raw` with an `X-TipoRicevuta` field holding `token` after its last header field, with the line break that field
-/// ends with, or CRLF when it ends the message unterminated.
+/// `raw` with an `X-TipoRicevuta` field holding `token` after its last header field, after a CRLF first when that
+/// field ends the message unterminated.
 fn with_receipt_field(raw: &[u8], headers: &Headers<'_>, token: &str) -> Vec<u8> {
     // The offset lies inside `raw`, so it fits a `usize`.
     let end = headers
@@ -318,20 +332,14 @@ fn with_receipt_field(raw: &[u8], headers: &Headers<'_>, token: &str) -> Vec<u8>
         .and_then(|field| usize::try_from(field.offset_end()).ok())
         .unwrap_or(raw.len());
     let (head, tail) = raw.split_at_checked(end).unwrap_or((raw, &[]));
-    let line_break: &[u8] = if head.ends_with(b"\n") && !head.ends_with(b"\r\n") {
-        b"\n"
-    } else {
-        b"\r\n"
-    };
-    let mut out =
-        Vec::with_capacity(raw.len() + RECEIPT_FIELD.len() + token.len() + 2 * line_break.len());
+    let mut out = Vec::with_capacity(raw.len() + RECEIPT_FIELD.len() + token.len() + 4);
     out.extend_from_slice(head);
-    if !head.ends_with(b"\n") {
-        out.extend_from_slice(line_break);
+    if !head.ends_with(b"\r\n") {
+        out.extend_from_slice(b"\r\n");
     }
     out.extend_from_slice(RECEIPT_FIELD);
     out.extend_from_slice(token.as_bytes());
-    out.extend_from_slice(line_break);
+    out.extend_from_slice(b"\r\n");
     out.extend_from_slice(tail);
     out
 }
