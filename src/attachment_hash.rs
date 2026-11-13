@@ -24,8 +24,7 @@ impl AttachmentHash {
         &self.name
     }
 
-    /// The SHA-1 (RFC 3174) of the attachment's transfer-decoded content, or of the bytes of an attached message
-    /// as they were sent.
+    /// The SHA-1 (RFC 3174) of the attachment's transfer-decoded content, headers included for an attached message.
     #[must_use]
     pub const fn sha1(&self) -> &[u8; 20] {
         &self.sha1
@@ -210,13 +209,10 @@ struct Candidate<'a> {
 impl<'a> Candidate<'a> {
     /// Reads both interpretations without rejecting a user file's contents.
     fn new(part: MessagePart<'a>) -> Self {
-        let decoded;
-        let content: &[u8] = if part.is_message() {
-            part.raw_body()
-        } else {
-            decoded = part.decoded();
-            &decoded
-        };
+        let decoded = part
+            .nested()
+            .map_or_else(|| part.decoded(), |message| message.raw().into());
+        let content: &[u8] = &decoded;
         let file = part.attachment_name();
         let hash_name = file.and_then(replaced_name);
         Self {
@@ -256,7 +252,7 @@ impl<'a> Candidate<'a> {
 struct Attachment<'a> {
     /// The file name, when the part has one.
     name: Option<&'a str>,
-    /// The SHA-1 of the transfer-decoded content, or of the bytes as sent for an attached message.
+    /// The SHA-1 of the transfer-decoded content, headers included for an attached message.
     sha1: [u8; 20],
     /// The SHA-1 of the same text or message with LF line ends, when the caller accepts that form and it differs.
     lf_sha1: Option<[u8; 20]>,
@@ -273,13 +269,10 @@ impl Attachment<'_> {
 fn attachments(message: MessageRef<'_>, line_ends: TextLineEnds) -> Vec<Attachment<'_>> {
     replaceable(message)
         .map(|part| {
-            let decoded;
-            let content: &[u8] = if part.is_message() {
-                part.raw_body()
-            } else {
-                decoded = part.decoded();
-                &decoded
-            };
+            let decoded = part
+                .nested()
+                .map_or_else(|| part.decoded(), |message| message.raw().into());
+            let content: &[u8] = &decoded;
             let lf_sha1 = (line_ends == TextLineEnds::CanonicalOrLf
                 && (part.is_message() || is_text(&part)))
             .then(|| lf_form(content))
