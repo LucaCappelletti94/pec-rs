@@ -73,6 +73,45 @@ if [[ ! -f pki/anchors/agid-like.der ]]; then
   rm -f "$csr"
 fi
 
+# CRLs of the test CA with chosen update times, carrying an authorityKeyIdentifier and a cRLNumber as AgID CA1's do,
+# and a signer naming where its CRL is published. The index is written by hand to fix the revocation date.
+if [[ ! -f pki/crls/current.der ]]; then
+  mkdir -p pki/crls
+  db=$(mktemp -d)
+  # crl NAME ISSUER THIS_UPDATE NEXT_UPDATE [INDEX] [EXTENSION]
+  crl() {
+    printf '%s' "${5:+$5$'\n'}" > "$db/index.txt"
+    printf '01\n' > "$db/crlnumber"
+    openssl ca -gencrl -batch -cert "pki/$2.pem" -keyfile "pki/$2.key" -crl_lastupdate "$3" -crl_nextupdate "$4" \
+      -config <(printf '[ca]\ndefault_ca=test\n[test]\ndatabase=%s/index.txt\ncrlnumber=%s/crlnumber\ndefault_md=sha256\ncrl_extensions=ext\n[ext]\nauthorityKeyIdentifier=keyid:always\n%s\n' "$db" "$db" "${6:-}") \
+      -out "$db/crl.pem" 2>/dev/null
+    openssl crl -in "$db/crl.pem" -outform DER -out "pki/crls/$1.der"
+  }
+  serial=$(openssl x509 -in pki/provider.pem -noout -serial | cut -d= -f2)
+  end=$(date -u -d "$(openssl x509 -in pki/provider.pem -noout -enddate | cut -d= -f2)" +%Y%m%d%H%M%SZ)
+  revoked=$(printf 'R\t%s\t270101000000Z,keyCompromise\t%s\tunknown\t/CN=Gestore PEC di Esempio S.p.A.\n' "$end" "$serial")
+  crl current ca 261201000000Z 21261001000000Z
+  crl revoked ca 270201000000Z 21261001000000Z "$revoked"
+  crl stale ca 261201000000Z 261202000000Z
+  crl after-expiry ca 21270101000000Z 21280101000000Z
+  crl before-ca ca 260101000000Z 21261001000000Z
+  crl critical ca 261201000000Z 21261001000000Z '' '1.3.6.1.4.1.32473.2=critical,ASN1:NULL'
+  crl other-ca root 261201000000Z 21261001000000Z
+  csr=$(mktemp)
+  openssl req -new -key pki/provider.key \
+    -subj "/C=IT/ST=Roma/L=Roma/O=Gestore PEC di Esempio S.p.A./CN=Gestore PEC di Esempio S.p.A." -out "$csr"
+  profile=$'keyUsage=critical,digitalSignature\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it'
+  # Two URLs to fetch the CRL from, beside a directory name and a name relative to the CA, which are no URLs.
+  points=$'crlDistributionPoints=http,ldap,directory,relative\n[http]\nfullname=URI:http://crl.pec.example.it/CRL\n[ldap]\nfullname=URI:ldap://crl.pec.example.it/cn=PEC%20Test%20CA1\n[directory]\nfullname=dirName:directory_name\n[directory_name]\nCN=PEC Test CA1 CRL\n[relative]\nrelativename=relative_name\n[relative_name]\nCN=CRL1'
+  openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 300 -days 36500 \
+    -extensions ext -extfile <(printf '[ext]\n%s\n%s\n' "$profile" "$points") \
+    -outform DER -out pki/signers/distribution-points.der 2>/dev/null
+  # RFC 5280 §4.1.2.5 gives a certificate with no well-defined expiration this notAfter.
+  openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 301 -not_after 99991231235959Z \
+    -extfile <(printf '%s\n' "$profile") -outform DER -out pki/signers/no-expiry.der 2>/dev/null
+  rm -rf "$db" "$csr"
+fi
+
 crlf() { sed 's/\r\{0,1\}$/\r/'; }
 
 # build NAME HEADERS SUBJECT BODY DATICERT ORIGINAL ORIGINAL_NAME

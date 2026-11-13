@@ -179,9 +179,13 @@ impl<'a> Message<'a> {
     }
 
     /// Verifies the provider's S/MIME signature over the message (§6.1): the digest of the signed part, the RSA
-    /// signature with the key of the signer's certificate, and that one of `anchors` issued that certificate, valid at
-    /// `at`, for signing the email of the `From` address. [`AGID_PROVIDER_CAS`](crate::AGID_PROVIDER_CAS) holds
-    /// AgID's anchors in DER.
+    /// signature with the key of the signer's certificate, and that one of `anchors` issued that certificate, valid and
+    /// unrevoked at `at`, for signing the email of the `From` address. [`AGID_PROVIDER_CAS`](crate::AGID_PROVIDER_CAS)
+    /// holds AgID's anchors in DER.
+    ///
+    /// `crls` are the caller's CRLs in DER, of any CA, of which the latest from the signer's CA that is fresh at `at`
+    /// decides revocation. When there is none, [`SignatureError::NoUsableCrl`](crate::SignatureError::NoUsableCrl)
+    /// names the URLs to fetch one from, and a fetched CRL serves every message until its `nextUpdate`.
     ///
     /// `at` is the time the message is judged at, such as when it was received, since the signing time a signature
     /// claims is not evidence (RFC 5652 §11.3). The signed part has to be as the provider sent it, with CRLF line
@@ -190,10 +194,12 @@ impl<'a> Message<'a> {
     /// # Errors
     ///
     /// Returns [`Error::NotSigned`] when the message is not `multipart/signed` with a PKCS #7 signature, or
-    /// [`Error::Signature`] when the signature does not verify or its signer is not trusted.
+    /// [`Error::Signature`] when the signature does not verify, its signer is not trusted or was revoked, or no CRL
+    /// decides.
     pub fn provider_signature(
         &self,
         anchors: &[&[u8]],
+        crls: &[&[u8]],
         at: Timestamp,
     ) -> Result<ProviderSignature, Error> {
         let root = self.parsed.root_part();
@@ -218,6 +224,7 @@ impl<'a> Message<'a> {
             &signature.decoded(),
             sender,
             anchors,
+            crls,
             at,
         )?)
     }

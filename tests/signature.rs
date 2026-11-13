@@ -205,11 +205,31 @@ fn now() -> Timestamp {
     time("2030-01-01T00:00:00Z")
 }
 
-/// The verification result of a fixture under `anchors` at `at`.
-fn verify_with(raw: &[u8], anchors: &[&[u8]], at: Timestamp) -> Result<ProviderSignature, Error> {
+/// A CRL of the test CA, with the update times or entries its file is named after.
+fn crl(name: &str) -> Vec<u8> {
+    fixture(&format!("pki/crls/{name}.der"))
+}
+
+/// The verification result of a fixture under `anchors` and `crls` at `at`.
+fn verify_full(
+    raw: &[u8],
+    anchors: &[&[u8]],
+    crls: &[&[u8]],
+    at: Timestamp,
+) -> Result<ProviderSignature, Error> {
     Message::parse(raw)
         .expect("a PEC message")
-        .provider_signature(anchors, at)
+        .provider_signature(anchors, crls, at)
+}
+
+/// The verification result of a fixture under `anchors` at `at`, with a CRL that lists nothing.
+fn verify_with(raw: &[u8], anchors: &[&[u8]], at: Timestamp) -> Result<ProviderSignature, Error> {
+    verify_full(raw, anchors, &[&crl("current")], at)
+}
+
+/// The verification result of a fixture under the test anchor constrained as AgID's are, with `crls` at `at`.
+fn verify_crls(raw: &[u8], crls: &[&[u8]], at: Timestamp) -> Result<ProviderSignature, Error> {
+    verify_full(raw, &[&anchor("agid-like")], crls, at)
 }
 
 /// The verification result of a fixture under the test anchor constrained as AgID's are.
@@ -768,4 +788,132 @@ fn from_must_be_an_address_of_the_signer() {
             "{from:?}"
         );
     }
+}
+
+#[test]
+fn a_crl_is_required() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_crls(&raw, &[], now()).expect_err("no CRL"),
+        Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
+    );
+}
+
+#[test]
+fn missing_crl_names_where_the_signer_publishes_it() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "distribution-points");
+    assert_eq!(
+        verify_crls(&raw, &[], now()).expect_err("no CRL"),
+        Error::Signature(SignatureError::NoUsableCrl {
+            urls: vec![
+                "http://crl.pec.example.it/CRL".to_owned(),
+                "ldap://crl.pec.example.it/cn=PEC%20Test%20CA1".to_owned(),
+            ]
+        })
+    );
+    verify_crls(&raw, &[&crl("current")], now()).expect("a CRL of its CA");
+}
+
+#[test]
+fn stale_crl_is_not_used() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_crls(&raw, &[&crl("stale")], now())
+            .expect_err("nextUpdate before the validation time"),
+        Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
+    );
+    verify_crls(&raw, &[&crl("stale")], time("2026-12-01T12:00:00Z")).expect("fresh then");
+}
+
+#[test]
+fn crl_issued_after_the_signer_expired_is_not_used() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_crls(&raw, &[&crl("after-expiry")], now()).expect_err("may have dropped the signer"),
+        Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
+    );
+}
+
+#[test]
+fn crl_issued_before_its_ca_is_not_used() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_crls(&raw, &[&crl("before-ca")], now()).expect_err("thisUpdate before the CA"),
+        Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
+    );
+}
+
+#[test]
+fn crls_of_other_cas_are_ignored() {
+    let raw = fixture("messages/acceptance.eml");
+    let other = crl("other-ca");
+    assert_eq!(
+        verify_crls(&raw, &[&other], now()).expect_err("only another CA's CRL"),
+        Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
+    );
+    verify_crls(&raw, &[&other, &crl("current")], now()).expect("a CRL of the signer's CA");
+}
+
+#[test]
+fn revocation_counts_from_its_date() {
+    let raw = fixture("messages/acceptance.eml");
+    let revoked = crl("revoked");
+    verify_crls(&raw, &[&revoked], time("2026-12-31T23:59:59Z")).expect("revoked later");
+    for at in ["2027-01-01T00:00:00Z", "2030-01-01T00:00:00Z"] {
+        assert_eq!(
+            verify_crls(&raw, &[&revoked], time(at)).expect_err(at),
+            Error::Signature(SignatureError::Revoked {
+                revoked_at: time("2027-01-01T00:00:00Z")
+            }),
+            "{at}"
+        );
+    }
+}
+
+#[test]
+fn the_latest_crl_counts() {
+    let raw = fixture("messages/acceptance.eml");
+    let (current, revoked) = (crl("current"), crl("revoked"));
+    for crls in [[&current[..], &revoked[..]], [&revoked[..], &current[..]]] {
+        assert!(matches!(
+            verify_crls(&raw, &crls, now()).expect_err("revoked in the later CRL"),
+            Error::Signature(SignatureError::Revoked { .. })
+        ));
+    }
+}
+
+#[test]
+fn forged_crl_is_refused() {
+    let raw = fixture("messages/acceptance.eml");
+    let mut forged = crl("current");
+    let last = forged.len() - 1;
+    forged[last] ^= 1;
+    assert_eq!(
+        verify_crls(&raw, &[&forged], now()).expect_err("a broken CRL signature"),
+        Error::Signature(SignatureError::InvalidCrl)
+    );
+}
+
+#[test]
+fn crl_with_a_critical_extension_is_refused() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_crls(&raw, &[&crl("critical")], now()).expect_err("an unknown critical extension"),
+        Error::Signature(SignatureError::InvalidCrl)
+    );
+}
+
+#[test]
+fn unreadable_crl_is_refused() {
+    let raw = fixture("messages/acceptance.eml");
+    assert_eq!(
+        verify_crls(&raw, &[b"not a CRL"], now()).expect_err("not a CRL"),
+        Error::Signature(SignatureError::InvalidCrl)
+    );
+}
+
+#[test]
+fn signer_without_an_expiration_date_is_checked_against_the_crl() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "no-expiry");
+    verify(&raw).expect("a CRL issued before 9999-12-31");
 }

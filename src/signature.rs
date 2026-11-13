@@ -91,6 +91,23 @@ pub enum SignatureError {
     /// `rustls-webpki` refuses the signer's certificate for another reason, which it names.
     #[error("invalid signer certificate: {0}")]
     InvalidCertificate(String),
+    /// No CRL of the signer's CA is fresh at the validation time and was issued while the signer's certificate was
+    /// unexpired (ETSI EN 319 102-1 §5.2.5). One fetched from `urls` can be, while that certificate is unexpired.
+    #[error("no usable CRL of the signer's CA, whose certificate names {urls:?}")]
+    NoUsableCrl {
+        /// The URLs of the signer certificate's CRL distribution points.
+        urls: Vec<String>,
+    },
+    /// A CRL is malformed, or one of the signer's CA is not signed by it or uses an extension the crate does not
+    /// honour (RFC 5280 §5.2).
+    #[error("invalid CRL")]
+    InvalidCrl,
+    /// The signer's certificate was revoked no later than the validation time.
+    #[error("the signer's certificate was revoked at {revoked_at}")]
+    Revoked {
+        /// The revocation date the CRL gives.
+        revoked_at: Timestamp,
+    },
 }
 
 /// A provider signature that verifies, by a certificate one of the caller's anchors issued for signing the sender's
@@ -138,7 +155,7 @@ impl Hash {
     }
 
     /// The RSA PKCS #1 v1.5 signature algorithm with this hash.
-    const fn with_rsa(self) -> ObjectIdentifier {
+    pub(crate) const fn with_rsa(self) -> ObjectIdentifier {
         match self {
             Self::Sha256 => SHA_256_WITH_RSA,
             Self::Sha512 => SHA_512_WITH_RSA,
@@ -162,6 +179,7 @@ pub(crate) fn verify(
     signature: &[u8],
     sender: Option<&str>,
     anchors: &[&[u8]],
+    crls: &[&[u8]],
     at: Timestamp,
 ) -> Result<ProviderSignature, SignatureError> {
     let signed_data: SignedData = ContentInfo::from_ber(signature)
@@ -214,7 +232,7 @@ pub(crate) fn verify(
     }
     let encoded = certificate.to_der();
     let signer = encoded.map_err(|_| SignatureError::Malformed)?;
-    trust::check(certificate, &signer, sender, anchors, at)?;
+    trust::check(certificate, &signer, sender, anchors, crls, at)?;
     Ok(ProviderSignature {
         signer,
         claimed_signing_time,
