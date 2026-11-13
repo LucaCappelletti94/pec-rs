@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Recreates the throwaway test PKI and every signed message under messages/.
-# Run from anywhere. Needs openssl 3.
+# Run from anywhere. Needs openssl 3.4.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 mkdir -p pki messages
+# Fixed validity, so the instants the tests check hold whenever the PKI is recreated.
+not_before=20261101000000Z not_after=21261001000000Z
 # The chain mirrors the AgID one: a root, a subordinate CA standing for AgID CA1, and a provider certificate with the
 # profile of the AgID CPS (§7.1.2.3), signed with RSA and SHA-256 as the CPS requires (§7.1.3).
 if [[ ! -f pki/provider.pem ]]; then
@@ -20,12 +22,63 @@ if [[ ! -f pki/provider.pem ]]; then
   openssl req -newkey rsa:2048 -nodes \
     -subj "/C=IT/ST=Roma/L=Roma/O=Gestore PEC di Esempio S.p.A./CN=Gestore PEC di Esempio S.p.A." \
     -keyout pki/provider.key -out pki/provider.csr 2>/dev/null
-  openssl x509 -req -sha256 -in pki/provider.csr -CA pki/ca.pem -CAkey pki/ca.key -CAcreateserial -days 36500 \
+  openssl x509 -req -sha256 -in pki/provider.csr -CA pki/ca.pem -CAkey pki/ca.key -CAcreateserial \
+    -not_before "$not_before" -not_after "$not_after" \
     -extfile <(printf 'keyUsage=critical,digitalSignature\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it\n') \
     -out pki/provider.pem 2>/dev/null
   openssl x509 -in pki/provider.pem -outform DER -out pki/provider.der
   openssl pkcs8 -topk8 -nocrypt -in pki/provider.key -outform DER -out pki/provider.key.der
   rm -f pki/ca.csr pki/provider.csr pki/root.srl pki/ca.srl
+fi
+
+# The test CA re-issued with each form of name constraint, agid-like.der in AgID's own form (CPS §7.1.5), and the
+# provider key certified with each defect of the profile. Both reuse the keys above, so every fixture still verifies.
+if [[ ! -f pki/anchors/agid-like.der ]]; then
+  mkdir -p pki/anchors pki/signers
+  csr=$(mktemp)
+  serial=100
+  names=$'[provider]\nC=IT\nST=Roma\nL=Roma\nO=Gestore PEC di Esempio S.p.A.\n[other]\nC=IT\nO=Altro Gestore PEC S.p.A.'
+  # anchor NAME NAME_CONSTRAINTS
+  anchor() {
+    serial=$((serial + 1))
+    openssl x509 -req -sha256 -in "$csr" -CA pki/root.pem -CAkey pki/root.key -set_serial "$serial" -days 36500 \
+      -extensions ext -extfile <(printf '[ext]\nbasicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign,cRLSign\nextendedKeyUsage=emailProtection\nnameConstraints=critical,%s\n%s\n' "$2" "$names") \
+      -outform DER -out "pki/anchors/$1.der" 2>/dev/null
+  }
+  openssl req -new -key pki/ca.key -subj "/C=IT/L=Roma/O=PEC Test CA/CN=PEC Test CA1" -out "$csr"
+  anchor agid-like 'permitted;email:pec.example.com,permitted;email:pec.example.it,permitted;dirName:other,permitted;dirName:provider,excluded;IP:0.0.0.0/0.0.0.0,excluded;IP:0:0:0:0:0:0:0:0/0:0:0:0:0:0:0:0,excluded;DNS:example.it'
+  anchor mailbox 'permitted;email:posta-certificata@PEC.EXAMPLE.IT'
+  anchor other-mailbox 'permitted;email:protocollo@pec.example.it'
+  anchor subdomains 'permitted;email:.example.it'
+  anchor subdomains-only 'permitted;email:.pec.example.it'
+  anchor other-host 'permitted;email:pec.example.com'
+  anchor excluded-host 'excluded;email:PEC.example.it'
+  anchor other-organisation 'permitted;dirName:other'
+  anchor excluded-organisation 'excluded;dirName:other'
+  # A SEQUENCE holding an INTEGER, which no NameConstraints is.
+  anchor unreadable-constraints 'DER:3003020100'
+  # The permitted email subtree of pec.example.it with a minimum, then a maximum, of 1, which RFC 5280 §4.2.1.10
+  # forbids for every name form.
+  anchor minimum 'DER:3017a0153013810e7065632e6578616d706c652e6974800101'
+  anchor maximum 'DER:3017a0153013810e7065632e6578616d706c652e6974810101'
+  openssl x509 -in pki/ca.pem -outform DER -out pki/anchors/unconstrained.der
+  # signer NAME DIGEST EXTENSIONS
+  signer() {
+    serial=$((serial + 1))
+    openssl x509 -req "-$2" -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial "$serial" \
+      -not_before "$not_before" -not_after "$not_after" \
+      -extfile <(printf '%s\n' "$3") -outform DER -out "pki/signers/$1.der" 2>/dev/null
+  }
+  openssl req -new -key pki/provider.key \
+    -subj "/C=IT/ST=Roma/L=Roma/O=Gestore PEC di Esempio S.p.A./CN=Gestore PEC di Esempio S.p.A." -out "$csr"
+  profile=$'keyUsage=critical,digitalSignature\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it'
+  signer sha512 sha512 "$profile"
+  signer no-signing sha256 "${profile/digitalSignature/keyEncipherment}"
+  signer no-email sha256 "${profile/emailProtection/clientAuth}"
+  # 1.3.6.1.4.1.32473 is the private enterprise number reserved for documentation (RFC 5612).
+  signer critical sha256 "$profile"$'\n1.3.6.1.4.1.32473.1=critical,ASN1:NULL'
+  signer dns sha256 "$profile,DNS:mail.pec.example.it"
+  rm -f "$csr"
 fi
 
 crlf() { sed 's/\r\{0,1\}$/\r/'; }

@@ -19,6 +19,8 @@ use rsa::{Pkcs1v15Sign, PublicKey};
 use sha2::digest::const_oid::AssociatedOid;
 use sha2::{Digest, Sha256, Sha512};
 
+use crate::trust;
+
 /// `id-data`, the content type of the signed MIME part.
 const ID_DATA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.113549.1.7.1");
 /// `id-signedData`.
@@ -40,7 +42,7 @@ const SHA_256_WITH_RSA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840
 /// `sha512WithRSAEncryption`.
 const SHA_512_WITH_RSA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.13");
 
-/// Why a provider signature does not verify.
+/// Why a provider signature does not verify or its signer is not a trusted provider.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum SignatureError {
     /// The signature part is not a detached CMS `SignedData` with one signer carrying the `content-type` and
@@ -62,9 +64,37 @@ pub enum SignatureError {
     /// The signature does not verify with the key of the signer's certificate.
     #[error("the signature does not verify with the signer's key")]
     BadSignature,
+    /// A trust anchor is not a certificate.
+    #[error("a trust anchor is not a certificate")]
+    InvalidAnchor,
+    /// None of the trust anchors issued the signer's certificate.
+    #[error("no trust anchor issued the signer's certificate")]
+    UnknownIssuer,
+    /// The signer's certificate is not valid yet at the validation time.
+    #[error("the signer's certificate is not valid yet")]
+    NotYetValid,
+    /// The signer's certificate expired before the validation time.
+    #[error("the signer's certificate has expired")]
+    Expired,
+    /// The signer's certificate is not for email protection (CPS `MO_AgID-CA` §7.1.2.3).
+    #[error("the signer's certificate is not for email protection")]
+    NotForEmail,
+    /// The signer's certificate does not allow digital signatures.
+    #[error("the signer's certificate does not allow digital signatures")]
+    NotForSigning,
+    /// The signer's certificate names a mailbox, organisation or host its CA may not certify (RFC 5280 §4.2.1.10).
+    #[error("the signer's certificate is outside its CA's name constraints")]
+    OutsideNameConstraints,
+    /// The message's `From` address is not an address of the signer's certificate (§6.1).
+    #[error("the From address is not in the signer's certificate")]
+    SenderMismatch,
+    /// `rustls-webpki` refuses the signer's certificate for another reason, which it names.
+    #[error("invalid signer certificate: {0}")]
+    InvalidCertificate(String),
 }
 
-/// A provider signature whose cryptography verifies. Whether its signer is a PEC provider is a separate check.
+/// A provider signature that verifies, by a certificate one of the caller's anchors issued for signing the sender's
+/// email.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProviderSignature {
     /// The signer's certificate in DER.
@@ -89,8 +119,8 @@ impl ProviderSignature {
 }
 
 /// The hash of a signature, which also names the RSA signature algorithm that uses it.
-#[derive(Clone, Copy)]
-enum Hash {
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Hash {
     /// SHA-256.
     Sha256,
     /// SHA-512.
@@ -126,10 +156,13 @@ impl<D: Digest> Writer for Hashing<D> {
     }
 }
 
-/// Verifies a detached `SignedData` in DER over the signed part `content`.
+/// Verifies a detached `SignedData` over the signed part `content`, and its signer as [`trust::check`] does.
 pub(crate) fn verify(
     content: &[u8],
     signature: &[u8],
+    sender: Option<&str>,
+    anchors: &[&[u8]],
+    at: Timestamp,
 ) -> Result<ProviderSignature, SignatureError> {
     let signed_data: SignedData = ContentInfo::from_ber(signature)
         .ok()
@@ -181,6 +214,7 @@ pub(crate) fn verify(
     }
     let encoded = certificate.to_der();
     let signer = encoded.map_err(|_| SignatureError::Malformed)?;
+    trust::check(certificate, &signer, sender, anchors, at)?;
     Ok(ProviderSignature {
         signer,
         claimed_signing_time,

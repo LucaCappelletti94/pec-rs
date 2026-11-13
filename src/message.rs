@@ -1,6 +1,7 @@
 //! Reading a message a PEC provider generated: its kind, its certification data and the message it carries.
 
-use mail_parser::{Headers, MessageParser, MessageRef, PartId};
+use jiff::Timestamp;
+use mail_parser::{Address, HeaderName, Headers, MessageParser, MessageRef, PartId};
 
 use crate::{
     AttachmentCheck, AttachmentHash, CertificationData, Error, Kind, MessageId, MessageKind,
@@ -177,17 +178,24 @@ impl<'a> Message<'a> {
         Some(part.nested()?.raw())
     }
 
-    /// Verifies the provider's S/MIME signature over the message (§6.1): the digest of the signed part and the RSA
-    /// signature with the key of the signer's certificate. Whether that certificate belongs to a PEC provider is not
-    /// checked here.
+    /// Verifies the provider's S/MIME signature over the message (§6.1): the digest of the signed part, the RSA
+    /// signature with the key of the signer's certificate, and that one of `anchors` issued that certificate, valid at
+    /// `at`, for signing the email of the `From` address. [`AGID_PROVIDER_CAS`](crate::AGID_PROVIDER_CAS) holds
+    /// AgID's anchors in DER.
     ///
-    /// The signed part has to be as the provider sent it, with CRLF line ends, as IMAP delivers it.
+    /// `at` is the time the message is judged at, such as when it was received, since the signing time a signature
+    /// claims is not evidence (RFC 5652 §11.3). The signed part has to be as the provider sent it, with CRLF line
+    /// ends, as IMAP delivers it.
     ///
     /// # Errors
     ///
     /// Returns [`Error::NotSigned`] when the message is not `multipart/signed` with a PKCS #7 signature, or
-    /// [`Error::Signature`] when the signature does not verify.
-    pub fn provider_signature(&self) -> Result<ProviderSignature, Error> {
+    /// [`Error::Signature`] when the signature does not verify or its signer is not trusted.
+    pub fn provider_signature(
+        &self,
+        anchors: &[&[u8]],
+        at: Timestamp,
+    ) -> Result<ProviderSignature, Error> {
         let root = self.parsed.root_part();
         let pkcs7 = root
             .content_type()
@@ -204,7 +212,28 @@ impl<'a> Message<'a> {
         ) else {
             return Err(Error::NotSigned);
         };
-        Ok(signature::verify(content.raw(), &signature.decoded())?)
+        let sender = self.sender();
+        Ok(signature::verify(
+            content.raw(),
+            &signature.decoded(),
+            sender,
+            anchors,
+            at,
+        )?)
+    }
+
+    /// The address of the message's `From` field when the message has one such field naming exactly one mailbox.
+    fn sender(&self) -> Option<&str> {
+        // RFC 5322 §3.6 allows one From field, and `from()` reads only the last of several.
+        if self.parsed.headers().all(HeaderName::From).count() != 1 {
+            return None;
+        }
+        let from = self.parsed.from()?;
+        let mut addresses = from.iter();
+        match (addresses.next(), addresses.next()) {
+            (Some(Address::Mailbox(mailbox)), None) => mailbox.address(),
+            _ => None,
+        }
     }
 
     /// Identifies a short receipt's generated hashes using the sent message, in receipt order (§6.5.2.2).
