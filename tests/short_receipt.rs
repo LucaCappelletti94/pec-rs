@@ -924,3 +924,17 @@ fn part_limited_mime_is_rejected() {
     );
     assert_incomplete_message_is_rejected(original.as_bytes());
 }
+
+#[test]
+fn limit_inside_attached_message_is_rejected() {
+    let mut original = String::from(
+        "MIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"outer\"\r\n\r\n--outer\r\nContent-Type: message/rfc822\r\n\r\nContent-Type: multipart/mixed; boundary=\"inner\"\r\n\r\n",
+    );
+    for _ in 0..10_010 {
+        original.push_str("--inner\r\nContent-Type: text/plain\r\n\r\nbody\r\n");
+    }
+    original.push_str(
+        "--inner--\r\n\r\n--outer\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"outer.txt\"\r\n\r\npayload\r\n--outer--\r\n",
+    );
+    assert_incomplete_message_is_rejected(original.as_bytes());
+}
