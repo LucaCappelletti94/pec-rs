@@ -6,29 +6,37 @@
 [![docs.rs](https://docs.rs/postacert/badge.svg)](https://docs.rs/postacert)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/LucaCappelletti94/postacert/blob/main/LICENSE)
 
-Parsing PEC messages, Italian certified email, and reading and writing their `daticert.xml` certification data, in Rust.
-
-- every receipt, notice and envelope a PEC provider generates, told apart by kind and checked against its subject
-- the certification data of `daticert.xml`, read and written
-- the original message out of a transport envelope or a delivery receipt, and the arrived message out of an anomaly envelope
-- short-receipt hashes identified and checked against the sent message, including named roots, nested attachments and carried user files, with ambiguous assignments rejected
-- the provider's S/MIME signature checked against the signed part, in the DER or BER form providers send, and its signer against AgID's provider CAs and their CRLs at a given time
-
-The crate works on bytes already fetched, so any SMTP or IMAP client can feed it. It follows the AgID technical rules annexed to DM 2 November 2005.
+postacert reads and checks PEC messages, Italian certified email, on bytes any SMTP or IMAP client has fetched. It tells every receipt, notice and envelope apart, verifies the provider's signature against AgID's CAs and CRLs, tracks each recipient's delivery, and checks an outgoing message as the provider will at submission. It follows the AgID technical rules annexed to DM 2 November 2005.
 
 ```rust
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
-use postacert::{Kind, Message, MessageKind};
+use postacert::{Delivery, Message, OutgoingMessage, ReceiptKind, Status};
 
+// A message built with any MIME library, checked as the provider will check it.
+let sent = OutgoingMessage::prepare(
+    b"From: mario.rossi@pec.example.it\r\n\
+      To: ufficio.fatture@pec.example.it\r\n\
+      Subject: Invio fattura 00012\r\n\
+      Date: Sun, 8 Nov 2026 10:14:58 +0100\r\n\
+      Message-ID: <20261108101458.0001@client.example.it>\r\n\
+      \r\n\
+      Fattura in allegato.\r\n",
+    ReceiptKind::Full,
+)?;
+// Send `sent.as_bytes()` from `sent.reverse_path()` to `sent.forward_paths()`, then track the receipts.
+let mut delivery = Delivery::new(sent.message_id().clone());
+
+// Real receipts verify against `postacert::AGID_PROVIDER_CAS` and AgID's CRL, these fixtures against a test CA.
 let raw = std::fs::read("tests/fixtures/messages/delivery-full.eml")?;
+let anchor = std::fs::read("tests/fixtures/pki/anchors/agid-like.der")?;
+let crl = std::fs::read("tests/fixtures/pki/crls/current.der")?;
+let at = "2030-01-01T00:00:00Z".parse().expect("an RFC 3339 instant");
 let receipt = Message::parse(&raw)?;
-assert_eq!(receipt.kind(), MessageKind::Certified(Kind::Delivery));
-assert_eq!(receipt.subject(), "Invio fattura 00012");
-
-let data = receipt.certification_data().expect("every receipt has one");
-assert_eq!(data.data.delivered_to.as_deref(), Some("ufficio.fatture@pec.example.it"));
-assert_eq!(data.data.at.timestamp().to_string(), "2026-11-08T09:15:00Z");
-assert!(receipt.original_message().is_some());
+delivery.record(&receipt.verify(&[&anchor], &[&crl], at)?)?;
+assert!(matches!(
+    delivery.status("ufficio.fatture@pec.example.it"),
+    Some(Status::Delivered(_))
+));
 # Ok(())
 # }
 ```
