@@ -5,18 +5,25 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 mkdir -p pki messages
+# The chain mirrors the AgID one: a root, a subordinate CA standing for AgID CA1, and a provider certificate with the
+# profile of the AgID CPS (§7.1.2.3), signed with RSA and SHA-256 as the CPS requires (§7.1.3).
 if [[ ! -f pki/provider.pem ]]; then
-  openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 36500 \
-    -subj "/C=IT/O=PEC Test CA/CN=PEC Test CA" \
+  openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 36500 \
+    -subj "/C=IT/O=PEC Test Root CA/CN=PEC Test Root CA" \
     -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" \
-    -keyout pki/ca.key -out pki/ca.pem 2>/dev/null
-  openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes \
-    -subj "/C=IT/O=Gestore PEC di Esempio S.p.A./CN=posta-certificata@pec.example.it/emailAddress=posta-certificata@pec.example.it" \
+    -keyout pki/root.key -out pki/root.pem 2>/dev/null
+  openssl req -newkey rsa:2048 -nodes -subj "/C=IT/L=Roma/O=PEC Test CA/CN=PEC Test CA1" \
+    -keyout pki/ca.key -out pki/ca.csr 2>/dev/null
+  openssl x509 -req -sha256 -in pki/ca.csr -CA pki/root.pem -CAkey pki/root.key -CAcreateserial -days 36500 \
+    -extfile <(printf 'basicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign,cRLSign\nextendedKeyUsage=emailProtection\n') \
+    -out pki/ca.pem 2>/dev/null
+  openssl req -newkey rsa:2048 -nodes \
+    -subj "/C=IT/ST=Roma/L=Roma/O=Gestore PEC di Esempio S.p.A./CN=Gestore PEC di Esempio S.p.A." \
     -keyout pki/provider.key -out pki/provider.csr 2>/dev/null
-  openssl x509 -req -in pki/provider.csr -CA pki/ca.pem -CAkey pki/ca.key -CAcreateserial -days 36500 \
-    -extfile <(printf 'basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,nonRepudiation\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it\n') \
+  openssl x509 -req -sha256 -in pki/provider.csr -CA pki/ca.pem -CAkey pki/ca.key -CAcreateserial -days 36500 \
+    -extfile <(printf 'keyUsage=critical,digitalSignature\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it\n') \
     -out pki/provider.pem 2>/dev/null
-  rm -f pki/provider.csr pki/ca.srl
+  rm -f pki/ca.csr pki/provider.csr pki/root.srl pki/ca.srl
 fi
 
 crlf() { sed 's/\r\{0,1\}$/\r/'; }
@@ -48,7 +55,7 @@ build() {
   } | crlf > "$inner"
   {
     printf '%s\nSubject: %s\n' "$headers" "$subject" | crlf
-    openssl smime -sign -in "$inner" -signer pki/provider.pem -inkey pki/provider.key -certfile pki/ca.pem -crlfeol
+    openssl smime -sign -md sha256 -in "$inner" -signer pki/provider.pem -inkey pki/provider.key -certfile pki/ca.pem -crlfeol
   } > "messages/$name"
   rm -f "$inner"
 }
