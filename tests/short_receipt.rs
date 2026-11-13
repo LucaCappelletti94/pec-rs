@@ -192,8 +192,8 @@ fn unreplaced_attachment_is_no_hash() {
     assert_eq!(hashes(&raw, &sent("attachments.eml")), expected);
 }
 
-/// The hash of each sent attachment is the SHA-1 of its decoded content, or of an attached message as sent. The
-/// attached message has no file name, so it is found by its digest.
+/// The hash of each sent attachment is the SHA-1 of its decoded content, headers included for an attached message.
+/// The attached message has no file name, so it is found by its digest.
 #[test]
 fn sent_attachments_match_their_hashes() {
     assert_eq!(
@@ -311,6 +311,67 @@ fn carried_attached_message_preserves_headers_and_body() {
                 AttachmentCheck::NotSent(None),
             ]),
             "{from}"
+        );
+    }
+}
+
+const FORWARDED_MESSAGE: &str = "From: a@example.test\r\nSubject: caffè\r\n\r\nhello\r\n";
+const FORWARDED_BASE64: &str = "RnJvbTogYUBleGFtcGxlLnRlc3QNClN1YmplY3Q6IGNhZmbDqA0KDQpoZWxsbw0K";
+
+/// Wraps an attached message with its declared transfer encoding.
+fn attached_message(encoding: &str, body: &str) -> Vec<u8> {
+    format!(
+        "MIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"forwarded\"\r\n\r\n--forwarded\r\nContent-Type: message/global\r\nContent-Disposition: attachment; filename=\"forwarded.eml\"\r\nContent-Transfer-Encoding: {encoding}\r\n\r\n{body}\r\n--forwarded--\r\n"
+    )
+    .into_bytes()
+}
+
+#[test]
+fn encoded_attached_message_hashes_match() {
+    let original = attached_message("base64", FORWARDED_BASE64);
+    let lf = FORWARDED_MESSAGE.replace("\r\n", "\n");
+    for (line_ends, content) in [
+        (TextLineEnds::Canonical, FORWARDED_MESSAGE),
+        (TextLineEnds::CanonicalOrLf, lf.as_str()),
+    ] {
+        let hash = hex_digest(content.as_bytes());
+        let raw = receipt_with(&text_attachments(&[("forwarded.eml.hash", &hash)]));
+        let receipt = Message::parse(&raw).expect("a short receipt");
+        assert_eq!(
+            receipt.check_attachments(&original, line_ends),
+            Ok(vec![AttachmentCheck::Matches(Some(
+                "forwarded.eml".to_owned()
+            ))])
+        );
+        let hashes = receipt
+            .attachment_hashes(&original, line_ends)
+            .expect("an unambiguous generated hash");
+        assert_eq!(
+            hashes
+                .iter()
+                .map(|hash| (hash.name(), *hash.sha1()))
+                .collect::<Vec<_>>(),
+            vec![("forwarded.eml", sha1(&hash))]
+        );
+    }
+}
+
+#[test]
+fn reencoded_attached_messages_are_carried() {
+    let plain = attached_message("8bit", FORWARDED_MESSAGE);
+    let encoded = attached_message("base64", FORWARDED_BASE64);
+    for (original, evidence) in [(&plain, &encoded), (&encoded, &plain)] {
+        let raw = receipt_with(evidence);
+        let receipt = Message::parse(&raw).expect("a short receipt");
+        assert_eq!(
+            receipt.check_attachments(original, TextLineEnds::Canonical),
+            Ok(vec![AttachmentCheck::Carried(Some(
+                "forwarded.eml".to_owned()
+            ))])
+        );
+        assert_eq!(
+            receipt.attachment_hashes(original, TextLineEnds::Canonical),
+            Ok(Vec::new())
         );
     }
 }
