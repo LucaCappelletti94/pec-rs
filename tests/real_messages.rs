@@ -39,6 +39,10 @@ fn every_real_pec_message_parses() {
             }
             MessageKind::Anomaly => assert!(message.original_message().is_some(), "{name}"),
         }
+        let signature = message
+            .provider_signature()
+            .unwrap_or_else(|error| panic!("{name}: {error}"));
+        assert!(!signature.signer_certificate().is_empty(), "{name}");
         checked += 1;
     }
     assert!(checked > 0, "no PEC message in {}", folder.display());
