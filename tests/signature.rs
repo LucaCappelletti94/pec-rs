@@ -351,6 +351,21 @@ fn unsigned_message_has_no_provider_signature() {
 }
 
 #[test]
+fn signed_message_with_another_protocol_has_no_provider_signature() {
+    let raw = fixture("messages/acceptance.eml");
+    let text = core::str::from_utf8(&raw).expect("ASCII fixture");
+    let pgp = text.replacen(
+        "protocol=\"application/x-pkcs7-signature\"",
+        "protocol=\"application/pgp-signature\"",
+        1,
+    );
+    assert_eq!(
+        verify(pgp.as_bytes()).expect_err("an OpenPGP signature"),
+        Error::NotSigned
+    );
+}
+
+#[test]
 fn signature_part_must_hold_signed_data() {
     let raw = fixture("messages/acceptance.eml");
     assert_eq!(
@@ -416,6 +431,36 @@ fn other_certificate_formats_never_name_the_signer() {
         verify(&with_signed_data(&raw, &data)).expect_err("no X.509 certificate"),
         Error::Signature(SignatureError::UnknownSigner)
     );
+}
+
+#[test]
+fn signer_is_named_by_issuer_and_serial_number_together() {
+    let raw = fixture("messages/acceptance.eml");
+    let provider =
+        Certificate::from_der(&provider_certificate()).expect("the provider certificate");
+    let other = Certificate::from_der(&fixture("pki/signers/dns.der")).expect("another signer");
+    for (issuer, serial_number) in [
+        (
+            provider.tbs_certificate().issuer(),
+            other.tbs_certificate().serial_number(),
+        ),
+        (
+            provider.tbs_certificate().subject(),
+            provider.tbs_certificate().serial_number(),
+        ),
+    ] {
+        let mut data = signed_data(&raw);
+        let mut only = take_signer(&mut data);
+        only.sid = SignerIdentifier::IssuerAndSerialNumber(IssuerAndSerialNumber {
+            issuer: issuer.clone(),
+            serial_number: serial_number.clone(),
+        });
+        assert_eq!(
+            verify(&with_signed_data(&raw, &with_signers(data, vec![only])))
+                .expect_err("no certificate named"),
+            Error::Signature(SignatureError::UnknownSigner)
+        );
+    }
 }
 
 #[test]
@@ -848,12 +893,16 @@ fn missing_crl_names_where_the_signer_publishes_it() {
 #[test]
 fn stale_crl_is_not_used() {
     let raw = fixture("messages/acceptance.eml");
-    assert_eq!(
-        verify_crls(&raw, &[&crl("stale")], now())
-            .expect_err("nextUpdate before the validation time"),
-        Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() })
-    );
-    verify_crls(&raw, &[&crl("stale")], time("2027-02-01T12:00:00Z")).expect("fresh then");
+    let stale = crl("stale");
+    for at in ["2027-02-02T00:00:00Z", "2030-01-01T00:00:00Z"] {
+        assert_eq!(
+            verify_crls(&raw, &[&stale], time(at))
+                .expect_err("nextUpdate at or before the validation time"),
+            Error::Signature(SignatureError::NoUsableCrl { urls: Vec::new() }),
+            "{at}"
+        );
+    }
+    verify_crls(&raw, &[&stale], time("2027-02-01T23:59:59Z")).expect("fresh until nextUpdate");
 }
 
 #[test]
