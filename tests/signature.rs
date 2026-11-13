@@ -608,6 +608,18 @@ fn signer_must_chain_to_a_given_anchor() {
 }
 
 #[test]
+fn subtree_bounds_refuse_the_anchor() {
+    let raw = fixture("messages/acceptance.eml");
+    for name in ["minimum", "maximum"] {
+        assert_eq!(
+            verify_with(&raw, &[&anchor(name)], now()).expect_err(name),
+            Error::Signature(SignatureError::InvalidAnchor),
+            "{name}"
+        );
+    }
+}
+
+#[test]
 fn unreadable_anchor_constraints_refuse_the_anchor() {
     let raw = fixture("messages/acceptance.eml");
     assert_eq!(

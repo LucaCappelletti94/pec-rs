@@ -54,6 +54,10 @@ if [[ ! -f pki/anchors/agid-like.der ]]; then
   anchor excluded-organisation 'excluded;dirName:other'
   # A SEQUENCE holding an INTEGER, which no NameConstraints is.
   anchor unreadable-constraints 'DER:3003020100'
+  # The permitted email subtree of pec.example.it with a minimum, then a maximum, of 1, which RFC 5280 §4.2.1.10
+  # forbids for every name form.
+  anchor minimum 'DER:3017a0153013810e7065632e6578616d706c652e6974800101'
+  anchor maximum 'DER:3017a0153013810e7065632e6578616d706c652e6974810101'
   openssl x509 -in pki/ca.pem -outform DER -out pki/anchors/unconstrained.der
   # signer NAME DIGEST EXTENSIONS
   signer() {

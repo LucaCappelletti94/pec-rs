@@ -205,6 +205,15 @@ fn anchor<'a>(der: &'a CertificateDer<'a>) -> Result<(TrustAnchor<'a>, Subtrees)
             constraints.excluded_subtrees,
         )
     });
+    // RFC 5280 §4.2.1.10 fixes `minimum` at 0 and leaves `maximum` out for every name form, and `split` keeps neither.
+    let bounded = permitted
+        .iter()
+        .chain(excluded.iter())
+        .flatten()
+        .any(|subtree| subtree.minimum != 0 || subtree.maximum.is_some());
+    if bounded {
+        return Err(SignatureError::InvalidAnchor);
+    }
     let (permitted, permitted_subtrees) = split(permitted);
     let (excluded, excluded_subtrees) = split(excluded);
     let rest = NameConstraints {
