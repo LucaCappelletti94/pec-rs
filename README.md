@@ -6,7 +6,7 @@
 [![docs.rs](https://docs.rs/postacert/badge.svg)](https://docs.rs/postacert)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/LucaCappelletti94/postacert/blob/main/LICENSE)
 
-Reading PEC messages, Italian certified email, in Rust.
+Parsing PEC messages, Italian certified email, and reading and writing their `daticert.xml` certification data, in Rust.
 
 - every receipt, notice and envelope a PEC provider generates, told apart by kind and checked against its subject
 - the certification data of `daticert.xml`, read and written
