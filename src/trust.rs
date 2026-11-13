@@ -107,15 +107,20 @@ impl Subtrees {
                 .all(|name| self.permit_directory(name))
     }
 
-    /// Whether `address` is in a permitted `rfc822Name` subtree, when there is one, and in no excluded one.
+    /// Whether `address` is in a permitted `rfc822Name` subtree, when there is one, and in no excluded one. A domain
+    /// starting with a dot names no host, so a mailbox on one falls outside every `rfc822Name` constraint.
     fn permit_email(&self, address: &str) -> bool {
         let mut permitted = self.permitted.iter().filter_map(email).peekable();
-        (permitted.peek().is_none() || permitted.any(|base| email_within(address, base)))
-            && !self
-                .excluded
-                .iter()
-                .filter_map(email)
-                .any(|base| email_within(address, base))
+        let mut excluded = self.excluded.iter().filter_map(email).peekable();
+        if permitted.peek().is_none() && excluded.peek().is_none() {
+            return true;
+        }
+        let dotted = address
+            .rsplit_once('@')
+            .is_some_and(|(_, host)| host.starts_with('.'));
+        !dotted
+            && (permitted.peek().is_none() || permitted.any(|base| email_within(address, base)))
+            && !excluded.any(|base| email_within(address, base))
     }
 
     /// Whether `name` starts with a permitted `directoryName`, when there is one. Any excluded `directoryName`
@@ -152,8 +157,9 @@ fn email_within(address: &str, base: &str) -> bool {
         same_mailbox(address, base)
     } else if base.starts_with('.') {
         host.is_some_and(|host| {
-            host.len() > base_bytes.len()
-                && host[host.len() - base_bytes.len()..].eq_ignore_ascii_case(base_bytes)
+            host.len()
+                .checked_sub(base_bytes.len())
+                .is_some_and(|start| host[start..].eq_ignore_ascii_case(base_bytes))
         })
     } else {
         host.is_some_and(|host| host.eq_ignore_ascii_case(base_bytes))

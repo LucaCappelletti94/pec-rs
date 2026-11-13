@@ -766,6 +766,23 @@ fn email_constraints_follow_rfc_5280() {
 }
 
 #[test]
+fn dotted_mailbox_domain_is_outside_every_email_constraint() {
+    let raw = signed_by(&fixture("messages/acceptance.eml"), "dot-host");
+    for name in [
+        "agid-like",
+        "subdomains",
+        "subdomains-only",
+        "excluded-host",
+    ] {
+        assert_eq!(
+            verify_with(&raw, &[&anchor(name)], now()).map(|_| ()),
+            Err(Error::Signature(SignatureError::OutsideNameConstraints)),
+            "{name}"
+        );
+    }
+}
+
+#[test]
 fn subject_must_start_with_a_permitted_directory_name() {
     let raw = fixture("messages/acceptance.eml");
     assert_eq!(
