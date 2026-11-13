@@ -296,7 +296,7 @@ fn every_fixture_carries_the_provider_signature() {
         );
         checked += 1;
     }
-    assert_eq!(checked, 23);
+    assert_eq!(checked, 25);
 }
 
 #[test]

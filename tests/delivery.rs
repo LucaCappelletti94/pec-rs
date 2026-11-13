@@ -135,6 +135,13 @@ fn an_external_recipient_named_by_another_receipt_conflicts() {
             (EXTERNAL, Status::Conflicting)
         ])
     );
+    assert_eq!(
+        statuses(&["acceptance", "timeout-external"]),
+        expected(&[
+            (CERTIFIED, Status::Accepted),
+            (EXTERNAL, Status::Conflicting)
+        ])
+    );
 }
 
 #[test]
@@ -189,6 +196,18 @@ fn a_notice_is_cleared_only_by_a_later_taken_in_charge() {
             (EXTERNAL, Status::OutsidePec)
         ])
     );
+    assert_eq!(
+        statuses(&[
+            "acceptance",
+            "timeout-warning",
+            "taken-in-charge-late",
+            "taken-in-charge"
+        ]),
+        expected(&[
+            (CERTIFIED, Status::TakenInCharge),
+            (EXTERNAL, Status::OutsidePec)
+        ])
+    );
 }
 
 #[test]
@@ -238,6 +257,13 @@ fn delivery_outranks_every_notice() {
         ]),
         expected(&[(CERTIFIED, delivered), (EXTERNAL, Status::OutsidePec)])
     );
+}
+
+#[test]
+fn delivery_keeps_the_earliest_certified_time() {
+    let delivered = expected(&[(CERTIFIED, Status::Delivered(fixture_time()))]);
+    assert_eq!(statuses(&["delivery-full", "delivery-later"]), delivered);
+    assert_eq!(statuses(&["delivery-later", "delivery-full"]), delivered);
 }
 
 #[test]
