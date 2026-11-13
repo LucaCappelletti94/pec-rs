@@ -16,7 +16,8 @@ if [[ ! -f pki/provider.pem ]]; then
     -keyout pki/root.key -out pki/root.pem 2>/dev/null
   openssl req -newkey rsa:2048 -nodes -subj "/C=IT/L=Roma/O=PEC Test CA/CN=PEC Test CA1" \
     -keyout pki/ca.key -out pki/ca.csr 2>/dev/null
-  openssl x509 -req -sha256 -in pki/ca.csr -CA pki/root.pem -CAkey pki/root.key -CAcreateserial -days 36500 \
+  openssl x509 -req -sha256 -in pki/ca.csr -CA pki/root.pem -CAkey pki/root.key -CAcreateserial \
+    -not_before "$not_before" -not_after "$not_after" \
     -extfile <(printf 'basicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign,cRLSign\nextendedKeyUsage=emailProtection\n') \
     -out pki/ca.pem 2>/dev/null
   openssl req -newkey rsa:2048 -nodes \
@@ -41,7 +42,8 @@ if [[ ! -f pki/anchors/agid-like.der ]]; then
   # anchor NAME NAME_CONSTRAINTS
   anchor() {
     serial=$((serial + 1))
-    openssl x509 -req -sha256 -in "$csr" -CA pki/root.pem -CAkey pki/root.key -set_serial "$serial" -days 36500 \
+    openssl x509 -req -sha256 -in "$csr" -CA pki/root.pem -CAkey pki/root.key -set_serial "$serial" \
+      -not_before "$not_before" -not_after "$not_after" \
       -extensions ext -extfile <(printf '[ext]\nbasicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign,cRLSign\nextendedKeyUsage=emailProtection\nnameConstraints=critical,%s\n%s\n' "$2" "$names") \
       -outform DER -out "pki/anchors/$1.der" 2>/dev/null
   }
@@ -113,11 +115,13 @@ if [[ ! -f pki/crls/current.der ]]; then
   profile=$'keyUsage=critical,digitalSignature\nextendedKeyUsage=emailProtection\nsubjectAltName=email:posta-certificata@pec.example.it'
   # Two URLs to fetch the CRL from, beside a directory name and a name relative to the CA, which are no URLs.
   points=$'crlDistributionPoints=http,ldap,directory,relative\n[http]\nfullname=URI:http://crl.pec.example.it/CRL\n[ldap]\nfullname=URI:ldap://crl.pec.example.it/cn=PEC%20Test%20CA1\n[directory]\nfullname=dirName:directory_name\n[directory_name]\nCN=PEC Test CA1 CRL\n[relative]\nrelativename=relative_name\n[relative_name]\nCN=CRL1'
-  openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 300 -days 36500 \
+  openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 300 \
+    -not_before "$not_before" -not_after "$not_after" \
     -extensions ext -extfile <(printf '[ext]\n%s\n%s\n' "$profile" "$points") \
     -outform DER -out pki/signers/distribution-points.der 2>/dev/null
   # RFC 5280 §4.1.2.5 gives a certificate with no well-defined expiration this notAfter.
-  openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 301 -not_after 99991231235959Z \
+  openssl x509 -req -sha256 -in "$csr" -CA pki/ca.pem -CAkey pki/ca.key -set_serial 301 \
+    -not_before "$not_before" -not_after 99991231235959Z \
     -extfile <(printf '%s\n' "$profile") -outform DER -out pki/signers/no-expiry.der 2>/dev/null
   # The test CA re-issued with a keyUsage that allows certificates but not CRLs (RFC 5280 §6.3.3).
   openssl req -new -key pki/ca.key -subj "/C=IT/L=Roma/O=PEC Test CA/CN=PEC Test CA1" -out "$csr"

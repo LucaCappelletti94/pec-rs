@@ -183,9 +183,10 @@ impl<'a> Message<'a> {
     /// unrevoked at `at`, for signing the email of the `From` address. [`AGID_PROVIDER_CAS`](crate::AGID_PROVIDER_CAS)
     /// holds AgID's anchors in DER.
     ///
-    /// `crls` are the caller's CRLs in DER, of any CA, of which the latest from the signer's CA that is fresh at `at`
-    /// decides revocation. When there is none, [`SignatureError::NoUsableCrl`](crate::SignatureError::NoUsableCrl)
-    /// names the URLs to fetch one from, and a fetched CRL serves every message until its `nextUpdate`.
+    /// `crls` are the caller's CRLs in DER, of any CA. The latest from the signer's CA decides revocation, and unless
+    /// it revokes the signer it has to be fresh at `at`. When there is none, or it is stale,
+    /// [`SignatureError::NoUsableCrl`](crate::SignatureError::NoUsableCrl) names the URLs to fetch a newer one from,
+    /// and a fetched CRL serves every message until its `nextUpdate`.
     ///
     /// `at` is the time the message is judged at, such as when it was received, since the signing time a signature
     /// claims is not evidence (RFC 5652 §11.3). The signed part has to be as the provider sent it, with CRLF line

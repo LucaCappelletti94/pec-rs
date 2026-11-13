@@ -91,8 +91,9 @@ pub enum SignatureError {
     /// `rustls-webpki` refuses the signer's certificate for another reason, which it names.
     #[error("invalid signer certificate: {0}")]
     InvalidCertificate(String),
-    /// No CRL of the signer's CA is fresh at the validation time and was issued while the signer's certificate was
-    /// unexpired (ETSI EN 319 102-1 §5.2.5). One fetched from `urls` can be, while that certificate is unexpired.
+    /// The signer's CA has no CRL issued while the signer's certificate was unexpired, or the latest such CRL does not
+    /// revoke the signer and is stale at the validation time (ETSI EN 319 102-1 §5.2.5 and §5.2.6). A newer one
+    /// fetched from `urls` can decide, while that certificate is unexpired.
     #[error("no usable CRL of the signer's CA, whose certificate names {urls:?}")]
     NoUsableCrl {
         /// The URLs of the signer certificate's CRL distribution points.
