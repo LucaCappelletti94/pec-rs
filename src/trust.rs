@@ -24,6 +24,7 @@ use sha2::digest::const_oid::AssociatedOid;
 use sha2::{Digest, Sha256, Sha512};
 use webpki::{EndEntityCert, VerifiedPath, anchor_from_trusted_cert};
 
+use crate::mailbox::same_mailbox;
 use crate::signature::Hash;
 use crate::{SignatureError, revocation};
 
@@ -157,16 +158,6 @@ fn email_within(address: &str, base: &str) -> bool {
     } else {
         host.is_some_and(|host| host.eq_ignore_ascii_case(base_bytes))
     }
-}
-
-/// Whether two addresses name the same mailbox, the local part compared exactly and the host without case (RFC 5280
-/// §7.5).
-fn same_mailbox(left: &str, right: &str) -> bool {
-    left.rsplit_once('@')
-        .zip(right.rsplit_once('@'))
-        .is_some_and(|((left_local, left_host), (right_local, right_host))| {
-            left_local == right_local && left_host.eq_ignore_ascii_case(right_host)
-        })
 }
 
 /// Whether `name` starts with the RDNs of `base`, each compared as encoded, as rustls/webpki#543 does.
