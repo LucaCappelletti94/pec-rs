@@ -24,8 +24,8 @@ use sha2::digest::const_oid::AssociatedOid;
 use sha2::{Digest, Sha256, Sha512};
 use webpki::{EndEntityCert, VerifiedPath, anchor_from_trusted_cert};
 
-use crate::SignatureError;
 use crate::signature::Hash;
+use crate::{SignatureError, revocation};
 
 /// `AgID CA1`, which issues PEC provider certificates until 2030-09-22 (SHA-256 `790EC428…278C1D`).
 pub const AGID_CA1: &[u8] = include_bytes!("anchors/agid-ca1.der");
@@ -43,9 +43,9 @@ const EMAIL_PROTECTION: &[u8] = &[0x2b, 6, 1, 5, 5, 7, 3, 4];
 static ALGORITHMS: &[&dyn SignatureVerificationAlgorithm] =
     &[&Rsa(Hash::Sha256), &Rsa(Hash::Sha512)];
 
-/// RSA PKCS #1 v1.5 with a hash, for `rustls-webpki` without `ring`, which fails to build for `wasm32`.
+/// RSA PKCS #1 v1.5 with a hash, for `rustls-webpki` without `ring`, which fails to build for `wasm32`, and for CRLs.
 #[derive(Debug)]
-struct Rsa(Hash);
+pub(crate) struct Rsa(pub(crate) Hash);
 
 impl SignatureVerificationAlgorithm for Rsa {
     fn verify_signature(
@@ -191,8 +191,17 @@ fn split(subtrees: Option<Vec<GeneralSubtree>>) -> (Vec<GeneralName>, Option<Vec
     (ours, (!rest.is_empty()).then_some(rest))
 }
 
-/// The anchor `rustls-webpki` checks, without the subtrees it cannot check, and those subtrees.
-fn anchor<'a>(der: &'a CertificateDer<'a>) -> Result<(TrustAnchor<'a>, Subtrees), SignatureError> {
+/// What the crate checks with an anchor itself: its certificate, which signs its CRLs, and the subtrees `rustls-webpki`
+/// cannot check.
+struct Issuer {
+    /// The anchor's certificate.
+    certificate: Certificate,
+    /// Its `rfc822Name` and `directoryName` subtrees.
+    subtrees: Subtrees,
+}
+
+/// The anchor `rustls-webpki` checks, without the subtrees it cannot check, and what the crate checks with it.
+fn anchor<'a>(der: &'a CertificateDer<'a>) -> Result<(TrustAnchor<'a>, Issuer), SignatureError> {
     let mut anchor = anchor_from_trusted_cert(der).map_err(|_| SignatureError::InvalidAnchor)?;
     let certificate = Certificate::from_der(der).map_err(|_| SignatureError::InvalidAnchor)?;
     let constraints = certificate
@@ -226,9 +235,12 @@ fn anchor<'a>(der: &'a CertificateDer<'a>) -> Result<(TrustAnchor<'a>, Subtrees)
     anchor.name_constraints = Some(Der::from(value.value().to_vec()));
     Ok((
         anchor,
-        Subtrees {
-            permitted,
-            excluded,
+        Issuer {
+            certificate,
+            subtrees: Subtrees {
+                permitted,
+                excluded,
+            },
         },
     ))
 }
@@ -247,20 +259,22 @@ fn chain_error(error: webpki::Error) -> SignatureError {
     }
 }
 
-/// Checks that one of `anchors` issued `signer` (`signer_der` in DER), valid at `at`, for signing the email of
-/// `sender`. The path has no intermediate certificate, since both AgID CAs have `pathLenConstraint` 0.
+/// Checks that one of `anchors` issued `signer` (`signer_der` in DER), valid and unrevoked at `at` by the latest
+/// usable of `crls`, for signing the email of `sender`. The path has no intermediate certificate, since both AgID CAs
+/// have `pathLenConstraint` 0.
 pub(crate) fn check(
     signer: &Certificate,
     signer_der: &[u8],
     sender: Option<&str>,
     anchors: &[&[u8]],
+    crls: &[&[u8]],
     at: Timestamp,
 ) -> Result<(), SignatureError> {
     let anchors: Vec<CertificateDer<'_>> = anchors
         .iter()
         .map(|der| CertificateDer::from(*der))
         .collect();
-    let (anchors, subtrees): (Vec<_>, Vec<_>) = anchors
+    let (anchors, issuers): (Vec<_>, Vec<_>) = anchors
         .iter()
         .map(anchor)
         .collect::<Result<Vec<_>, _>>()?
@@ -272,14 +286,18 @@ pub(crate) fn check(
         .ok()
         .flatten()
         .map_or_else(Vec::new, |(_, names)| names.0);
-    let within = |path: &VerifiedPath<'_>| {
-        let permitted = anchors
+    let issuer_of = |path: &VerifiedPath<'_>| {
+        anchors
             .iter()
             .position(|anchor| core::ptr::eq(anchor, path.anchor()))
-            .and_then(|index| subtrees.get(index))
-            .is_some_and(|subtrees| {
-                subtrees.permit(signer.tbs_certificate().subject(), &alt_names)
-            });
+            .and_then(|index| issuers.get(index))
+    };
+    let within = |path: &VerifiedPath<'_>| {
+        let permitted = issuer_of(path).is_some_and(|issuer| {
+            issuer
+                .subtrees
+                .permit(signer.tbs_certificate().subject(), &alt_names)
+        });
         if permitted {
             Ok(())
         } else {
@@ -291,7 +309,7 @@ pub(crate) fn check(
     let time = UnixTime::since_unix_epoch(Duration::from_secs(
         u64::try_from(at.as_second()).unwrap_or(0),
     ));
-    EndEntityCert::try_from(&end_entity)
+    let issuer = EndEntityCert::try_from(&end_entity)
         .and_then(|end_entity| {
             end_entity
                 .verify_for_usage(
@@ -303,9 +321,10 @@ pub(crate) fn check(
                     None,
                     Some(&within),
                 )
-                .map(|_| ())
+                .map(|path| issuer_of(&path))
         })
-        .map_err(chain_error)?;
+        .map_err(chain_error)?
+        .ok_or(SignatureError::UnknownIssuer)?;
     let signing = signer
         .tbs_certificate()
         .get_extension::<KeyUsage>()
@@ -321,9 +340,8 @@ pub(crate) fn check(
             .filter_map(email)
             .any(|address| same_mailbox(sender, address))
     });
-    if sender_named {
-        Ok(())
-    } else {
-        Err(SignatureError::SenderMismatch)
+    if !sender_named {
+        return Err(SignatureError::SenderMismatch);
     }
+    revocation::check(signer, &issuer.certificate, crls, at)
 }

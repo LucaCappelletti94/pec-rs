@@ -6,6 +6,7 @@ mod error;
 mod kind;
 pub mod message;
 mod message_id;
+mod revocation;
 mod signature;
 mod trust;
 

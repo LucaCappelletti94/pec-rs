@@ -18,6 +18,7 @@ include = [
     "/tests/fixtures/messages",
     "/tests/fixtures/original",
     "/tests/fixtures/pki/anchors",
+    "/tests/fixtures/pki/crls",
     "/tests/fixtures/pki/provider.der",
     "/tests/fixtures/pki/provider.key.der",
     "/tests/fixtures/pki/signers",
