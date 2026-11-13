@@ -57,9 +57,12 @@ fn every_real_pec_message_parses() {
             .and_then(|date| jiff::Timestamp::from_second(date.to_timestamp()).ok())
             .expect("a Date field");
         // A signer whose certificate expired before every CRL here has no usable CRL, so it names its own.
-        match message.provider_signature(AGID_PROVIDER_CAS, &crls, date) {
-            Ok(signature) => {
-                assert!(!signature.signer_certificate().is_empty(), "{name}");
+        match message.verify(AGID_PROVIDER_CAS, &crls, date) {
+            Ok(receipt) => {
+                assert!(
+                    !receipt.signature().signer_certificate().is_empty(),
+                    "{name}"
+                );
                 verified += 1;
             }
             Err(Error::Signature(SignatureError::NoUsableCrl { urls })) => assert!(
