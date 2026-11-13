@@ -1,0 +1,58 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.7@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: errore-consegna
+Subject: AVVISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----7E7B7185470D08599B2BA20B74741746"
+
+This is an S/MIME signed message
+
+------7E7B7185470D08599B2BA20B74741746
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Avviso di mancata consegna
+Il giorno 08/11/2026 alle ore 10:15:00 (+0100) nel messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+e destinato all=27utente "ufficio.fatture@pec.example.it"
+=E8 stato rilevato un errore 5.1.1 - Utente non riconosciuto.
+Il messaggio =E8 stato rifiutato dal sistema.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-E; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Ricevuta age-?D: vvenuta-consegna
+Subject: CONSEGNA: Invio fattura breve di aoveniente da "mario.rossi@d message
+
+-00012--
+MI---EBBQADggEPADCCAogQC
+gEBAMc9zkHBH/Kdnv0XChfDSmk5CeIyL5RJhxOtm3XAAn6jNNY+vC8L591y/OJp
+MIPTXNSNsggA5UwgjbCnP5V7Ezly+k/7kOo6+A2ifSTO4f+vouF9NKuZtIwpIudL
+WgIRkjhPCmMFLc04X+o/Jl66FVmWZryrc1YEFHzOybzo5at0uFf5BfAku3EzNsm6
+
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-E; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Ricevuta age-?D: vvenuta-consegna
+Subject: CONSEGNA: Invio fattura breve di aoveniente da "mario.rossi@d message
+
+-00012--
+MI---EBBQADggEPADCCAQoC
+ggEBAMc9zkHBH/Kdnv0XChfBmr+I1VTcraCi/LHniRHjDwd6sG3wi0Jkky05Szq29wjr08PCGZHlogP3hKkMO
+/LieM9MDUoWPohZ4vKgirJZA/SvgR7SVbCraQD0ilJH7H0tDBOEolcARz1Et/3RW
+3p+blhaC6tR20B3rsJ2PpHb8UBovBH5OY4h/6Q==
+
+------7E7B7185470D08599B2BA20B74741746--
+

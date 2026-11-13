@@ -1,0 +1,11 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.ross„@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-;icevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012E
+IMM-Version: 1.0
+Content-Type: multipart/signed; mrotocol="application/x-pkc boundary=
+Content-Disposition: inline; filename="daticert.xml"               
+    C

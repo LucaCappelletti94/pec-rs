@@ -1,0 +1,56 @@
+From: šž–Ñssi@pec+pec.example.it
+To: ufficio.fattur1458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/`mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+40Buongiorno,
+in/ allegato la fat®®®®®®®®®®®®®®®ignature"; micÀalg=sh@a-ple.it
+SuCabject: Invio fattura 00024
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: 2120<6108101458.0000@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-255; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/`mixed; boundary="pec-sent"
+
+--pec-sent
+Conteundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/`mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+40Buongiorno,
+in/ allegato la fat®®®®®®®®®®®®®®®ignatu?re"; micÀal+g=sh@ec-sent"
+
+--pec-sent
+Conteundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/`mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/plain; charset="utf-8"
+40Buongiorno,
+in/ allegato la fat®®®®®®®®®®®®®®®ignatu?re"; micÀal+g=sh@a-256; boundary="pec-signed"
+ÿ6108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+Content-Type: multipart/`mixed; boundary="pec-sent"
+
+--pec-sent
+Content-Type: text/pla"
+
+Bsigned-

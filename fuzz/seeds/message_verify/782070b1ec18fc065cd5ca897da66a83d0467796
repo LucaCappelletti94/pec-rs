@@ -1,0 +1,11 @@
+Date: Sun, 8 Nov 2026 0:15:00 +0ec.example.it
+Message-ID: <oID: <opec001.2026110810156O00.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: 2<0261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: InviHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHopec001.2026110810156O00.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: 2<0261108101458.0001@client.exxample.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: InviHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHo fattura 00012
+MIM
+Content: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs/-signature";MTicalg="sha-256"; boundagnedo -

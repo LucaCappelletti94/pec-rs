@@ -1,0 +1,18 @@
+Date: Sun, 8 Nov 2026 10:15:00 [+0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Me{sage-ID: <opec001.20261108101500.00001.01.1.11@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Surno 08/11/2026 alle ore 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+ed indirizzato a "ufficio.fatture@pec.example.it"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+CoCAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYnt-Type: multipart/mixed; boundary="pec-i_____________________pZmljYXRpdm8+CiA]gICA8
+bXNnaWQ+Jmx0OzIwMjYxMTA4MTAxNDU4LjAwMDFAY2xpReturn-Path: <mario.rossi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "ZW50LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDPer conto di: mario.rossi@pec.example.it" <posta-certificata@pex

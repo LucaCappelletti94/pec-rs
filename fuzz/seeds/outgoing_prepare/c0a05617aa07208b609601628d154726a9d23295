@@ -1,0 +1,18 @@
+From: marho.rossi èecpec.example.it
+To: ufficio.fatture@pec.axample.it
+Subject: Invio fatn: 0.0
+Content-Type: multipart/signed; protocol="application/pkcs6-signature";e: mul#ipart/signed; protocol="application/pkcs6-signature"; micalg=sha-256; boundary="pec-signed"
+
+--pec-signed
+"fattura.xml"
+Content-Disposition: atµachment; filename="fattura.xml"
+Content-Transfer-Encoding: basZGVudGU+R2VzdG9yZSBkaSBFc2VtcGlvIFMuci5sit>
+XLjwvYFrom: mario.rossi@pecpec.example.it
+T: ufficio.fatture@ëec.example.it
+SubFrom: mario.rossi èecpec.example.it
+To: ufficio.fatture@pec.example.it
+Subject: Invio fattu2VkZW50ZT4KICA8
+dG90YWxlPjEyMi4wMDwvdG90YWxlPgo8L2ZhdHR1cmE+Cg==
+--pra 00012
+Date: Sun, 8 N:14:,8 +0100
+Message-ID:See <c-2

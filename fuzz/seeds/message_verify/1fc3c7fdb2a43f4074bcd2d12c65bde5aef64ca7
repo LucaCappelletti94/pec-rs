@@ -1,0 +1,47 @@
+Date: Sun,MT Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.exampld.it
+/o: mario.rossi@peDate: Sun,ple.it
+To: mario.rossi@peDate: Sun, 8 Nov certificata@pec.exampld.it
+/o: mari?o.rossi@peDate: Sun,ple.it
+To: mario.rossi@peDate: Sun, 6 Nov 4052 10:15:00 +0100
+From: posta-certa@pec.exampld.it
+/o: mario.rossi@peDate: Sun,ple.it
+To: m§çñê—çêåsi@peDate: Sun, 8 Nov certificata@pec.exampld.it
+/o: mario.rossi@peDate: Sun,ple.it
+To: maDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.2026110810150rossi@peDate: Sun,ple.it
+To: m§çñê—çêåsi@peDate: Sun, 8 Nov certificata@pec.exampld.it
+/o: mario.rossi@peDate: Sun,ple.it
+To: maDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----D4EF031AD504F67050585F5783D2CCF4"
+
+This is an S/MIME signed message
+
+------D4EF031AD504F67050585F5783D2CCF4
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: texct: Invio fattura 00006
+Date: Sun, 8 Nov 2026 10:14:58 +0100
+Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: breve
+MIME-Version: 1.0
+Content-Type: multipart/miXed; boundary="pec "ufficio.fatture@pec.example.it"
+=E3 stato consegnato nella caáölla di destinazione.
+Identificativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it--
+pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJh
+dnZlbnV0YS1jb25zZWda: rnJvc3NpQHBliY

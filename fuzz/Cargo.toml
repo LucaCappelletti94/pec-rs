@@ -8,6 +8,7 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
+jiff = { version = "0.2.39", default-features = false }
 libfuzzer-sys = "0.4"
 postacert = { path = ".." }
 
@@ -21,6 +22,27 @@ bench = false
 [[bin]]
 name = "certification_xml"
 path = "fuzz_targets/certification_xml.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "outgoing_prepare"
+path = "fuzz_targets/outgoing_prepare.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "message_verify"
+path = "fuzz_targets/message_verify.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "attachment_check"
+path = "fuzz_targets/attachment_check.rs"
 test = false
 doc = false
 bench = false

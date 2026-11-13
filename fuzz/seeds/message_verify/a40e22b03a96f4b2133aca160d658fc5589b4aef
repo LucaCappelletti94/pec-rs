@@ -1,0 +1,51 @@
+Date: Sun, 8.01.1.15@pec.exampe¹¹¹¹¹d indirizzato a "info@example.com"
+=E8 stato consegnato nella casella di destinazione.
+Identificativo gsagmseio: opec001.202sta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.9@pec.example.it>
+X-RiferimDat›Å?RŠ<<<<<<<<<<<<<<<ento-Message%-ID: <20261108101458.0001@client.example.it,>
+X-Ricevuta: rilevazione-virus
+X-Mittente: mario.rossi@pec.ex avvenuta consegna
+Il gio fattura 00012" proveniente da "mario.rossi@pec.example.it"
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it20261108101458.0001
+Message-ID: <opec001.20261108101500.00001.01.1.15@pec.
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-TDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.21@pec.example.it>
+X-Riferimento-Message-ID:: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----D4EF031AD504F67050585F5783D2CCF4"
+
+This is an S/MIME signed message
+
+------D4EF031AD504F67050585F5783D2CCF4
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charsXR0dXJhIDAwMDEyPC9vZ2dldHRvPgogIDwv
+aW50ZXN0YXppb25lPgogIDxkYXRpPgogICAgPGdlc3RvcmUtZW1pdHRlbnRlPkdlc3RvcmUgUEVD
+IGRpIEVzZW1waW8gUy5wLkEuPC9nZXN0b3JlLWVtaXR0ZW50ZT4KICAgIDxkYX®œIHpvbmE9Iisw
+MTAwIj4KICAgICAgPGdpb3Jubz4wOC8xMS8yMDI2PC9naW9ybm8+CiAgICAgIDxvcmE+MTA6MTU6
+MDA8L29yYT4KICAgIDwvZGF0YT4KICAgIDxpZGVudGlmaWNhdGl2bz5vcGVjMDAxLjIwMjYxMTA4
+MTAxNTAwLjAwMDAxLjAxLjEuMUBwZWMuZXhhbXBsZS5pdDwvaWRlbnRpZmljYXRpdm8+CiAgICA8
+--NnaWQ+Jmx0OzIwMjYxMTA4MTAxNDU4LjAwMDFAY2xpZW50LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSJicmV2ZSIvPgogICAgPGNvbnNlZ25hPnVmZmljaW8uZmF0
+dHVyZUBwZWMuZXhhbXBsZS5pdDwvY29uc2VnbmE+CiAgPC9kYXRpPgo8L3Bvc3RhY2VydD4K
+--pec-inner
+Content-Type: message/rfc822; name="postacert.eml"
+Content-Disposition: inlintipart/mixed; boundaconsegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocoVydCB0aXBvPSJh
+dnZlbnV0YS1jb25zZWduYSIgZXJyb3JlPSJuZXNzdW5vIj4KICA8aW50t-Type: text/plaÿÿÿÿcharset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Rry="pec-innicevutaer"
+
+--pec-inner
+C o

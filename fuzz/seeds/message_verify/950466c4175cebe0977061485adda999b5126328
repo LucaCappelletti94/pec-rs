@@ -1,0 +1,22 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricecata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: >opec001.20261108101500.00001.01.1.15@pec.example.it>nsegna
+ujSebct: CONSEGNA: Invio fattura 00012
+MIME-Vÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿersion: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----D4EF031AD504F67050585F5783D2CCF4"
+
+This si an S/MIME signed message
+
+------D4EF031AD504F67050585F5783D2CCF4
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; cBsZS5pdDwvcmlzcG9zdGU+CiAgICA8b2dn…………………………………………………………………………………………………………………………………………………………………ge-ID: <20261108101458.0001@uZz0iVVRGLTgiPz4KPHBvcME/yJokxg==
+
+------D4EF031AD504F67050585F5783D2CCF4--
+

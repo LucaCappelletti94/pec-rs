@@ -1,0 +1,42 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.15@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----D4EF031AD504F67050585F5783D2CCF4"
+
+This is an S/MIME signed message
+
+------D4EF031AD504F67050585F5783D2CCF4
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-NzVnC1sI56RtEcMkIhGHjKi+/34
+poQ+VO/JcIY1JX4jsZgjBuljSn7VMYICczCCAm8CAQEwYTBJMQswCQYDVQQGEwJJ
+VDENMAsGA1UEBwwEUm9tYTEUMBIGA1UECgwLUEVDIFRlc3QgQ0ExFTATBgNVBAMM
+DFBFQyBUZXN0IENBMQIURsDUGY54yA1WFeTFFg8qJxgFz5QwDQYJYIZIAWUDBAIB
+BQCggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcN
+MjYxMTEzMTU1NjI5WjAvBgkqhkiG9w0BCQQxIgQgRgjoh6N7j9honB+hkQE92W+Z
+H18Sv4Z/LtmKfxLicGkweQYJKoZIhvcNAQkPMWwwajALBglghkgBZQMEASowCwYJ
+YIZIAWUDBAEWMAsGCWCGSAle.it>
+X-Ricevuta: avvenuta-consegna
+Subjeca-256"; boundary="----FlAwQBAjAKBggqhkiG9w0DBzAOBggqhkiG9w0DAgIC
+AIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQY®KoZIhvcNAwICASgwDQYJKoZI
+hvcNAQEBBQAEggEAq4JPLwHG28DXyUzJbQP6LjOI3XaMObZEP0QeVKe+1YZJEpMQ
+nfUnnvnyRT8zthXcNJ0QU1nKPEwRP9hf34yma0uYUg8xHxVWm3Jr1PA7bz5JbnZpbyBmYXR0dXJhIDAwMDdDwvaWRlbnRpZmljYXRpdm9+CiAgICA8bXNnaWQ+Jmx0OzIwMjYxMTA4
+MTAxNDU4LjAwMDFAY2xpZW50L46bddfOPdUNGIovFo3mmBwe8/jesNov 25:00 +0100
+From: posta-certificata@pec.exam--pleIlt
+To: mario5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwvcmlzcG9zdGU+CiAgICA8b2dn^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ZXR0bz5JbnZpbyBmYXR0dXJhIDAwMDEy-ID: <opec001.202611sage-ID: <opec001.2026110810ata@pec.egiPz4KPHBvc3RhY2VydCB0aX%vPSJh
+dnZlbnV0YS1jb25zZWduYSIgZXJyb3JlPSJuZXNzdW5vIj4KICA8aW50ZXN0YXppb25lPgogICAg
+PG1pdHRlbnRlPm1hcmlvLnJvc3NpQHBlYy5leGFtcGxlLml0PC9taXR0ZW50ZT4KICAgIDxkZXN0
+aW5hdGFyaSB0aXBvPSJjZXJ0aWZpY2F0byI+dWZmaWNpby5mYXR0dXJlQHB
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvcME/DateyJo: 

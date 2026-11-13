@@ -1,0 +1,58 @@
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.11@pec.example.it>
+X-Riferimento-Message-ID: <00000re 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da0LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSan S/MIME signed mes.00001.01.1.11@pec.example.it>
+X-Riferimento-Message-ID: <00000005962951.0000@client.example.it>
+wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJh
+dnZlbnV0YS1jb25zZWduY1108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA îERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7#signature"; ssi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ucffiio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec000.20261108100
+PC9kZXN0aW5hdGFyaT4KICAgIDxyaXNwb3N0ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwv
+cmlzcG9zdGU+CiAgICA8b2dnZXR0bz5JbnZpbyBmYXR0dXJhIDAwMDEyPC9vZ2dldHRvPgogIDwv
+aW50ZXN0YXppb25lPgogIDxkYXRpPgole.it>
+Reply-To: mario.rossi@pec.example.it
+To: ucffiio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec000.20261108101500.00001.01.1.1@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.11@pec.example.it>
+X-Riferimento-Message-ID: <00000re 10:15:00 (+0100) il messaggio
+"Invio fattura 00012" proveniente da0LmV4YW1wbGUuaXQmZ3Q7PC9tc2dp
+ZD4KICAgIDxyaWNldnV0YSB0aXBvPSan S/MIME signed mes.00001.01.1.11@pec.example.it>
+X-Riferimento-Message-ID: <00000005962951.0000@client.example.it>
+wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJh
+dnZlbnV0YS1jb25zZWduY1108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasporto: posta-certificata
+Subject: POSTA îERTIFICATA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7#signature"; ssi@pec.example.it>
+Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: "Per conto di: mario.rossi@pec.example.it" <posta-certificata@pec.example.it>
+Reply-To: mario.rossi@pec.example.it
+To: ucffiio.fatture@pec.example.it
+Cc: info@example.com
+Message-ID: <opec000.20261108100
+PC9kZXN0aW5hdGFyaT4KICAgIDxyaXNwb3N0ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwv
+cmlzcG9zdGU+CiAgICA8b2dnZXR0bz5JbnZpbyBmYXR0dXJhIDAwMDEyPC9vZ2dldHRvPgogIDwv
+aW50ZXN0YXppb25lPgogIDxkYXRpPgole.it>
+Reply-To: mario.rossi@pec.example.it
+To: ucffiio.fatture@pec.example.it
+Cc: info@example.com
+Message-ferimento-Message-I„„„„„„„„„„„„„„„„D: <20261108101458.0001@client.example.it>
+X-TipoRicevuta: completa
+X-Trasportodirizzato a ":

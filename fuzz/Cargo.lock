@@ -405,6 +405,7 @@ dependencies = [
 name = "postacert-fuzz"
 version = "0.0.0"
 dependencies = [
+ "jiff",
  "libfuzzer-sys",
  "postacert",
 ]

@@ -1,0 +1,105 @@
+Date: Sun, 8 N]v 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00001.01.1.21@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/suZz0iVVRGLTgiPz4KPHBvc3RhY2VydCB0aXBvPSJy
+aWxldmF6aW9uZS12aXJ1cyIgZXJyb3JlPSJ2aXJ1cyI+CiAgPGludGVzdGF6aW9uZT4KICAgIDxt
+aXR0ZW50ZT5tYXJpby5yb3NzaUBwZWMuZXhhbXBsZS5pdDwvbWl0dGVudGU+CiAgICA8ZGVzdGlu
+YXRhcmkgdGlwbz0iY2VydGlmaWNhdG8iPnVmZmljaW8uZmF0dHVyura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----0D490B1F7C710B01B245608CFF792739"
+
+This is an S/MIME signed message
+
+------0D490B1F7C710B01B245608CFF792739
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; Date: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.itZUBwZWMuZXhhbXBsZS5pdDwv
+Ze: Sun,
+Message-ID: <opec001.20261108101500.00001.01.1.7@pec.example.it>
+X-Riferimento-Message-ID: <40522
+--pec-inner
+Content-Type: application/xml; name="daticert.xml"
+Content-Disposition: inline; filename="daticert.xml"
+Content-Transfer-inner
+Content-Type: t$ext/plain; charset="iso-8859-1"
+ContDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101500.00081.01.1.21@pec.example.it>
+X-Riferimento-Message-ID: <20261108101458.0001@client.example.it>
+X-Ricevuta: avvenuta-consegna
+Subject: CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="="--6D314B401C92A14E952D538313E1F69D"
+
+This is an S/MIME signed message
+
+------6D314B401E2CÇÎDate: Sun, 8 Nov 2026 10:15:00 +0100
+Fr@om: posta-certificŸ‹¿šœÚexample.it
+To: mario.rossi@pec.example.it
+Message-I0 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101599452D538313E1F69D
+Content-Type: multipart/miüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüü'üüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüxed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-ample.it
+Subject: PROBLEMA DI SICUREZZA: Invio fattura 00012
+MIME-Version: 1cativo messaggio: opec001.20261108101500.00001.01.1.1@pec.example.it
+cpe---inner
+Content-Type: aDate: Sun, 8 Nov 2026 10:15:00 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.202611081015VISO DI MANCATA CONSEGNA: Invio fattura 00012
+MIME-Version: 1.0
+Content-Type: multipart/sig 00012
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="="--6D314B401C92A14E952D538313E1F69D"
+
+This is an S/MIME signed message
+
+-bX-----6D314B401E2CÇÎDate: Sun, 8 Nov 2026 10:15:00 +0100
+Fr@om: posta-certificŸ‹¿šœÚexample.it
+To: mario.rossi@pec.example.it
+Message-I0 +0100
+From: posta-certificata@pec.example.it
+To: mario.rossi@pec.example.it
+Message-ID: <opec001.20261108101599452D538313E1F69D
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inner
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-ample.it
+Subject: PROBLEMA DI SICUREZZA: Invio fattura 00012
+MIME-Version: 1cativo mesd; protocol="application/x-pkcs7-signature"; micalg="sha-256"; bounxample.it
+To: mario.rossi@pec.examJNZbWKLBqGUBllwd+BG2RbU0w
+DQYJKoZIhvcwMjYxMTA4
+MTAxNDU4LjAwMDFAY2xpZW50L46bddfOPdUNGIovFo3mmBwe8/jhGh
+Ja5F+mE/4uSw8S3JerYKoT4Sj0JFZN//NAQELBQAepBZooRRG1bnw3lewQzELMAkGA1UEBhMCSVQxGTAXBgNVBAoMEFBFQyBUZXN0
+IFJvb3QgQ0ExGTAXBgNVBAMMEFBFQyBUZXN0IFJvb3QgQ0EwIBcNMjYxMTEzMTEdHtion/x-pkcs7-signature"; micalg="sha-256"; boundary="----0D490B1F7C710B01B2KLJGtU0LabRxLJ35
+2m6vErK/nbs79Bc64piK08/UwQkzV45608CFF792739"
+
+This is6O00.00001.01.1.15@pec.example.it>
+X-Riferimento-Ment-Transfer-Encoding: quoted-priIKcHUb6+w==
+
+------6D31261108101458.0001@client.example.it>
+X-Ricevuta: rilevazione-virus
+X-Mittente: mario.rossi@pec.example.it
+Subjectessage-ID: 2<0261108101458.0001@cliey--="-"I---D4EF031AD504F670e: Sun, 8 Nov 2026 10:15:00 +0100
+F an S/M5ME signed meªªªªªªª
+------0D490B1F7C710B01B245608CFF792739
+Content-Type: multipart/mixed; boundary="pec-inner"
+
+--pec-inne-certific
+MIME-Version:ocol="app 1.0
+Clication/x-onp
