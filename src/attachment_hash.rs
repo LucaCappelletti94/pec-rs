@@ -1,7 +1,7 @@
 //! The SHA-1 a short delivery receipt carries in place of each attachment of the original message, and checking it
 //! against the message the sender sent, §6.5.2.2.
 
-use mail_parser::{MessageParser, MessagePart, MessageRef};
+use mail_parser::{MessageParser, MessagePart, MessageRef, PartFlags};
 use sha1::{Digest, Sha1};
 
 use crate::Error;
@@ -65,13 +65,28 @@ pub enum TextLineEnds {
     CanonicalOrLf,
 }
 
+/// Parses the sent message, refusing a tree a MIME parser limit cut short.
+fn parse_sent(sent: &[u8]) -> Result<mail_parser::Message<'_>, Error> {
+    MessageParser::default()
+        .parse(sent)
+        .filter(|parsed| !limit_reached(parsed))
+        .ok_or(Error::NotMime)
+}
+
+/// Whether a MIME parser limit flagged any part of any message in `parsed`, attached messages included.
+pub(crate) fn limit_reached(parsed: &mail_parser::Message<'_>) -> bool {
+    parsed
+        .parts()
+        .any(|part| part.flags().contains(PartFlags::LIMIT_REACHED))
+}
+
 /// Identifies generated hashes using the sent message, preserving receipt order.
 pub(crate) fn read(
     original: MessageRef<'_>,
     sent: &[u8],
     line_ends: TextLineEnds,
 ) -> Result<Vec<AttachmentHash>, Error> {
-    let parsed = MessageParser::default().parse(sent).ok_or(Error::NotMime)?;
+    let parsed = parse_sent(sent)?;
     let comparison = Comparison::new(original, parsed.root(), line_ends)?;
     Ok(comparison
         .candidates
@@ -97,7 +112,7 @@ pub(crate) fn check(
     sent: &[u8],
     line_ends: TextLineEnds,
 ) -> Result<Vec<AttachmentCheck>, Error> {
-    let parsed = MessageParser::default().parse(sent).ok_or(Error::NotMime)?;
+    let parsed = parse_sent(sent)?;
     let comparison = Comparison::new(original, parsed.root(), line_ends)?;
     let mut checks = Vec::with_capacity(
         comparison.outgoing.len()

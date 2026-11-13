@@ -874,3 +874,67 @@ fn carried_digest_text_retains_full_filename_priority() {
     );
     assert_eq!(hashes(&raw, &original), vec![]);
 }
+
+/// Checks that neither attachment API silently accepts a truncated sent or receipt tree.
+fn assert_incomplete_message_is_rejected(limited: &[u8]) {
+    let empty: &[u8] = b"Content-Type: text/plain\r\n\r\nbody";
+    for (original, evidence) in [(limited, empty), (empty, limited)] {
+        let raw = receipt_with(evidence);
+        let receipt = Message::parse(&raw).expect("a short receipt");
+        assert_eq!(
+            receipt.check_attachments(original, TextLineEnds::Canonical),
+            Err(Error::NotMime)
+        );
+        assert_eq!(
+            receipt.attachment_hashes(original, TextLineEnds::Canonical),
+            Err(Error::NotMime)
+        );
+    }
+}
+
+#[test]
+fn depth_limited_mime_is_rejected() {
+    let mut original = String::from("MIME-Version: 1.0\r\n");
+    for level in 0..65 {
+        write!(
+            original,
+            "Content-Type: multipart/mixed; boundary=\"depth-{level}\"\r\n\r\n--depth-{level}\r\n"
+        )
+        .expect("writing a string");
+    }
+    original.push_str(
+        "Content-Type: text/plain\r\nContent-Disposition: attachment; filename=\"hidden.txt\"\r\n\r\npayload",
+    );
+    for level in (0..65).rev() {
+        write!(original, "\r\n--depth-{level}--\r\n").expect("writing a string");
+    }
+    assert_incomplete_message_is_rejected(original.as_bytes());
+}
+
+#[test]
+fn part_limited_mime_is_rejected() {
+    let mut original = String::from(
+        "MIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"part-limit\"\r\n\r\n",
+    );
+    for _ in 0..10_010 {
+        original.push_str("--part-limit\r\nContent-Type: text/plain\r\n\r\nbody\r\n");
+    }
+    original.push_str(
+        "--part-limit\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"hidden.txt\"\r\n\r\npayload\r\n--part-limit--\r\n",
+    );
+    assert_incomplete_message_is_rejected(original.as_bytes());
+}
+
+#[test]
+fn limit_inside_attached_message_is_rejected() {
+    let mut original = String::from(
+        "MIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"outer\"\r\n\r\n--outer\r\nContent-Type: message/rfc822\r\n\r\nContent-Type: multipart/mixed; boundary=\"inner\"\r\n\r\n",
+    );
+    for _ in 0..10_010 {
+        original.push_str("--inner\r\nContent-Type: text/plain\r\n\r\nbody\r\n");
+    }
+    original.push_str(
+        "--inner--\r\n\r\n--outer\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=\"outer.txt\"\r\n\r\npayload\r\n--outer--\r\n",
+    );
+    assert_incomplete_message_is_rejected(original.as_bytes());
+}

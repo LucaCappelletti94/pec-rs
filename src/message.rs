@@ -184,13 +184,13 @@ impl<'a> Message<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::NotMime`] for an invalid sent message, [`Error::InvalidAttachmentHash`] for malformed generated hashes, or [`Error::AmbiguousAttachments`] when equally supported assignments disagree on outcomes or evidence interpretations.
+    /// Returns [`Error::NotMime`] for an invalid sent message or a parser-limited sent or receipt tree, [`Error::InvalidAttachmentHash`] for malformed generated hashes, or [`Error::AmbiguousAttachments`] when equally supported assignments disagree on outcomes or evidence interpretations.
     pub fn attachment_hashes(
         &self,
         sent: &[u8],
         line_ends: TextLineEnds,
     ) -> Result<Vec<AttachmentHash>, Error> {
-        self.short_original().map_or_else(
+        self.short_original()?.map_or_else(
             || Ok(Vec::new()),
             |original| attachment_hash::read(original, sent, line_ends),
         )
@@ -204,24 +204,33 @@ impl<'a> Message<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::NotShortReceipt`] without a short receipt's original, [`Error::NotMime`] for an invalid sent message, [`Error::InvalidAttachmentHash`] for malformed generated hashes, or [`Error::AmbiguousAttachments`] when equally supported assignments disagree on outcomes or evidence interpretations.
+    /// Returns [`Error::NotShortReceipt`] without a short receipt's original, [`Error::NotMime`] for an invalid sent message or a parser-limited sent or receipt tree, [`Error::InvalidAttachmentHash`] for malformed generated hashes, or [`Error::AmbiguousAttachments`] when equally supported assignments disagree on outcomes or evidence interpretations.
     pub fn check_attachments(
         &self,
         sent: &[u8],
         line_ends: TextLineEnds,
     ) -> Result<Vec<AttachmentCheck>, Error> {
-        let original = self.short_original().ok_or(Error::NotShortReceipt)?;
+        let original = self.short_original()?.ok_or(Error::NotShortReceipt)?;
         attachment_hash::check(original, sent, line_ends)
     }
 
-    /// The original carried by a short delivery receipt.
-    fn short_original(&self) -> Option<MessageRef<'_>> {
+    /// The original carried by a short delivery receipt, refused when a MIME parser limit cut the receipt short.
+    fn short_original(&self) -> Result<Option<MessageRef<'_>>, Error> {
         if self.kind != MessageKind::Certified(Kind::Delivery)
-            || self.certification.as_ref()?.data.receipt != Some(ReceiptKind::Short)
+            || self
+                .certification
+                .as_ref()
+                .and_then(|certification| certification.data.receipt)
+                != Some(ReceiptKind::Short)
         {
-            return None;
+            return Ok(None);
         }
-        self.parsed.part(self.original?)?.nested()
+        if attachment_hash::limit_reached(&self.parsed) {
+            return Err(Error::NotMime);
+        }
+        Ok(self
+            .original
+            .and_then(|original| self.parsed.part(original)?.nested()))
     }
 }
 
