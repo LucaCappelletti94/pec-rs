@@ -80,6 +80,8 @@ if [[ ! -f pki/anchors/agid-like.der ]]; then
   # 1.3.6.1.4.1.32473 is the private enterprise number reserved for documentation (RFC 5612).
   signer critical sha256 "$profile"$'\n1.3.6.1.4.1.32473.1=critical,ASN1:NULL'
   signer dns sha256 "$profile,DNS:mail.pec.example.it"
+  # A mailbox whose domain starts with a dot, which names no host.
+  signer dot-host sha256 "${profile/@pec/@.pec}"
   rm -f "$csr"
 fi
 
