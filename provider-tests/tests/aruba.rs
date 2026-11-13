@@ -12,11 +12,12 @@ mod common;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use common::{RECEIPT_WAIT, Receipts, fetch, message, receipt_form, token};
-use lettre::address::Envelope;
+use common::{
+    RECEIPT_WAIT, Receipts, assert_about, envelope, fetch, outgoing, receipt_form, token,
+};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{SmtpTransport, Transport};
-use postacert::{AttachmentCheck, Error, Message, ReceiptKind, TextLineEnds};
+use postacert::{AttachmentCheck, Error, Message, OutgoingMessage, ReceiptKind, TextLineEnds};
 use serde::Deserialize;
 
 /// The mailbox the messages leave from and arrive at.
@@ -28,11 +29,8 @@ struct Account {
     password: String,
 }
 
-/// Sends `raw` from the mailbox to itself over SMTPS.
-fn send(account: &Account, raw: &[u8]) {
-    let address = account.address.parse().expect("the address is valid");
-    let envelope = Envelope::new(Some(address), vec![account.address.parse().expect("valid")])
-        .expect("an envelope");
+/// Sends `outgoing` over SMTPS with the mailbox's credentials and the envelope the crate gives it.
+fn send(account: &Account, outgoing: &OutgoingMessage) {
     SmtpTransport::relay("smtps.pec.aruba.it")
         .expect("the relay host is valid")
         .credentials(Credentials::new(
@@ -40,7 +38,7 @@ fn send(account: &Account, raw: &[u8]) {
             account.password.clone(),
         ))
         .build()
-        .send_raw(&envelope, raw)
+        .send_raw(&envelope(outgoing), outgoing.as_bytes())
         .expect("the provider accepts the message");
 }
 
@@ -69,12 +67,19 @@ fn aruba_receipts_verify() {
     let token = token();
     let short_subject = format!("postacert ricevuta breve {token}");
     let summary_subject = format!("postacert ricevuta sintetica {token}");
-    let short_sent = message(&account.address, &account.address, "breve", &short_subject);
-    let summary_sent = message(
+    let short_sent = outgoing(
         &account.address,
         &account.address,
-        "sintetica",
+        &short_subject,
+        &format!("breve.{token}@postacert.test"),
+        ReceiptKind::Short,
+    );
+    let summary_sent = outgoing(
+        &account.address,
+        &account.address,
         &summary_subject,
+        &format!("sintetica.{token}@postacert.test"),
+        ReceiptKind::Summary,
     );
     send(&account, &short_sent);
     send(&account, &summary_sent);
@@ -103,12 +108,19 @@ fn aruba_receipts_verify() {
     let short_delivery = short.delivery.expect("complete");
     assert_eq!(receipt_form(&short_transport), Some(ReceiptKind::Short));
     assert_eq!(receipt_form(&short_delivery), Some(ReceiptKind::Short));
+    for raw in [
+        &short.acceptance.expect("complete"),
+        &short_transport,
+        &short_delivery,
+    ] {
+        assert_about(raw, &short_sent);
+    }
     // Aruba hashes the canonical form, replaces the parts with a Content-Disposition and leaves in place one named
     // only by its Content-Type.
     assert_eq!(
         Message::parse(&short_delivery)
             .expect("a valid receipt")
-            .check_attachments(&short_sent, TextLineEnds::Canonical),
+            .check_attachments(short_sent.as_bytes(), TextLineEnds::Canonical),
         Ok(vec![
             AttachmentCheck::Matches(Some("righe.txt".to_owned())),
             AttachmentCheck::Carried(Some("dati.bin".to_owned())),
@@ -118,10 +130,17 @@ fn aruba_receipts_verify() {
 
     let summary_delivery = summary.delivery.expect("complete");
     assert_eq!(receipt_form(&summary_delivery), Some(ReceiptKind::Summary));
+    for raw in [
+        &summary.acceptance.expect("complete"),
+        &summary.transport.expect("complete"),
+        &summary_delivery,
+    ] {
+        assert_about(raw, &summary_sent);
+    }
     let summary_receipt = Message::parse(&summary_delivery).expect("a valid receipt");
     assert_eq!(summary_receipt.original_message(), None);
     assert_eq!(
-        summary_receipt.check_attachments(&summary_sent, TextLineEnds::Canonical),
+        summary_receipt.check_attachments(summary_sent.as_bytes(), TextLineEnds::Canonical),
         Err(Error::NotShortReceipt)
     );
 }

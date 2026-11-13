@@ -6,6 +6,7 @@ publish = false
 
 [dev-dependencies]
 imap = "2.4.1"
+jiff = { version = "0.2.39", default-features = false, features = ["std"] }
 lettre = { version = "0.11.23", default-features = false, features = ["ring", "rustls", "smtp-transport", "webpki-roots"] }
 native-tls = "0.2.14"
 postacert = { path = ".." }

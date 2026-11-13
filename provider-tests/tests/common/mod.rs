@@ -3,10 +3,19 @@
 use std::io::{Read, Write};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use postacert::{Kind, Message, MessageKind, ReceiptKind};
+use lettre::address::Envelope;
+use postacert::{Kind, Limits, Message, MessageKind, OutgoingMessage, ReceiptKind};
 
 /// How long a provider gets to deliver every receipt.
 pub const RECEIPT_WAIT: Duration = Duration::from_secs(600);
+
+/// The current time as an RFC 5322 date in UTC, with the `-0000` zone of a client stating no local offset (RFC 5322
+/// §3.3).
+fn now() -> String {
+    jiff::fmt::rfc2822::DateTimePrinter::new()
+        .timestamp_to_string(&jiff::Timestamp::now())
+        .expect("the current time prints as an RFC 2822 date")
+}
 
 /// A token that makes this run's subjects unique, the seconds since 1970.
 pub fn token() -> String {
@@ -17,15 +26,24 @@ pub fn token() -> String {
         .to_string()
 }
 
-/// A message from `from` to `to` asking for the `receipt` form, with a quoted-printable text attachment written
-/// with literal line breaks, a base64 binary one named only by its `Content-Type`, and an attached message without
-/// a file name.
-pub fn message(from: &str, to: &str, receipt: &str, subject: &str) -> Vec<u8> {
-    format!(
+/// A message from `from` to `to` asking for `receipt` delivery receipts, written by hand so the encodings under test
+/// stay exact, then checked for submission and against the limits every provider accepts. It carries a
+/// quoted-printable text attachment written with literal line breaks, a base64 binary one named only by its
+/// `Content-Type`, and an attached message without a file name.
+pub fn outgoing(
+    from: &str,
+    to: &str,
+    subject: &str,
+    message_id: &str,
+    receipt: ReceiptKind,
+) -> OutgoingMessage {
+    let date = now();
+    let raw = format!(
         "From: {from}\r\n\
          To: {to}\r\n\
          Subject: {subject}\r\n\
-         X-TipoRicevuta: {receipt}\r\n\
+         Date: {date}\r\n\
+         Message-ID: <{message_id}>\r\n\
          MIME-Version: 1.0\r\n\
          Content-Type: multipart/mixed; boundary=\"pec-test\"\r\n\
          \r\n\
@@ -57,8 +75,35 @@ pub fn message(from: &str, to: &str, receipt: &str, subject: &str) -> Vec<u8> {
          Testo del messaggio inoltrato.\r\n\
          \r\n\
          --pec-test--\r\n"
-    )
-    .into_bytes()
+    );
+    let outgoing = OutgoingMessage::prepare(raw.as_bytes(), receipt)
+        .expect("the message passes the provider's checks");
+    outgoing
+        .check_limits(Limits::GUARANTEED)
+        .expect("the message is within every provider's limits");
+    outgoing
+}
+
+/// The SMTP envelope of `outgoing`, from its reverse path to its forward paths (§6.3.1).
+pub fn envelope(outgoing: &OutgoingMessage) -> Envelope {
+    let forward_paths = outgoing
+        .forward_paths()
+        .iter()
+        .map(|path| path.parse().expect("a valid forward path"))
+        .collect();
+    let reverse_path = outgoing
+        .reverse_path()
+        .parse()
+        .expect("a valid reverse path");
+    Envelope::new(Some(reverse_path), forward_paths).expect("an envelope")
+}
+
+/// Asserts that the receipt `raw` is about `outgoing`, whose `Message-ID` its signed `msgid` carries (§6.3).
+#[track_caller]
+pub fn assert_about(raw: &[u8], outgoing: &OutgoingMessage) {
+    let receipt = Message::parse(raw).expect("a valid PEC message");
+    let data = receipt.certification_data().expect("certification data");
+    assert_eq!(data.data.message_id.as_ref(), Some(outgoing.message_id()));
 }
 
 /// Every message in the inbox of `session` whose subject holds `token`, read without marking it read.
