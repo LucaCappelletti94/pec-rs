@@ -9,7 +9,8 @@ cargo-fuzz = true
 
 [dependencies]
 jiff = { version = "0.2.39", default-features = false }
-libfuzzer-sys = "0.4"
+libfuzzer-sys = { version = "0.4", features = ["arbitrary-derive"] }
+mail-parser = "1.0.1"
 postacert = { path = ".." }
 
 [[bin]]
@@ -43,6 +44,13 @@ bench = false
 [[bin]]
 name = "attachment_check"
 path = "fuzz_targets/attachment_check.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "outgoing_build"
+path = "fuzz_targets/outgoing_build.rs"
 test = false
 doc = false
 bench = false
