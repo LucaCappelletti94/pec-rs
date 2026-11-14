@@ -15,7 +15,7 @@ PEC_ARUBA_CONFIG=~/.config/pec/aruba.toml cargo test --manifest-path provider-te
 
 Each run sends two certified messages, which stay in the mailbox.
 
-The OpenPEC test runs the same messages through [OpenPEC](https://sourceforge.net/projects/openpec/) 2.2.8, the open-source PEC provider, in a container that is a whole provider for the test domain `pec.test`: Postfix, OpenPEC, its LDAP provider index and Dovecot. Its mailboxes `mittente`, `destinatario` and `posta-certificata` at `pec.test` share the password `prova`. The test runs only when `PEC_OPENPEC_SMTP` and `PEC_OPENPEC_IMAP` name the container's ports.
+The OpenPEC test runs the same messages, and a third written by the crate's builder, through [OpenPEC](https://sourceforge.net/projects/openpec/) 2.2.8, the open-source PEC provider, in a container that is a whole provider for the test domain `pec.test`: Postfix, OpenPEC, its LDAP provider index and Dovecot. Its mailboxes `mittente`, `destinatario` and `posta-certificata` at `pec.test` share the password `prova`. The test runs only when `PEC_OPENPEC_SMTP` and `PEC_OPENPEC_IMAP` name the container's ports.
 
 ```sh
 docker build -t pec-openpec provider-tests/openpec
