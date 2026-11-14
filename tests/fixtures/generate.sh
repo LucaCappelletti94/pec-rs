@@ -10,7 +10,7 @@ not_before=20261101000000Z not_after=21261001000000Z
 # The chain mirrors the AgID one: a root, a subordinate CA standing for AgID CA1, and a provider certificate with the
 # profile of the AgID CPS (§7.1.2.3), signed with RSA and SHA-256 as the CPS requires (§7.1.3).
 if [[ ! -f pki/provider.pem ]]; then
-  openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 36500 \
+  openssl req -x509 -newkey rsa:2048 -sha256 -nodes -not_before "$not_before" -not_after "$not_after" \
     -subj "/C=IT/O=PEC Test Root CA/CN=PEC Test Root CA" \
     -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" \
     -keyout pki/root.key -out pki/root.pem 2>/dev/null
@@ -129,7 +129,8 @@ if [[ ! -f pki/crls/current.der ]]; then
     -extfile <(printf '%s\n' "$profile") -outform DER -out pki/signers/no-expiry.der 2>/dev/null
   # The test CA re-issued with a keyUsage that allows certificates but not CRLs (RFC 5280 §6.3.3).
   openssl req -new -key pki/ca.key -subj "/C=IT/L=Roma/O=PEC Test CA/CN=PEC Test CA1" -out "$csr"
-  openssl x509 -req -sha256 -in "$csr" -CA pki/root.pem -CAkey pki/root.key -set_serial 302 -days 36500 \
+  openssl x509 -req -sha256 -in "$csr" -CA pki/root.pem -CAkey pki/root.key -set_serial 302 \
+    -not_before "$not_before" -not_after "$not_after" \
     -extfile <(printf 'basicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign\nextendedKeyUsage=emailProtection\n') \
     -outform DER -out pki/anchors/no-crl-sign.der 2>/dev/null
   rm -rf "$db" "$csr"
