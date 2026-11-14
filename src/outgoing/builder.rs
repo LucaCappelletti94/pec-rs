@@ -145,8 +145,8 @@ impl OutgoingMessageBuilder {
     ///
     /// Returns [`Error::Outgoing`] with [`OutgoingError::Subject`] when the subject holds a control character other
     /// than tab, with [`OutgoingError::Date`] when the date has a year outside 1900 to 3000 or a zone offset that is
-    /// not whole minutes under a day, or with [`OutgoingError::LineTooLong`] when a field holds a word too long for
-    /// one line.
+    /// not whole minutes under a day, with [`OutgoingError::Identifier`] when a message identifier holds a character
+    /// outside ASCII, or with [`OutgoingError::LineTooLong`] when a field holds a word too long for one line.
     pub fn build(self) -> Result<OutgoingMessage, Error> {
         if let Some(subject) = self
             .subject
@@ -172,20 +172,20 @@ impl OutgoingMessageBuilder {
         write::field(
             &mut raw,
             "Message-ID",
-            &write::identifiers(slice::from_ref(&self.message_id)),
+            &write::identifiers(slice::from_ref(&self.message_id))?,
         )?;
         if let Some(id) = &self.in_reply_to {
             write::field(
                 &mut raw,
                 "In-Reply-To",
-                &write::identifiers(slice::from_ref(id)),
+                &write::identifiers(slice::from_ref(id))?,
             )?;
         }
         if !self.references.is_empty() {
             write::field(
                 &mut raw,
                 "References",
-                &write::identifiers(&self.references),
+                &write::identifiers(&self.references)?,
             )?;
         }
         if let Some(subject) = &self.subject {

@@ -30,8 +30,8 @@ impl FromStr for MessageId {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::InvalidMessageId`] when the brackets are unbalanced, or when the identifier holds whitespace
-    /// or a bracket, or lacks an `@` with text on both sides.
+    /// Returns [`Error::InvalidMessageId`] when the brackets are unbalanced, or when the identifier holds whitespace,
+    /// a control character or a bracket, none of which RFC 5322 §3.6.4 allows, or lacks an `@` with text on both sides.
     fn from_str(value: &str) -> Result<Self, Error> {
         let trimmed = value.trim();
         let inner = match (trimmed.strip_prefix('<'), trimmed.ends_with('>')) {
@@ -42,7 +42,8 @@ impl FromStr for MessageId {
         let valid = inner
             .split_once('@')
             .is_some_and(|(left, right)| !left.is_empty() && !right.is_empty())
-            && !inner.contains(|c: char| c.is_whitespace() || c == '<' || c == '>');
+            && !inner
+                .contains(|c: char| c.is_whitespace() || c.is_control() || c == '<' || c == '>');
         if valid {
             Ok(Self(inner.to_owned()))
         } else {

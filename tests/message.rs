@@ -462,6 +462,10 @@ fn message_ids_parse_in_either_form() {
         "a@example.it>",
         "a b@example.it",
         "<a<b@example.it>",
+        "a\0@example.it",
+        "a\u{1}b@example.it",
+        "a@example\u{7f}.it",
+        "<a\u{85}@example.it>",
     ] {
         assert_eq!(
             invalid.parse::<MessageId>(),

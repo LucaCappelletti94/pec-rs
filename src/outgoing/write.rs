@@ -83,8 +83,22 @@ pub(super) fn mailboxes<'a>(list: impl IntoIterator<Item = &'a Mailbox>) -> Vec<
 }
 
 /// The words of a list of message identifiers, each between angle brackets (RFC 5322 §3.6.4).
-pub(super) fn identifiers<'a>(ids: impl IntoIterator<Item = &'a MessageId>) -> Vec<String> {
-    ids.into_iter().map(ToString::to_string).collect()
+///
+/// # Errors
+///
+/// Returns [`OutgoingError::Identifier`] when an identifier holds a character outside ASCII.
+pub(super) fn identifiers<'a>(
+    ids: impl IntoIterator<Item = &'a MessageId>,
+) -> Result<Vec<String>, OutgoingError> {
+    ids.into_iter()
+        .map(|id| {
+            if id.as_str().is_ascii() {
+                Ok(id.to_string())
+            } else {
+                Err(OutgoingError::Identifier(id.as_str().to_owned()))
+            }
+        })
+        .collect()
 }
 
 /// The words of a display name: atoms when it is atoms and single spaces, a quoted string when it is other
