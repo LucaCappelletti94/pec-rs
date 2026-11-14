@@ -383,6 +383,35 @@ fn control_characters_are_refused() {
 }
 
 #[test]
+fn identifiers_outside_ascii_are_refused() {
+    let accented = "fattura.caffè@client.example.it";
+    for (field, variant) in [
+        (
+            "Message-ID",
+            OutgoingMessage::builder(
+                mailbox("mario.rossi@pec.example.it"),
+                mailbox("ufficio.fatture@pec.example.it"),
+                id(accented),
+                date(),
+            ),
+        ),
+        ("In-Reply-To", builder().in_reply_to(id(accented))),
+        (
+            "References",
+            builder().references([id("<20261107090000.0001@client.example.it>"), id(accented)]),
+        ),
+    ] {
+        assert_eq!(
+            variant.build(),
+            Err(Error::Outgoing(OutgoingError::Identifier(
+                accented.to_owned()
+            ))),
+            "{field}"
+        );
+    }
+}
+
+#[test]
 fn dates_the_header_cannot_hold_are_refused() {
     for (time, offset, valid) in [
         ("1899-12-31T23:59:59", 0, false),

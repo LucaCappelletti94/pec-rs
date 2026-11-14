@@ -36,6 +36,10 @@ pub enum OutgoingError {
     /// (§6.3, RFC 5322 §3.6.4).
     #[error("the message needs one valid Message-ID field")]
     MessageId,
+    /// A built message's identifier holds a character outside ASCII, which no encoded word may stand for (RFC 2047
+    /// §5) and only a message sent with SMTPUTF8 carries (RFC 6532 §3.2), with the identifier.
+    #[error("the message identifier {0:?} holds a character outside ASCII")]
+    Identifier(String),
     /// The message lacks exactly one `Date` field holding a valid date (RFC 5322 §3.6.1), or a built message's date has
     /// a year outside 1900 to 3000 or a zone offset that is not whole minutes under a day.
     #[error("the message needs one valid Date field")]
