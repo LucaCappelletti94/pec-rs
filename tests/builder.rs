@@ -494,13 +494,18 @@ fn header_and_body(built: &OutgoingMessage) -> (String, String) {
 }
 
 /// Asserts what RFC 5322, RFC 2045 and RFC 2047 ask of the bytes of `built`, which a lenient reader would forgive:
-/// 7-bit bytes, header lines within 78 columns, encoded words of at most 75 characters each holding whole UTF-8
-/// characters, body lines within 76 columns ending in no white space, and every quoted-printable `=` escaping two
-/// uppercase hexadecimal digits or breaking the line.
+/// 7-bit bytes and no control character but CR and LF in line breaks and tab, header lines within 78 columns, encoded
+/// words of at most 75 characters each holding whole UTF-8 characters, body lines within 76 columns ending in no white
+/// space, and every quoted-printable `=` escaping two uppercase hexadecimal digits or breaking the line.
 #[track_caller]
 fn assert_well_formed(built: &OutgoingMessage) {
     let raw = built.as_bytes();
     assert!(raw.is_ascii(), "8-bit bytes");
+    assert!(
+        raw.iter()
+            .all(|byte| !byte.is_ascii_control() || matches!(byte, b'\t' | b'\r' | b'\n')),
+        "a control character"
+    );
     let text = core::str::from_utf8(raw).expect("ASCII");
     let (header, body) = text.split_once("\r\n\r\n").expect("a header and a body");
     for line in header.split("\r\n") {
