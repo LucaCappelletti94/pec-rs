@@ -1,4 +1,81 @@
-//! Comparing and validating mailbox addresses.
+//! Mailboxes an outgoing message names, and comparing and validating their addresses.
+
+use crate::{Error, OutgoingError};
+
+/// A mailbox an outgoing message names, an address with an optional display name (RFC 5322 §3.4).
+///
+/// The address is a `local@domain` of two dot-atoms, the form the provider accepts for the sender and each recipient
+/// (§6.3.1, RFC 5322 §3.4.1).
+///
+/// ```
+/// use postacert::Mailbox;
+///
+/// let mailbox = Mailbox::named("Mario Rossi", "mario.rossi@pec.example.it")?;
+/// assert_eq!(mailbox.name(), Some("Mario Rossi"));
+/// assert_eq!(mailbox.address(), "mario.rossi@pec.example.it");
+/// # Ok::<(), postacert::Error>(())
+/// ```
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Mailbox {
+    /// The display name, never empty.
+    name: Option<String>,
+    /// The `local@domain` address.
+    address: String,
+}
+
+impl Mailbox {
+    /// The mailbox at `address`, with no display name.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Outgoing`] with [`OutgoingError::Address`] when `address` is not a `local@domain` of two
+    /// dot-atoms.
+    pub fn new(address: impl Into<String>) -> Result<Self, Error> {
+        let address = address.into();
+        if is_dot_atom_address(&address) {
+            Ok(Self {
+                name: None,
+                address,
+            })
+        } else {
+            Err(OutgoingError::Address(address).into())
+        }
+    }
+
+    /// The mailbox at `address` displayed as `name`, or with no display name when `name` is empty.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Outgoing`] with [`OutgoingError::DisplayName`] when `name` holds a control character other
+    /// than tab, or with [`OutgoingError::Address`] when `address` is not a `local@domain` of two dot-atoms.
+    pub fn named(name: impl Into<String>, address: impl Into<String>) -> Result<Self, Error> {
+        let name = name.into();
+        if has_control(&name) {
+            return Err(OutgoingError::DisplayName(name).into());
+        }
+        let mut mailbox = Self::new(address)?;
+        mailbox.name = Some(name).filter(|name| !name.is_empty());
+        Ok(mailbox)
+    }
+
+    /// The display name, `None` when the mailbox has none.
+    #[must_use]
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
+    /// The `local@domain` address.
+    #[must_use]
+    pub fn address(&self) -> &str {
+        &self.address
+    }
+}
+
+/// Whether `text` holds a control character other than tab, which no header field may carry (RFC 5322 §2.2).
+pub(crate) fn has_control(text: &str) -> bool {
+    text.chars()
+        .any(|character| character.is_control() && character != '\t')
+}
 
 /// Whether two addresses name the same mailbox, the local part compared exactly and the host without case (RFC 5280
 /// §7.5).
@@ -36,6 +113,6 @@ fn is_dot_atom(text: &str) -> bool {
 }
 
 /// Whether `byte` is an `atext` character (RFC 5322 §3.2.3).
-fn is_atext(byte: u8) -> bool {
+pub(crate) fn is_atext(byte: u8) -> bool {
     byte.is_ascii_alphanumeric() || b"!#$%&'*+-/=?^_`{|}~".contains(&byte)
 }
