@@ -61,6 +61,24 @@ pub enum OutgoingError {
     /// The field with this name holds a word too long for one line of 998 columns (RFC 5322 §2.1.1).
     #[error("the {0} field holds a word too long for one line")]
     LineTooLong(&'static str),
+    /// An attachment's content type is not a `type/subtype` of two tokens without parameters (RFC 2045 §5.1), or is
+    /// a `multipart` or `message` type, which base64 cannot carry (RFC 2045 §6.4), with the content type.
+    #[error("{0:?} is not a discrete type/subtype")]
+    ContentType(String),
+    /// The attachment at this position among the attachments, from 0, has an empty name.
+    #[error("attachment {0} has an empty name")]
+    AttachmentName(usize),
+    /// An attached message holds a NUL, a bare line break or a line over 998 octets, which neither 7bit nor 8bit
+    /// carries (RFC 2045 §2.7, §2.8) and `message/rfc822` cannot avoid by base64 (RFC 2046 §5.2.1).
+    #[error(
+        "attachment {attachment} holds a NUL, a bare line break or a line over 998 octets at byte {at}"
+    )]
+    AttachedMessage {
+        /// The attachment's position among the attachments, from 0.
+        attachment: usize,
+        /// The offset of the first such byte in the attached message.
+        at: usize,
+    },
     /// The message has more distinct recipients than the provider accepts (DM 2 November 2005, art. 12).
     #[error("the message has {recipients} recipients and the provider accepts {limit}")]
     TooManyRecipients {
