@@ -59,6 +59,11 @@ const LONG_ACCENTED_SUBJECT: &str = "Fattura n° 12 — consegna caffè e tè pe
 const TEXT: &str = "Buongiorno,\nin allegato la fattura n° 12 per la fornitura di caffè e tè.\r\nQuesta riga \
      supera di molto i settantasei caratteri ammessi per una riga di testo codificata.\rCordiali saluti\n";
 
+/// An HTML version of [`TEXT`], with accents, a line longer than 76 columns and line breaks of every form.
+const HTML: &str = "<p>Buongiorno,<br>\nin allegato la fattura n° 12 per la fornitura di caffè e tè.</p>\r\n<p>Questa \
+     riga supera di molto i settantasei caratteri ammessi per una riga di testo codificata.</p>\r<p>Cordiali \
+     saluti</p>\n";
+
 /// `text` with every line break written as CRLF.
 fn crlf(text: &str) -> String {
     text.replace("\r\n", "\n")
@@ -89,6 +94,11 @@ fn variants() -> Vec<OutgoingMessageBuilder> {
             ]),
         builder().receipt(ReceiptKind::Short),
         builder().receipt(ReceiptKind::Summary),
+        builder()
+            .subject("Invio fattura 00012")
+            .text(TEXT)
+            .html(HTML),
+        builder().html("<p>Fattura in allegato.</p>"),
     ]
 }
 
@@ -246,6 +256,68 @@ fn mail_parser_reads_back_every_field() {
     assert_eq!(
         built.message_id(),
         &id("<20261108101458.0001@client.example.it>")
+    );
+}
+
+#[test]
+fn an_html_version_goes_after_the_text_in_a_multipart_alternative() {
+    let built = builder()
+        .text(TEXT)
+        .html(HTML)
+        .build()
+        .expect("a buildable message");
+    assert_well_formed(&built);
+    let parsed = MessageParser::default()
+        .parse(built.as_bytes())
+        .expect("MIME");
+    let types = parsed
+        .parts()
+        .map(|part| {
+            let content_type = part.content_type().expect("a Content-Type");
+            format!(
+                "{}/{}",
+                content_type.ctype(),
+                content_type.subtype().unwrap_or_default()
+            )
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(types, ["multipart/alternative", "text/plain", "text/html"]);
+    assert_eq!(
+        parsed.body_text(0).expect("a text body"),
+        crlf(TEXT).as_str()
+    );
+    assert_eq!(
+        parsed.body_html(0).expect("an HTML body"),
+        crlf(HTML).as_str()
+    );
+}
+
+#[test]
+fn a_text_holding_another_messages_delimiters_reads_back_as_written() {
+    let other = builder()
+        .text("Fattura in allegato.")
+        .html(HTML)
+        .build()
+        .expect("a buildable message");
+    let (header, _) = header_and_body(&other);
+    let boundary = header
+        .split_once("boundary=\"")
+        .and_then(|(_, rest)| rest.split_once('"'))
+        .map(|(boundary, _)| boundary)
+        .expect("a boundary");
+    let text = format!("Fattura in allegato.\r\n--{boundary}\r\n\r\n--{boundary}--");
+    let built = builder()
+        .text(text.as_str())
+        .html(HTML)
+        .build()
+        .expect("a buildable message");
+    let parsed = MessageParser::default()
+        .parse(built.as_bytes())
+        .expect("MIME");
+    assert_eq!(parsed.body_text(0).expect("a text body"), text.as_str());
+    assert_eq!(
+        parsed.body_html(0).expect("an HTML body"),
+        crlf(HTML).as_str()
     );
 }
 
@@ -550,7 +622,33 @@ fn assert_well_formed(built: &OutgoingMessage) {
             String::from_utf8(decoded).expect("whole UTF-8 characters");
         }
     }
-    let quoted_printable = header.contains("Content-Transfer-Encoding: quoted-printable");
+    assert_body_well_formed(header, body);
+}
+
+/// Asserts that the lines of `body` stay within 76 columns ending in no white space, and that every `=` of a
+/// quoted-printable body escapes two uppercase hexadecimal digits or breaks the line, for each part in turn when
+/// `header` makes it a multipart.
+#[track_caller]
+fn assert_body_well_formed(header: &str, body: &str) {
+    let unfolded = header.replace("\r\n ", " ");
+    if let Some((_, rest)) = unfolded.split_once("; boundary=\"") {
+        let boundary = rest.split_once('"').expect("a quoted boundary").0;
+        let parts = body
+            .strip_prefix(&format!("--{boundary}\r\n"))
+            .and_then(|rest| rest.strip_suffix(&format!("\r\n--{boundary}--")))
+            .expect("parts between delimiter lines");
+        for part in parts.split(&format!("\r\n--{boundary}\r\n")) {
+            let (header, body) = part
+                .split_once("\r\n\r\n")
+                .expect("a part header and a body");
+            for line in header.split("\r\n") {
+                assert!(line.len() <= 78, "{line:?}");
+            }
+            assert_body_well_formed(header, body);
+        }
+        return;
+    }
+    let quoted_printable = unfolded.contains("Content-Transfer-Encoding: quoted-printable");
     for line in body.split("\r\n") {
         assert!(line.len() <= 76, "{line:?}");
         assert!(!line.ends_with([' ', '\t']), "{line:?}");
@@ -618,19 +716,26 @@ fn written_bytes_follow_the_rfcs() {
         }
     }
     for text in &texts {
-        let built = builder()
-            .text(text.as_str())
-            .build()
-            .expect("a buildable message");
-        assert_well_formed(&built);
-        let parsed = MessageParser::default()
-            .parse(built.as_bytes())
-            .expect("MIME");
-        assert_eq!(
-            parsed.body_text(0).unwrap_or_default(),
-            crlf(text).as_str(),
-            "{text:?}"
-        );
+        for (variant, html) in [
+            (builder().text(text.as_str()), false),
+            (builder().text(TEXT).html(text.as_str()), true),
+        ] {
+            let built = variant.build().expect("a buildable message");
+            assert_well_formed(&built);
+            let parsed = MessageParser::default()
+                .parse(built.as_bytes())
+                .expect("MIME");
+            let read = if html {
+                parsed.body_html(0)
+            } else {
+                parsed.body_text(0)
+            };
+            assert_eq!(
+                read.unwrap_or_default(),
+                crlf(text).as_str(),
+                "{text:?}, HTML {html}"
+            );
+        }
     }
 }
 

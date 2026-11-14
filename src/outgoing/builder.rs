@@ -8,6 +8,11 @@ use super::{OutgoingError, OutgoingMessage, write};
 use crate::mailbox::{has_control, same_mailbox};
 use crate::{Error, Mailbox, MessageId, ReceiptKind};
 
+/// The content type of the text body.
+const PLAIN: &str = "text/plain; charset=utf-8";
+/// The content type of the HTML version of the text body.
+const HTML: &str = "text/html; charset=utf-8";
+
 /// An outgoing message being built, from [`OutgoingMessage::builder`].
 ///
 /// It has a sender, one or more `To` recipients, an identifier and a date from the start, and no way to name a `Bcc`
@@ -35,6 +40,8 @@ pub struct OutgoingMessageBuilder {
     subject: Option<String>,
     /// The text body.
     text: String,
+    /// The HTML version of the text body.
+    html: Option<String>,
     /// The delivery receipt form asked for, the `X-TipoRicevuta` field.
     receipt: ReceiptKind,
 }
@@ -82,6 +89,7 @@ impl OutgoingMessage {
             date,
             subject: None,
             text: String::new(),
+            html: None,
             receipt: ReceiptKind::Full,
         }
     }
@@ -130,6 +138,13 @@ impl OutgoingMessageBuilder {
         self
     }
 
+    /// Sets the HTML version of the text body, which goes after the text in a `multipart/alternative` (RFC 2046
+    /// §5.1.4), its line breaks of any form written as CRLF.
+    pub fn html(mut self, html: impl Into<String>) -> Self {
+        self.html = Some(html.into());
+        self
+    }
+
     /// Asks for `receipt` delivery receipts with `X-TipoRicevuta` (§6.5.2.2, §6.5.2.3).
     pub const fn receipt(mut self, receipt: ReceiptKind) -> Self {
         self.receipt = receipt;
@@ -139,7 +154,8 @@ impl OutgoingMessageBuilder {
     /// Writes the message, with the envelope to send it with.
     ///
     /// Text outside printable ASCII goes as UTF-8, in encoded words in the header (RFC 2047) and quoted-printable in
-    /// the body (RFC 2045 §6.7), and every field folds within 78 columns where its words allow (RFC 5322 §2.1.1).
+    /// the body (RFC 2045 §6.7), and every field folds within 78 columns where its words allow (RFC 5322 §2.1.1). The
+    /// body is the text, or a `multipart/alternative` of the text and then its HTML version (RFC 2046 §5.1.4).
     ///
     /// # Errors
     ///
@@ -191,13 +207,18 @@ impl OutgoingMessageBuilder {
         if let Some(subject) = &self.subject {
             write::field(&mut raw, "Subject", &write::unstructured(subject))?;
         }
-        let (encoding, body) = write::text_body(&self.text);
-        write::fixed_field(&mut raw, "MIME-Version", "1.0");
-        write::fixed_field(&mut raw, "Content-Type", "text/plain; charset=utf-8");
-        write::fixed_field(&mut raw, "Content-Transfer-Encoding", encoding);
         write::fixed_field(&mut raw, "X-TipoRicevuta", self.receipt.token());
-        raw.extend_from_slice(b"\r\n");
-        raw.extend_from_slice(&body);
+        write::fixed_field(&mut raw, "MIME-Version", "1.0");
+        match &self.html {
+            None => write::text(&mut raw, PLAIN, &self.text),
+            Some(html) => {
+                let mut plain = Vec::new();
+                write::text(&mut plain, PLAIN, &self.text);
+                let mut alternative = Vec::new();
+                write::text(&mut alternative, HTML, html);
+                write::multipart(&mut raw, "multipart/alternative", &[plain, alternative]);
+            }
+        }
         let mut forward_paths: Vec<String> = Vec::new();
         for mailbox in self.to.iter().chain(&self.cc) {
             if !forward_paths

@@ -1,8 +1,9 @@
-//! Writing the header fields and the text body of an outgoing message (RFC 5322 §2.1.1 and §3, RFC 2045 §6.7,
-//! RFC 2047).
+//! Writing the header fields and the body of an outgoing message (RFC 5322 §2.1.1 and §3, RFC 2045 §6.7, RFC 2046
+//! §5.1, RFC 2047).
 
 use base64ct::{Base64, Encoding};
 use jiff::Zoned;
+use sha2::{Digest, Sha256};
 
 use crate::mailbox::is_atext;
 use crate::{Mailbox, MessageId, OutgoingError};
@@ -196,11 +197,12 @@ pub(super) fn date(date: &Zoned) -> Result<Vec<String>, OutgoingError> {
     ])
 }
 
-/// The transfer encoding of `text` and its body, its line breaks of any form written as CRLF (RFC 2046 §4.1.1).
+/// Writes the `Content-Type` field `content_type` and the transfer encoding of `text`, a blank line and its body,
+/// its line breaks of any form written as CRLF (RFC 2046 §4.1.1).
 ///
 /// The body is 7bit when every line is printable ASCII and tabs, at most 76 columns, and ends in neither, and
 /// quoted-printable otherwise, so no line passes 76 columns and none ends in white space a transport could strip.
-pub(super) fn text_body(text: &str) -> (&'static str, Vec<u8>) {
+pub(super) fn text(out: &mut Vec<u8>, content_type: &str, text: &str) {
     let lines = lines(text);
     let seven_bit = lines.iter().all(|line| {
         line.len() <= QUOTED_PRINTABLE_LINE
@@ -209,25 +211,62 @@ pub(super) fn text_body(text: &str) -> (&'static str, Vec<u8>) {
                 .all(|byte| byte.is_ascii_graphic() || matches!(byte, b' ' | b'\t'))
             && !line.ends_with([' ', '\t'])
     });
-    let mut body = Vec::with_capacity(text.len());
-    for (index, line) in lines.iter().enumerate() {
-        if index > 0 {
-            body.extend_from_slice(b"\r\n");
-        }
-        if seven_bit {
-            body.extend_from_slice(line.as_bytes());
-        } else {
-            quoted_printable(line.as_bytes(), &mut body);
-        }
-    }
-    (
+    fixed_field(out, "Content-Type", content_type);
+    fixed_field(
+        out,
+        "Content-Transfer-Encoding",
         if seven_bit {
             "7bit"
         } else {
             "quoted-printable"
         },
-        body,
-    )
+    );
+    out.extend_from_slice(b"\r\n");
+    out.reserve(text.len());
+    for (index, line) in lines.iter().enumerate() {
+        if index > 0 {
+            out.extend_from_slice(b"\r\n");
+        }
+        if seven_bit {
+            out.extend_from_slice(line.as_bytes());
+        } else {
+            quoted_printable(line.as_bytes(), out);
+        }
+    }
+}
+
+/// Writes the `Content-Type` field of the multipart type `media_type` with the boundary of `parts`, a blank line and
+/// the parts, each after a delimiter line, then the close delimiter (RFC 2046 §5.1.1).
+///
+/// The boundary is `=_` and the 64 uppercase hexadecimal digits of the SHA-256 of the parts, so equal parts build
+/// equal bytes, and a part holds a delimiter line only by holding the hash of the parts it is among. The boundary
+/// parameter takes a line of its own, which it fills to column 78.
+pub(super) fn multipart(out: &mut Vec<u8>, media_type: &str, parts: &[Vec<u8>]) {
+    let mut hasher = Sha256::new();
+    for part in parts {
+        hasher.update(part);
+    }
+    let mut boundary = [b'_'; 66];
+    boundary[0] = b'=';
+    let (digits, _) = boundary[2..].as_chunks_mut::<2>();
+    for (pair, byte) in digits.iter_mut().zip(hasher.finalize()) {
+        *pair = [HEX[usize::from(byte >> 4)], HEX[usize::from(byte & 0x0f)]];
+    }
+    out.extend_from_slice(b"Content-Type: ");
+    out.extend_from_slice(media_type.as_bytes());
+    out.extend_from_slice(b";\r\n boundary=\"");
+    out.extend_from_slice(&boundary);
+    out.extend_from_slice(b"\"\r\n\r\n");
+    for part in parts {
+        out.extend_from_slice(b"--");
+        out.extend_from_slice(&boundary);
+        out.extend_from_slice(b"\r\n");
+        out.extend_from_slice(part);
+        out.extend_from_slice(b"\r\n");
+    }
+    out.extend_from_slice(b"--");
+    out.extend_from_slice(&boundary);
+    out.extend_from_slice(b"--");
 }
 
 /// The lines of `text`, split at CRLF, LF and CR alike.
