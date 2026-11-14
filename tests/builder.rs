@@ -423,11 +423,16 @@ fn attachment_names_read_back_as_written() {
     let fits = format!("{}.pdf", "a".repeat(62));
     let long = format!("{}.pdf", "a".repeat(63));
     let euros = "€".repeat(40);
+    // A quote takes a backslash before it in the quoted form, so 65 characters with one quote fill column 78.
+    let escaped_fits = format!("\"{}.pdf", "a".repeat(60));
+    let escaped_long = format!("\"{}.pdf", "a".repeat(61));
     for (name, quoted) in [
         ("fattura.pdf", true),
         (fits.as_str(), true),
         (long.as_str(), false),
         (r#"Fattura "bozza" C:\00012.pdf"#, true),
+        (escaped_fits.as_str(), true),
+        (escaped_long.as_str(), false),
         (" spazi  doppi ", true),
         ("fattura caffè.pdf", false),
         ("riga\r\nnuova\t.pdf", false),
@@ -450,6 +455,18 @@ fn attachment_names_read_back_as_written() {
             .collect::<Vec<_>>();
         assert_eq!(names, [Some(name.to_owned())], "{name:?}");
     }
+    // RFC 2231 keeps attribute characters as they are, and the sections each fill one line.
+    let built = builder()
+        .attachment("fattura caffè.pdf", "application/pdf", b"%PDF-1.7")
+        .attachment(long.as_str(), "application/pdf", b"%PDF-1.7")
+        .build()
+        .expect("a buildable message");
+    let text = core::str::from_utf8(built.as_bytes()).expect("ASCII");
+    assert!(text.contains(" filename*0*=utf-8''fattura%20caff%C3%A8.pdf\r\n"));
+    assert!(text.contains(&format!(
+        " filename*0*=utf-8''{};\r\n filename*1*=aaaaaa.pdf\r\n",
+        "a".repeat(57)
+    )));
 }
 
 #[test]
@@ -918,6 +935,16 @@ fn assert_body_well_formed(header: &str, body: &str) {
         }
         return;
     }
+    if unfolded.contains("Content-Transfer-Encoding: base64") {
+        // Base64 goes in full lines of 76 columns and a last one of at most 76 (RFC 2045 §6.8).
+        let lines = body.split("\r\n").collect::<Vec<_>>();
+        let (last, full) = lines.split_last().expect("a line");
+        assert!(
+            full.iter().all(|line| line.len() == 76) && last.len() <= 76,
+            "{body:?}"
+        );
+        return;
+    }
     let quoted_printable = unfolded.contains("Content-Transfer-Encoding: quoted-printable");
     for line in body.split("\r\n") {
         assert!(line.len() <= 76, "{line:?}");
@@ -1059,5 +1086,27 @@ fn a_field_folds_only_before_a_word_that_would_pass_column_78() {
             format!("\r\nSubject: {first} {second}\r\n")
         };
         assert!(text.contains(&expected), "{expected:?} in {text:?}");
+    }
+}
+
+#[test]
+fn encoded_words_fill_75_columns() {
+    // An encoded word carries 45 UTF-8 bytes, 60 base64 characters, so 15 euro signs fill one (RFC 2047 §2).
+    for (euros, words) in [(15, 1), (16, 2), (30, 2), (31, 3)] {
+        let built = builder()
+            .subject("€".repeat(euros))
+            .build()
+            .expect("a buildable message");
+        let (header, _) = header_and_body(&built);
+        let subject = header
+            .split("\r\n")
+            .find_map(|line| line.strip_prefix("Subject: "))
+            .expect("a Subject field");
+        let encoded = subject
+            .split(' ')
+            .filter(|word| word.starts_with("=?"))
+            .collect::<Vec<_>>();
+        assert!(encoded.iter().all(|word| word.len() <= 75), "{subject}");
+        assert_eq!(encoded.len(), words, "{euros} euro signs");
     }
 }
