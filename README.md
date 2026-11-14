@@ -6,23 +6,23 @@
 [![docs.rs](https://docs.rs/postacert/badge.svg)](https://docs.rs/postacert)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/LucaCappelletti94/postacert/blob/main/LICENSE)
 
-postacert reads and checks PEC messages, Italian certified email, on bytes any SMTP or IMAP client has fetched. It tells every receipt, notice and envelope apart, verifies the provider's signature against AgID's CAs and CRLs, tracks each recipient's delivery, and checks an outgoing message as the provider will at submission. It follows the AgID technical rules annexed to DM 2 November 2005.
+postacert reads and checks PEC messages, Italian certified email, on bytes any SMTP or IMAP client has fetched. It tells every receipt, notice and envelope apart, verifies the provider's signature against AgID's CAs and CRLs, tracks each recipient's delivery, and builds outgoing messages the provider accepts at submission. It follows the AgID technical rules annexed to DM 2 November 2005.
 
 ```rust
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
-use postacert::{Delivery, Message, OutgoingMessage, ReceiptKind, Status};
+use postacert::{Delivery, Mailbox, Message, OutgoingMessage, Status};
 
-// A message built with any MIME library, checked as the provider will check it.
-let sent = OutgoingMessage::prepare(
-    b"From: mario.rossi@pec.example.it\r\n\
-      To: ufficio.fatture@pec.example.it\r\n\
-      Subject: Invio fattura 00012\r\n\
-      Date: Sun, 8 Nov 2026 10:14:58 +0100\r\n\
-      Message-ID: <20261108101458.0001@client.example.it>\r\n\
-      \r\n\
-      Fattura in allegato.\r\n",
-    ReceiptKind::Full,
-)?;
+// The crate reads no clock, so the caller dates the message.
+let date = "2026-11-08T10:14:58+01:00[+01:00]".parse().expect("a date with its offset");
+let sent = OutgoingMessage::builder(
+    Mailbox::named("Mario Rossi", "mario.rossi@pec.example.it")?,
+    Mailbox::new("ufficio.fatture@pec.example.it")?,
+    "<20261108101458.0001@client.example.it>".parse()?,
+    date,
+)
+.subject("Invio fattura 00012")
+.text("Fattura in allegato.")
+.build()?;
 // Send `sent.as_bytes()` from `sent.reverse_path()` to `sent.forward_paths()`, then track the receipts.
 let mut delivery = Delivery::new(sent.message_id().clone());
 

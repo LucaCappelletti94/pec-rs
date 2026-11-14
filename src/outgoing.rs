@@ -1,8 +1,12 @@
-//! Checking a message the caller built before its submission to the sender's PEC provider (§6.3.1), and asking for a
+//! Building or checking a message before its submission to the sender's PEC provider (§6.3.1), and asking for a
 //! delivery receipt form (§6.5.2.2, §6.5.2.3).
 
-use mail_parser::{Address, HeaderName, Headers, Mailbox, MessageParser};
+mod builder;
+mod write;
 
+use mail_parser::{Address, HeaderName, Headers, Mailbox as ParsedMailbox, MessageParser};
+
+pub use self::builder::OutgoingMessageBuilder;
 use crate::mailbox::{is_dot_atom_address, same_mailbox};
 use crate::{Error, MessageId, ReceiptKind};
 
@@ -32,7 +36,8 @@ pub enum OutgoingError {
     /// (§6.3, RFC 5322 §3.6.4).
     #[error("the message needs one valid Message-ID field")]
     MessageId,
-    /// The message lacks exactly one `Date` field holding a valid date (RFC 5322 §3.6.1).
+    /// The message lacks exactly one `Date` field holding a valid date (RFC 5322 §3.6.1), or a built message's date has
+    /// a year outside 1900 to 3000 or a zone offset that is not whole minutes under a day.
     #[error("the message needs one valid Date field")]
     Date,
     /// An `X-TipoRicevuta` field already asks for another receipt form, with the value it holds (§6.5.2.2).
@@ -43,6 +48,15 @@ pub enum OutgoingError {
     /// §2.3.8).
     #[error("a bare line break at byte {0}")]
     BareLineBreak(usize),
+    /// A display name holds a control character other than tab, which no header field carries (RFC 5322 §2.2).
+    #[error("the display name {0:?} holds a control character")]
+    DisplayName(String),
+    /// The subject holds a control character other than tab, which no header field carries (RFC 5322 §2.2).
+    #[error("the subject {0:?} holds a control character")]
+    Subject(String),
+    /// The field with this name holds a word too long for one line of 998 columns (RFC 5322 §2.1.1).
+    #[error("the {0} field holds a word too long for one line")]
+    LineTooLong(&'static str),
     /// The message has more distinct recipients than the provider accepts (DM 2 November 2005, art. 12).
     #[error("the message has {recipients} recipients and the provider accepts {limit}")]
     TooManyRecipients {
@@ -85,8 +99,8 @@ impl Limits {
     };
 }
 
-/// A message the caller built, checked for submission to the sender's PEC provider and asking for a delivery receipt
-/// form.
+/// A message ready for submission to the sender's PEC provider and asking for a delivery receipt form, made by
+/// [`builder`](Self::builder) or checked by [`prepare`](Self::prepare).
 ///
 /// The provider refuses a message without one `From` mailbox and a `To` mailbox, one naming a `Bcc` recipient, and one
 /// whose SMTP envelope differs from its `From`, `To` and `Cc` addresses (§6.3.1). Send
@@ -95,9 +109,9 @@ impl Limits {
 /// unless given one, also sends to the `Bcc` recipients it removed from the header, and the provider refuses that.
 #[derive(Debug, PartialEq, Eq)]
 pub struct OutgoingMessage {
-    /// The message with `X-TipoRicevuta`.
+    /// The message, with `X-TipoRicevuta`.
     raw: Vec<u8>,
-    /// The `Message-ID` the caller gave the message.
+    /// The `Message-ID` the message carries.
     message_id: MessageId,
     /// The `From` address.
     reverse_path: String,
@@ -106,27 +120,29 @@ pub struct OutgoingMessage {
 }
 
 impl OutgoingMessage {
-    /// Checks a message the caller built and asks for `receipt` delivery receipts with `X-TipoRicevuta` (§6.5.2.2,
-    /// §6.5.2.3), written after the last header field.
+    /// Checks a message built elsewhere, by lettre's `Message::formatted` for one or kept as bytes, and asks for
+    /// `receipt` delivery receipts with `X-TipoRicevuta` (§6.5.2.2, §6.5.2.3), written after the last header field.
     ///
     /// A message already asking for `receipt` is kept as it is. The provider replaces the message's `Message-ID` and
     /// keeps it as `msgid` in every receipt (§6.3), so [`message_id`](Self::message_id) starts the
     /// [`Delivery`](crate::Delivery) that tracks them.
     ///
     /// ```
-    /// use postacert::{OutgoingMessage, ReceiptKind};
+    /// use postacert::{Mailbox, OutgoingMessage, ReceiptKind};
     ///
-    /// let raw = b"From: Mario Rossi <mario.rossi@pec.example.it>\r\n\
-    ///     To: ufficio.fatture@pec.example.it\r\n\
-    ///     Subject: Invio fattura 00012\r\n\
-    ///     Date: Sun, 8 Nov 2026 10:14:58 +0100\r\n\
-    ///     Message-ID: <20261108101458.0001@client.example.it>\r\n\
-    ///     \r\n\
-    ///     Fattura in allegato.\r\n";
-    /// let outgoing = OutgoingMessage::prepare(raw, ReceiptKind::Short)?;
-    /// assert_eq!(outgoing.reverse_path(), "mario.rossi@pec.example.it");
-    /// assert_eq!(outgoing.forward_paths(), ["ufficio.fatture@pec.example.it"]);
-    /// assert!(outgoing.as_bytes().ends_with(b"X-TipoRicevuta: breve\r\n\r\nFattura in allegato.\r\n"));
+    /// let date = "2026-11-08T10:14:58+01:00[+01:00]".parse().expect("a date with its offset");
+    /// let built = OutgoingMessage::builder(
+    ///     Mailbox::named("Mario Rossi", "mario.rossi@pec.example.it")?,
+    ///     Mailbox::new("ufficio.fatture@pec.example.it")?,
+    ///     "<20261108101458.0001@client.example.it>".parse()?,
+    ///     date,
+    /// )
+    /// .text("Fattura in allegato.")
+    /// .receipt(ReceiptKind::Short)
+    /// .build()?;
+    /// // A draft kept as bytes, checked again before it is sent.
+    /// let outgoing = OutgoingMessage::prepare(built.as_bytes(), ReceiptKind::Short)?;
+    /// assert_eq!(outgoing, built);
     /// # Ok::<(), postacert::Error>(())
     /// ```
     ///
@@ -199,15 +215,17 @@ impl OutgoingMessage {
     /// (RFC 1870 §5).
     ///
     /// ```
-    /// use postacert::{Limits, OutgoingMessage, ReceiptKind};
+    /// use postacert::{Limits, Mailbox, OutgoingMessage};
     ///
-    /// let raw = b"From: mario.rossi@pec.example.it\r\n\
-    ///     To: ufficio.fatture@pec.example.it\r\n\
-    ///     Date: Sun, 8 Nov 2026 10:14:58 +0100\r\n\
-    ///     Message-ID: <20261108101458.0001@client.example.it>\r\n\
-    ///     \r\n\
-    ///     Fattura in allegato.\r\n";
-    /// let outgoing = OutgoingMessage::prepare(raw, ReceiptKind::Full)?;
+    /// let date = "2026-11-08T10:14:58+01:00[+01:00]".parse().expect("a date with its offset");
+    /// let outgoing = OutgoingMessage::builder(
+    ///     Mailbox::new("mario.rossi@pec.example.it")?,
+    ///     Mailbox::new("ufficio.fatture@pec.example.it")?,
+    ///     "<20261108101458.0001@client.example.it>".parse()?,
+    ///     date,
+    /// )
+    /// .text("Fattura in allegato.")
+    /// .build()?;
     /// outgoing.check_limits(Limits::GUARANTEED)?;
     /// # Ok::<(), postacert::Error>(())
     /// ```
@@ -300,7 +318,7 @@ fn recipients(headers: &Headers<'_>) -> Result<Vec<String>, OutgoingError> {
 }
 
 /// The address of `mailbox` when it is a dot-atom address.
-fn address(mailbox: Mailbox<'_>) -> Result<&str, OutgoingError> {
+fn address(mailbox: ParsedMailbox<'_>) -> Result<&str, OutgoingError> {
     let address = mailbox.address().unwrap_or_default();
     if is_dot_atom_address(address) {
         Ok(address)

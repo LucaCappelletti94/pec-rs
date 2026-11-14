@@ -27,6 +27,8 @@ include = [
 ]
 
 [dependencies]
+# Encoded words and attachments of built messages.
+base64ct = { version = "1.8.0", default-features = false, features = ["alloc"] }
 cms = { version = "=0.3.0-rc.2", default-features = false }
 # Aruba and InfoCert send their SignedData in BER with indefinite lengths.
 der = { version = "0.8.3", default-features = false, features = ["ber"] }
@@ -42,8 +44,6 @@ sha1 = { version = "0.11.0", default-features = false }
 sha2 = { version = "0.11.1", default-features = false, features = ["oid"] }
 thiserror = "2.0.21"
 
-[dev-dependencies]
-base64ct = { version = "1.8.0", features = ["alloc"] }
 
 [lints.rust]
 missing_docs = "warn"

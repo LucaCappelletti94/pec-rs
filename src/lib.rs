@@ -22,8 +22,9 @@ pub use certification::{
 pub use delivery::{Delivery, Recorded, Status};
 pub use error::Error;
 pub use kind::{Kind, MessageKind};
+pub use mailbox::Mailbox;
 pub use message::{Message, VerifiedMessage};
 pub use message_id::MessageId;
-pub use outgoing::{Limits, OutgoingError, OutgoingMessage};
+pub use outgoing::{Limits, OutgoingError, OutgoingMessage, OutgoingMessageBuilder};
 pub use signature::{ProviderSignature, SignatureError};
 pub use trust::{AGID_CA_SMIME_RSA_2026, AGID_CA1, AGID_PROVIDER_CAS};
