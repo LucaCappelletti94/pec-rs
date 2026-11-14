@@ -9,12 +9,14 @@
     reason = "test code: the expect message names the failing step"
 )]
 
+mod built;
 mod common;
 
 use std::net::TcpStream;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
+use built::built;
 use common::{
     RECEIPT_WAIT, Receipts, assert_about, envelope, fetch, outgoing, receipt_form, token,
 };
@@ -65,6 +67,7 @@ fn openpec_receipts_verify() {
     let token = token();
     let short_subject = format!("postacert ricevuta breve {token}");
     let summary_subject = format!("postacert ricevuta sintetica {token}");
+    let built_subject = format!("postacert messaggio costruito {token}");
     let short_sent = outgoing(
         SENDER,
         RECIPIENT,
@@ -79,13 +82,22 @@ fn openpec_receipts_verify() {
         &format!("sintetica.{token}@postacert.test"),
         ReceiptKind::Summary,
     );
+    let built_sent = built(
+        SENDER,
+        RECIPIENT,
+        &built_subject,
+        &format!("costruito.{token}@postacert.test"),
+        ReceiptKind::Short,
+    );
     send(&smtp, &short_sent);
     send(&smtp, &summary_sent);
+    send(&smtp, &built_sent);
 
     let deadline = Instant::now() + RECEIPT_WAIT;
     let mut short = Receipts::default();
     let mut summary = Receipts::default();
-    while !(short.complete() && summary.complete()) {
+    let mut built_receipts = Receipts::default();
+    while !(short.complete() && summary.complete() && built_receipts.complete()) {
         assert!(
             Instant::now() < deadline,
             "the receipts arrive within {RECEIPT_WAIT:?}"
@@ -93,10 +105,13 @@ fn openpec_receipts_verify() {
         sleep(Duration::from_secs(5));
         for user in [SENDER, RECIPIENT] {
             for raw in fetch_plain(&imap, user, &token) {
-                let breve =
-                    Message::parse(&raw).is_ok_and(|message| message.subject() == short_subject);
-                if breve {
+                let subject = Message::parse(&raw)
+                    .map(|message| message.subject().to_owned())
+                    .unwrap_or_default();
+                if subject == short_subject {
                     short.file(raw, &short_subject);
+                } else if subject == built_subject {
+                    built_receipts.file(raw, &built_subject);
                 } else {
                     summary.file(raw, &summary_subject);
                 }
@@ -148,5 +163,24 @@ fn openpec_receipts_verify() {
     assert_eq!(
         summary_receipt.check_attachments(summary_sent.as_bytes(), TextLineEnds::CanonicalOrLf),
         Err(Error::NotShortReceipt)
+    );
+
+    // A built message asking for a short receipt has its PDF and its attached message checked as matching.
+    let built_delivery = built_receipts.delivery.expect("complete");
+    assert_eq!(receipt_form(&built_delivery), Some(ReceiptKind::Short));
+    for raw in [
+        &built_receipts.acceptance.expect("complete"),
+        &built_receipts.transport.expect("complete"),
+        &built_delivery,
+    ] {
+        assert_about(raw, &built_sent);
+    }
+    let built_receipt = Message::parse(&built_delivery).expect("a valid receipt");
+    assert_eq!(
+        built_receipt.check_attachments(built_sent.as_bytes(), TextLineEnds::CanonicalOrLf),
+        Ok(vec![
+            AttachmentCheck::Matches(Some("fattura.pdf".to_owned())),
+            AttachmentCheck::Matches(None),
+        ])
     );
 }

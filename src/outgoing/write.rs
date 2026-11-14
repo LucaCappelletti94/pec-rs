@@ -1,8 +1,9 @@
-//! Writing the header fields and the text body of an outgoing message (RFC 5322 §2.1.1 and §3, RFC 2045 §6.7,
-//! RFC 2047).
+//! Writing the header fields and the body of an outgoing message (RFC 5322 §2.1.1 and §3, RFC 2045 §6.7, RFC 2046
+//! §5.1, RFC 2047).
 
 use base64ct::{Base64, Encoding};
 use jiff::Zoned;
+use sha2::{Digest, Sha256};
 
 use crate::mailbox::is_atext;
 use crate::{Mailbox, MessageId, OutgoingError};
@@ -17,6 +18,14 @@ const LONGEST_PLAIN_WORD: usize = FOLD - 2;
 const ENCODED_WORD_BYTES: usize = 45;
 /// The longest quoted-printable line, CRLF excluded (RFC 2045 §6.7 rule 5).
 const QUOTED_PRINTABLE_LINE: usize = 76;
+/// The longest base64 line, CRLF excluded (RFC 2045 §6.8).
+const BASE64_LINE: usize = 76;
+/// The characters of a token besides letters and digits, every printable ASCII character but the tspecials (RFC 2045
+/// §5.1).
+const TOKEN_PUNCTUATION: &[u8] = b"!#$%&'*+-.^_`{|}~";
+/// The characters RFC 2231 §7 writes as they are in a parameter value besides letters and digits, those of a token but
+/// `*`, `'` and `%`.
+const ATTRIBUTE_PUNCTUATION: &[u8] = b"!#$&+-.^_`{|}~";
 /// The digits quoted-printable writes an octet with (RFC 2045 §6.7 rule 1).
 const HEX: &[u8; 16] = b"0123456789ABCDEF";
 /// Day names as RFC 5322 §3.3 writes them, from Monday.
@@ -196,11 +205,12 @@ pub(super) fn date(date: &Zoned) -> Result<Vec<String>, OutgoingError> {
     ])
 }
 
-/// The transfer encoding of `text` and its body, its line breaks of any form written as CRLF (RFC 2046 §4.1.1).
+/// Writes the `Content-Type` field `content_type` and the transfer encoding of `text`, a blank line and its body,
+/// its line breaks of any form written as CRLF (RFC 2046 §4.1.1).
 ///
 /// The body is 7bit when every line is printable ASCII and tabs, at most 76 columns, and ends in neither, and
 /// quoted-printable otherwise, so no line passes 76 columns and none ends in white space a transport could strip.
-pub(super) fn text_body(text: &str) -> (&'static str, Vec<u8>) {
+pub(super) fn text(out: &mut Vec<u8>, content_type: &str, text: &str) {
     let lines = lines(text);
     let seven_bit = lines.iter().all(|line| {
         line.len() <= QUOTED_PRINTABLE_LINE
@@ -209,25 +219,192 @@ pub(super) fn text_body(text: &str) -> (&'static str, Vec<u8>) {
                 .all(|byte| byte.is_ascii_graphic() || matches!(byte, b' ' | b'\t'))
             && !line.ends_with([' ', '\t'])
     });
-    let mut body = Vec::with_capacity(text.len());
-    for (index, line) in lines.iter().enumerate() {
-        if index > 0 {
-            body.extend_from_slice(b"\r\n");
-        }
-        if seven_bit {
-            body.extend_from_slice(line.as_bytes());
-        } else {
-            quoted_printable(line.as_bytes(), &mut body);
-        }
-    }
-    (
+    fixed_field(out, "Content-Type", content_type);
+    fixed_field(
+        out,
+        "Content-Transfer-Encoding",
         if seven_bit {
             "7bit"
         } else {
             "quoted-printable"
         },
-        body,
-    )
+    );
+    out.extend_from_slice(b"\r\n");
+    out.reserve(text.len());
+    for (index, line) in lines.iter().enumerate() {
+        if index > 0 {
+            out.extend_from_slice(b"\r\n");
+        }
+        if seven_bit {
+            out.extend_from_slice(line.as_bytes());
+        } else {
+            quoted_printable(line.as_bytes(), out);
+        }
+    }
+}
+
+/// Writes the `Content-Type` field of the multipart type `media_type` with the boundary of `parts`, a blank line and
+/// the parts, each after a delimiter line, then the close delimiter (RFC 2046 §5.1.1). A part outside 7-bit bytes
+/// labels the multipart `8bit` (RFC 2045 §6.4).
+///
+/// The boundary is `=_` and the 64 uppercase hexadecimal digits of the SHA-256 of the parts, so equal parts build
+/// equal bytes, and a part holds a delimiter line only by holding the hash of the parts it is among. The boundary
+/// parameter takes a line of its own, which it fills to column 78.
+pub(super) fn multipart(out: &mut Vec<u8>, media_type: &str, parts: &[Vec<u8>]) {
+    let mut hasher = Sha256::new();
+    for part in parts {
+        hasher.update(part);
+    }
+    let mut boundary = [b'_'; 66];
+    boundary[0] = b'=';
+    let (digits, _) = boundary[2..].as_chunks_mut::<2>();
+    for (pair, byte) in digits.iter_mut().zip(hasher.finalize()) {
+        *pair = [HEX[usize::from(byte >> 4)], HEX[usize::from(byte & 0x0f)]];
+    }
+    out.extend_from_slice(b"Content-Type: ");
+    out.extend_from_slice(media_type.as_bytes());
+    out.extend_from_slice(b";\r\n boundary=\"");
+    out.extend_from_slice(&boundary);
+    out.extend_from_slice(b"\"\r\n");
+    if !parts.iter().all(|part| part.is_ascii()) {
+        fixed_field(out, "Content-Transfer-Encoding", "8bit");
+    }
+    out.extend_from_slice(b"\r\n");
+    for part in parts {
+        out.extend_from_slice(b"--");
+        out.extend_from_slice(&boundary);
+        out.extend_from_slice(b"\r\n");
+        out.extend_from_slice(part);
+        out.extend_from_slice(b"\r\n");
+    }
+    out.extend_from_slice(b"--");
+    out.extend_from_slice(&boundary);
+    out.extend_from_slice(b"--");
+}
+
+/// Writes the fields of the file `name` holding `bytes` of the type `content_type`, a blank line and the bytes base64
+/// in lines of 76 columns (RFC 2045 §6.8, RFC 2183).
+///
+/// # Errors
+///
+/// Returns [`OutgoingError::LineTooLong`] when the content type is too long for one line.
+pub(super) fn file(
+    out: &mut Vec<u8>,
+    name: &str,
+    content_type: &str,
+    bytes: &[u8],
+) -> Result<(), OutgoingError> {
+    if "Content-Type: ".len() + content_type.len() > LONGEST_LINE {
+        return Err(OutgoingError::LineTooLong("Content-Type"));
+    }
+    fixed_field(out, "Content-Type", content_type);
+    fixed_field(out, "Content-Transfer-Encoding", "base64");
+    let mut words = filename(name);
+    words.insert(0, "attachment;".to_owned());
+    field(out, "Content-Disposition", &words)?;
+    out.extend_from_slice(b"\r\n");
+    let encoded = Base64::encode_string(bytes);
+    for (index, line) in encoded.as_bytes().chunks(BASE64_LINE).enumerate() {
+        if index > 0 {
+            out.extend_from_slice(b"\r\n");
+        }
+        out.extend_from_slice(line);
+    }
+    Ok(())
+}
+
+/// Writes the fields of the attached message `raw`, a blank line and the message as given (RFC 2046 §5.2.1), `8bit`
+/// when it holds a byte outside ASCII.
+pub(super) fn message(out: &mut Vec<u8>, raw: &[u8]) {
+    fixed_field(out, "Content-Type", "message/rfc822");
+    fixed_field(
+        out,
+        "Content-Transfer-Encoding",
+        if raw.is_ascii() { "7bit" } else { "8bit" },
+    );
+    out.extend_from_slice(b"\r\n");
+    out.extend_from_slice(raw);
+}
+
+/// The words of the `filename` parameter of `name` (RFC 2183 §2.3), a quoted string when `name` is printable ASCII and
+/// fits one line with the space before it, and UTF-8 percent-encoded sections otherwise, each within one line (RFC
+/// 2231 §3, §4).
+fn filename(name: &str) -> Vec<String> {
+    let escapes = name
+        .bytes()
+        .filter(|byte| matches!(byte, b'"' | b'\\'))
+        .count();
+    if name.bytes().all(|byte| matches!(byte, b' '..=b'~'))
+        && "filename=\"\"".len() + name.len() + escapes < FOLD
+    {
+        let mut word = String::with_capacity("filename=\"\"".len() + name.len() + escapes);
+        word.push_str("filename=\"");
+        for character in name.chars() {
+            if matches!(character, '"' | '\\') {
+                word.push('\\');
+            }
+            word.push(character);
+        }
+        word.push('"');
+        return vec![word];
+    }
+    let mut words = Vec::new();
+    let mut word = String::from("filename*0*=utf-8''");
+    for byte in name.bytes() {
+        let literal = byte.is_ascii_alphanumeric() || ATTRIBUTE_PUNCTUATION.contains(&byte);
+        // The section and the `;` after it, when another follows, stay within one line with the space before them.
+        if word.len() + if literal { 1 } else { 3 } + ";".len() >= FOLD {
+            word.push(';');
+            words.push(word);
+            word = format!("filename*{}*=", words.len());
+        }
+        if literal {
+            word.push(char::from(byte));
+        } else {
+            word.push('%');
+            word.push(char::from(HEX[usize::from(byte >> 4)]));
+            word.push(char::from(HEX[usize::from(byte & 0x0f)]));
+        }
+    }
+    words.push(word);
+    words
+}
+
+/// Whether `content_type` is a `type/subtype` of two tokens (RFC 2045 §5.1), neither a `multipart` nor a `message`
+/// type, the composite types base64 cannot carry (RFC 2045 §6.4).
+pub(super) fn is_discrete(content_type: &str) -> bool {
+    content_type.split_once('/').is_some_and(|(kind, subtype)| {
+        is_token(kind)
+            && is_token(subtype)
+            && !kind.eq_ignore_ascii_case("multipart")
+            && !kind.eq_ignore_ascii_case("message")
+    })
+}
+
+/// Whether `text` is a token, letters, digits and the punctuation of [`TOKEN_PUNCTUATION`] (RFC 2045 §5.1).
+fn is_token(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || TOKEN_PUNCTUATION.contains(&byte))
+}
+
+/// The offset of the first byte that neither 7bit nor 8bit carries in `raw` (RFC 2045 §2.7, §2.8), a NUL, a line feed
+/// not after a carriage return, a carriage return not before a line feed, or the octet after the 998th of a line.
+pub(super) fn unsendable(raw: &[u8]) -> Option<usize> {
+    let mut line_start = 0;
+    for (at, &byte) in raw.iter().enumerate() {
+        match byte {
+            b'\r' if raw.get(at + 1) == Some(&b'\n') => {}
+            b'\n' if at.checked_sub(1).and_then(|before| raw.get(before)) == Some(&b'\r') => {
+                line_start = at + 1;
+            }
+            0 | b'\r' | b'\n' => return Some(at),
+            _ if at - line_start >= LONGEST_LINE => return Some(at),
+            _ => {}
+        }
+    }
+    None
 }
 
 /// The lines of `text`, split at CRLF, LF and CR alike.

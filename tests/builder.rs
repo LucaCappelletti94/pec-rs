@@ -59,6 +59,46 @@ const LONG_ACCENTED_SUBJECT: &str = "Fattura n° 12 — consegna caffè e tè pe
 const TEXT: &str = "Buongiorno,\nin allegato la fattura n° 12 per la fornitura di caffè e tè.\r\nQuesta riga \
      supera di molto i settantasei caratteri ammessi per una riga di testo codificata.\rCordiali saluti\n";
 
+/// An HTML version of [`TEXT`], with accents, a line longer than 76 columns and line breaks of every form.
+const HTML: &str = "<p>Buongiorno,<br>\nin allegato la fattura n° 12 per la fornitura di caffè e tè.</p>\r\n<p>Questa \
+     riga supera di molto i settantasei caratteri ammessi per una riga di testo codificata.</p>\r<p>Cordiali \
+     saluti</p>\n";
+
+/// A message to attach, in 7-bit bytes.
+const ATTACHED: &str = "From: mario.rossi@pec.example.it\r\nTo: ufficio.fatture@pec.example.it\r\nSubject: Fattura \
+     00011\r\n\r\nFattura in allegato.\r\n";
+
+/// A message to attach, in 8-bit bytes.
+const ATTACHED_8BIT: &str = "Subject: Città\r\n\r\nCaffè e tè.\r\n";
+
+/// Every byte value, over more than one base64 line.
+fn binary() -> Vec<u8> {
+    (0..=255_u8).cycle().take(1000).collect()
+}
+
+/// The content types of the parts of `built` as mail-parser reads them, in order, `text/plain` for a part without one
+/// (RFC 2045 §5.2).
+fn content_types(built: &OutgoingMessage) -> Vec<String> {
+    let parsed = MessageParser::default()
+        .parse(built.as_bytes())
+        .expect("MIME");
+    parsed
+        .parts()
+        .map(|part| {
+            part.content_type().map_or_else(
+                || "text/plain".to_owned(),
+                |content_type| {
+                    format!(
+                        "{}/{}",
+                        content_type.ctype(),
+                        content_type.subtype().unwrap_or_default()
+                    )
+                },
+            )
+        })
+        .collect()
+}
+
 /// `text` with every line break written as CRLF.
 fn crlf(text: &str) -> String {
     text.replace("\r\n", "\n")
@@ -89,6 +129,22 @@ fn variants() -> Vec<OutgoingMessageBuilder> {
             ]),
         builder().receipt(ReceiptKind::Short),
         builder().receipt(ReceiptKind::Summary),
+        builder()
+            .subject("Invio fattura 00012")
+            .text(TEXT)
+            .html(HTML),
+        builder().html("<p>Fattura in allegato.</p>"),
+        builder().text("Fattura in allegato.").attachment(
+            "fattura.pdf",
+            "application/pdf",
+            binary(),
+        ),
+        builder()
+            .text(TEXT)
+            .html(HTML)
+            .attachment("nota caffè.txt", "text/plain", "Totale 41 €\r\n".as_bytes())
+            .attached_message(ATTACHED.as_bytes())
+            .attached_message(ATTACHED_8BIT.as_bytes()),
     ]
 }
 
@@ -247,6 +303,285 @@ fn mail_parser_reads_back_every_field() {
         built.message_id(),
         &id("<20261108101458.0001@client.example.it>")
     );
+}
+
+#[test]
+fn an_html_version_goes_after_the_text_in_a_multipart_alternative() {
+    let built = builder()
+        .text(TEXT)
+        .html(HTML)
+        .build()
+        .expect("a buildable message");
+    assert_well_formed(&built);
+    assert_eq!(
+        content_types(&built),
+        ["multipart/alternative", "text/plain", "text/html"]
+    );
+    let parsed = MessageParser::default()
+        .parse(built.as_bytes())
+        .expect("MIME");
+    assert_eq!(
+        parsed.body_text(0).expect("a text body"),
+        crlf(TEXT).as_str()
+    );
+    assert_eq!(
+        parsed.body_html(0).expect("an HTML body"),
+        crlf(HTML).as_str()
+    );
+}
+
+#[test]
+fn a_text_holding_another_messages_delimiters_reads_back_as_written() {
+    let other = builder()
+        .text("Fattura in allegato.")
+        .html(HTML)
+        .build()
+        .expect("a buildable message");
+    let (header, _) = header_and_body(&other);
+    let boundary = header
+        .split_once("boundary=\"")
+        .and_then(|(_, rest)| rest.split_once('"'))
+        .map(|(boundary, _)| boundary)
+        .expect("a boundary");
+    let text = format!("Fattura in allegato.\r\n--{boundary}\r\n\r\n--{boundary}--");
+    let built = builder()
+        .text(text.as_str())
+        .html(HTML)
+        .build()
+        .expect("a buildable message");
+    let parsed = MessageParser::default()
+        .parse(built.as_bytes())
+        .expect("MIME");
+    assert_eq!(parsed.body_text(0).expect("a text body"), text.as_str());
+    assert_eq!(
+        parsed.body_html(0).expect("an HTML body"),
+        crlf(HTML).as_str()
+    );
+}
+
+#[test]
+fn attachments_follow_the_body_in_order() {
+    let built = builder()
+        .text(TEXT)
+        .html(HTML)
+        .attachment("fattura.pdf", "application/pdf", binary())
+        .attached_message(ATTACHED.as_bytes())
+        .attachment("nota.txt", "text/plain", b"Totale 41\r\n")
+        .build()
+        .expect("a buildable message");
+    assert_well_formed(&built);
+    // mail-parser lists the attached message's own body after it.
+    assert_eq!(
+        content_types(&built),
+        [
+            "multipart/mixed",
+            "multipart/alternative",
+            "text/plain",
+            "text/html",
+            "application/pdf",
+            "message/rfc822",
+            "text/plain",
+            "text/plain"
+        ]
+    );
+    let parsed = MessageParser::default()
+        .parse(built.as_bytes())
+        .expect("MIME");
+    assert_eq!(
+        parsed.body_text(0).expect("a text body"),
+        crlf(TEXT).as_str()
+    );
+    assert_eq!(
+        parsed.body_html(0).expect("an HTML body"),
+        crlf(HTML).as_str()
+    );
+    let attachments = parsed
+        .attachments()
+        .map(|part| {
+            (
+                part.attachment_name().map(str::to_owned),
+                part.nested().map_or_else(
+                    || part.decoded().into_owned(),
+                    |message| message.raw().to_vec(),
+                ),
+            )
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        attachments,
+        [
+            (Some("fattura.pdf".to_owned()), binary()),
+            (None, ATTACHED.as_bytes().to_vec()),
+            (Some("nota.txt".to_owned()), b"Totale 41\r\n".to_vec()),
+        ]
+    );
+}
+
+#[test]
+fn attachment_names_read_back_as_written() {
+    // A quoted name takes a line with ` filename=""`, 12 columns, so 66 characters fill column 78.
+    let fits = format!("{}.pdf", "a".repeat(62));
+    let long = format!("{}.pdf", "a".repeat(63));
+    let euros = "€".repeat(40);
+    for (name, quoted) in [
+        ("fattura.pdf", true),
+        (fits.as_str(), true),
+        (long.as_str(), false),
+        (r#"Fattura "bozza" C:\00012.pdf"#, true),
+        (" spazi  doppi ", true),
+        ("fattura caffè.pdf", false),
+        ("riga\r\nnuova\t.pdf", false),
+        (euros.as_str(), false),
+    ] {
+        let built = builder()
+            .attachment(name, "application/pdf", b"%PDF-1.7")
+            .build()
+            .expect("a buildable message");
+        assert_well_formed(&built);
+        let text = core::str::from_utf8(built.as_bytes()).expect("ASCII");
+        assert_eq!(text.contains(" filename=\""), quoted, "{name:?}");
+        assert_eq!(text.contains(" filename*0*=utf-8''"), !quoted, "{name:?}");
+        let parsed = MessageParser::default()
+            .parse(built.as_bytes())
+            .expect("MIME");
+        let names = parsed
+            .attachments()
+            .map(|part| part.attachment_name().map(str::to_owned))
+            .collect::<Vec<_>>();
+        assert_eq!(names, [Some(name.to_owned())], "{name:?}");
+    }
+}
+
+#[test]
+fn attachments_take_discrete_content_types() {
+    for valid in [
+        "application/pdf",
+        "text/plain",
+        "application/vnd.ms-excel",
+        "image/svg+xml",
+        "Application/PDF",
+    ] {
+        let built = builder()
+            .attachment("allegato", valid, b"x")
+            .build()
+            .expect("a discrete type/subtype");
+        assert_eq!(
+            content_types(&built).last(),
+            Some(&valid.to_ascii_lowercase()),
+            "{valid}"
+        );
+    }
+    for invalid in [
+        "",
+        "application",
+        "application/",
+        "/pdf",
+        "application/pdf; name=x",
+        "application/p df",
+        "application/pdf/x",
+        "text/(plain)",
+        "application/pdf\u{e8}",
+        "multipart/mixed",
+        "Message/rfc822",
+    ] {
+        assert_eq!(
+            builder().attachment("allegato", invalid, b"x").build(),
+            Err(Error::Outgoing(OutgoingError::ContentType(
+                invalid.to_owned()
+            ))),
+            "{invalid:?}"
+        );
+    }
+    // "Content-Type: " takes 14 columns, so a content type of 984 characters fills a line of 998.
+    for (length, valid) in [(984, true), (985, false)] {
+        let content_type = format!("application/{}", "x".repeat(length - "application/".len()));
+        let built = builder()
+            .attachment("allegato", content_type.as_str(), b"x")
+            .build();
+        if valid {
+            built.expect("a line of 998 columns");
+        } else {
+            assert_eq!(
+                built,
+                Err(Error::Outgoing(OutgoingError::LineTooLong("Content-Type")))
+            );
+        }
+    }
+}
+
+#[test]
+fn an_empty_attachment_name_is_refused() {
+    assert_eq!(
+        builder()
+            .attachment("fattura.pdf", "application/pdf", b"x")
+            .attachment("", "application/pdf", b"y")
+            .build(),
+        Err(Error::Outgoing(OutgoingError::AttachmentName(1)))
+    );
+}
+
+#[test]
+fn attached_messages_neither_7bit_nor_8bit_carries_are_refused() {
+    let line = |length: usize| format!("{}\r\n", "x".repeat(length));
+    for (raw, at) in [
+        ("a\nb".to_owned(), Some(1)),
+        ("\nb".to_owned(), Some(0)),
+        ("a\rb".to_owned(), Some(1)),
+        ("a\r".to_owned(), Some(1)),
+        ("a\0b\r\n".to_owned(), Some(1)),
+        (line(999), Some(998)),
+        (format!("{}{}", line(10), line(999)), Some(12 + 998)),
+        (line(998), None),
+        (format!("Subject: x\r\n\r\n{}", line(998)), None),
+    ] {
+        let built = builder()
+            .attachment("fattura.pdf", "application/pdf", b"x")
+            .attached_message(raw.as_bytes())
+            .build();
+        match at {
+            Some(at) => assert_eq!(
+                built,
+                Err(Error::Outgoing(OutgoingError::AttachedMessage {
+                    attachment: 1,
+                    at
+                })),
+                "{raw:?}"
+            ),
+            None => assert_eq!(
+                MessageParser::default()
+                    .parse(built.expect("a message 8bit carries").as_bytes())
+                    .expect("MIME")
+                    .attachments()
+                    .filter_map(|part| part.nested().map(|message| message.raw().to_vec()))
+                    .collect::<Vec<_>>(),
+                [raw.as_bytes().to_vec()],
+                "{raw:?}"
+            ),
+        }
+    }
+}
+
+#[test]
+fn an_8bit_attached_message_makes_the_message_8bit() {
+    for (raw, encoding) in [(ATTACHED, "7bit"), (ATTACHED_8BIT, "8bit")] {
+        let built = builder()
+            .attached_message(raw.as_bytes())
+            .build()
+            .expect("a buildable message");
+        let (header, _) = header_and_body(&built);
+        assert_eq!(
+            header.contains("\r\nContent-Transfer-Encoding: 8bit"),
+            encoding == "8bit",
+            "{encoding}"
+        );
+        assert_eq!(built.as_bytes().is_ascii(), encoding == "7bit");
+        let parsed = MessageParser::default()
+            .parse(built.as_bytes())
+            .expect("MIME");
+        let part = parsed.attachments().next().expect("the attached message");
+        assert_eq!(part.content_transfer_encoding(), Some(encoding));
+        assert_eq!(part.nested().expect("a message").raw(), raw.as_bytes());
+    }
 }
 
 #[test]
@@ -550,7 +885,40 @@ fn assert_well_formed(built: &OutgoingMessage) {
             String::from_utf8(decoded).expect("whole UTF-8 characters");
         }
     }
-    let quoted_printable = header.contains("Content-Transfer-Encoding: quoted-printable");
+    assert_body_well_formed(header, body);
+}
+
+/// Asserts that the lines of `body` stay within 76 columns ending in no white space, and that every `=` of a
+/// quoted-printable body escapes two uppercase hexadecimal digits or breaks the line, for each part in turn when
+/// `header` makes it a multipart.
+#[track_caller]
+fn assert_body_well_formed(header: &str, body: &str) {
+    let unfolded = header.replace("\r\n ", " ");
+    if let Some((_, rest)) = unfolded.split_once("; boundary=\"") {
+        let boundary = rest.split_once('"').expect("a quoted boundary").0;
+        let parts = body
+            .strip_prefix(&format!("--{boundary}\r\n"))
+            .and_then(|rest| rest.strip_suffix(&format!("\r\n--{boundary}--")))
+            .expect("parts between delimiter lines");
+        for part in parts.split(&format!("\r\n--{boundary}\r\n")) {
+            let (header, body) = part
+                .split_once("\r\n\r\n")
+                .expect("a part header and a body");
+            for line in header.split("\r\n") {
+                assert!(line.len() <= 78, "{line:?}");
+            }
+            assert_body_well_formed(header, body);
+        }
+        return;
+    }
+    if unfolded.contains("Content-Type: message/rfc822") {
+        // An attached message goes as given, in lines of up to 998 octets (RFC 5322 §2.1.1).
+        for line in body.split("\r\n") {
+            assert!(line.len() <= 998, "{line:?}");
+        }
+        return;
+    }
+    let quoted_printable = unfolded.contains("Content-Transfer-Encoding: quoted-printable");
     for line in body.split("\r\n") {
         assert!(line.len() <= 76, "{line:?}");
         assert!(!line.ends_with([' ', '\t']), "{line:?}");
@@ -618,19 +986,26 @@ fn written_bytes_follow_the_rfcs() {
         }
     }
     for text in &texts {
-        let built = builder()
-            .text(text.as_str())
-            .build()
-            .expect("a buildable message");
-        assert_well_formed(&built);
-        let parsed = MessageParser::default()
-            .parse(built.as_bytes())
-            .expect("MIME");
-        assert_eq!(
-            parsed.body_text(0).unwrap_or_default(),
-            crlf(text).as_str(),
-            "{text:?}"
-        );
+        for (variant, html) in [
+            (builder().text(text.as_str()), false),
+            (builder().text(TEXT).html(text.as_str()), true),
+        ] {
+            let built = variant.build().expect("a buildable message");
+            assert_well_formed(&built);
+            let parsed = MessageParser::default()
+                .parse(built.as_bytes())
+                .expect("MIME");
+            let read = if html {
+                parsed.body_html(0)
+            } else {
+                parsed.body_text(0)
+            };
+            assert_eq!(
+                read.unwrap_or_default(),
+                crlf(text).as_str(),
+                "{text:?}, HTML {html}"
+            );
+        }
     }
 }
 

@@ -6,10 +6,13 @@
     reason = "test code: the expect message names the failing step"
 )]
 
+mod built;
+
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::thread;
 
+use built::built;
 use lettre::address::Envelope;
 use lettre::{SmtpTransport, Transport};
 use postacert::{OutgoingMessage, ReceiptKind};
@@ -67,9 +70,8 @@ fn stored(listener: &TcpListener) -> Vec<u8> {
     }
 }
 
-#[test]
-fn lettre_sends_a_prepared_message_as_prepared() {
-    let outgoing = OutgoingMessage::prepare(MESSAGE, ReceiptKind::Full).expect("a valid message");
+/// Sends `outgoing` through lettre to a server on the loopback interface and returns the bytes the server stores.
+fn sent(outgoing: &OutgoingMessage) -> Vec<u8> {
     let listener = TcpListener::bind("127.0.0.1:0").expect("a loopback port");
     let port = listener.local_addr().expect("a local address").port();
     let server = thread::spawn(move || stored(&listener));
@@ -92,8 +94,26 @@ fn lettre_sends_a_prepared_message_as_prepared() {
         .build()
         .send_raw(&envelope, outgoing.as_bytes())
         .expect("the server stores the message");
-    let stored = server.join().expect("the server finishes");
+    server.join().expect("the server finishes")
+}
+
+#[test]
+fn lettre_sends_a_prepared_message_as_prepared() {
+    let outgoing = OutgoingMessage::prepare(MESSAGE, ReceiptKind::Full).expect("a valid message");
     // lettre 0.11.23 writes a CRLF before the terminating `.` line even after the message's own final CRLF, so the
     // server stores one more, empty, line than the message holds (RFC 5321 §4.1.1.4).
-    assert_eq!(stored, [outgoing.as_bytes(), b"\r\n"].concat());
+    assert_eq!(sent(&outgoing), [outgoing.as_bytes(), b"\r\n"].concat());
+}
+
+#[test]
+fn lettre_sends_a_built_message_as_built() {
+    let outgoing = built(
+        "mario.rossi@pec.example.it",
+        "ufficio.fatture@pec.example.it",
+        "Fattura in allegato",
+        "loopback.built@client.example.it",
+        ReceiptKind::Full,
+    );
+    // A built message ends without a line break, which lettre's CRLF before the terminating `.` line ends.
+    assert_eq!(sent(&outgoing), [outgoing.as_bytes(), b"\r\n"].concat());
 }
